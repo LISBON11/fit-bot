@@ -14,19 +14,17 @@ jest.unstable_mockModule('../../../src/config/env.js', () => ({
 // Функция для создания мока OpenAI с нужным ответом
 const mockParseSuccess = (mockResponse: ParsedWorkout) => {
     const MockOpenAI = jest.fn().mockImplementation(() => ({
-        beta: {
-            chat: {
-                completions: {
-                    parse: jest.fn().mockResolvedValue({
-                        choices: [
-                            {
-                                message: {
-                                    parsed: mockResponse,
-                                },
+        chat: {
+            completions: {
+                parse: jest.fn().mockResolvedValue({
+                    choices: [
+                        {
+                            message: {
+                                parsed: mockResponse,
                             },
-                        ],
-                    }),
-                },
+                        },
+                    ],
+                }),
             },
         },
     })) as any;
@@ -38,20 +36,18 @@ const mockParseSuccess = (mockResponse: ParsedWorkout) => {
 
 const mockParseFailure = (refusalMessage: string) => {
     const MockOpenAI = jest.fn().mockImplementation(() => ({
-        beta: {
-            chat: {
-                completions: {
-                    parse: jest.fn().mockResolvedValue({
-                        choices: [
-                            {
-                                message: {
-                                    parsed: null,
-                                    refusal: refusalMessage
-                                },
+        chat: {
+            completions: {
+                parse: jest.fn().mockResolvedValue({
+                    choices: [
+                        {
+                            message: {
+                                parsed: null,
+                                refusal: refusalMessage
                             },
-                        ],
-                    }),
-                },
+                        },
+                    ],
+                }),
             },
         },
     })) as any;

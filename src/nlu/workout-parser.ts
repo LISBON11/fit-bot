@@ -45,7 +45,7 @@ export class WorkoutParser {
       const messages = buildParsePrompt(rawText, currentDate, knownExercises);
 
       // Отправляем запрос с использованием механизма Structured Outputs
-      const completion = await this.openai.beta.chat.completions.parse({
+      const completion = await this.openai.chat.completions.parse({
         model: 'gpt-4o-mini',
         messages,
         response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),

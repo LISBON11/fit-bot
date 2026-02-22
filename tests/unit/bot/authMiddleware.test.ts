@@ -1,116 +1,140 @@
-import { CustomContext } from '../../../src/bot/types.js';
-import { NextFunction } from 'grammy';
+import type { CustomContext } from '../../../src/bot/types.js';
+import type { NextFunction } from 'grammy';
 import { jest } from '@jest/globals';
+
+/** Интерфейс мока Prisma клиента для тестов auth middleware */
+interface MockPrismaClient {
+  authProvider: {
+    findUnique: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+    create: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+  };
+  user: {
+    create: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
+  };
+  $transaction: jest.Mock<
+    (callback: (tx: MockPrismaClient) => Promise<unknown>) => Promise<unknown>
+  >;
+}
 
 // Мокаем получение Prisma клиента
 jest.unstable_mockModule('../../../src/config/database.js', () => ({
-    getPrismaClient: jest.fn(),
+  getPrismaClient: jest.fn(),
 }));
 
 const { authMiddleware } = await import('../../../src/bot/middleware/authMiddleware.js');
 const { getPrismaClient } = await import('../../../src/config/database.js');
 
 describe('Auth Middleware', () => {
-    let mockCtx: Partial<CustomContext>;
-    let mockNext: NextFunction;
-    let mockPrisma: any;
+  let mockCtx: Partial<CustomContext>;
+  let mockNext: NextFunction;
+  let mockPrisma: MockPrismaClient;
 
-    beforeEach(() => {
-        mockCtx = {
-            from: {
-                id: 123456789,
-                is_bot: false,
-                first_name: 'Test',
-                username: 'testuser',
-            },
-        };
-        mockNext = jest.fn() as unknown as NextFunction;
+  beforeEach(() => {
+    mockCtx = {
+      from: {
+        id: 123456789,
+        is_bot: false,
+        first_name: 'Test',
+        username: 'testuser',
+      },
+    };
+    mockNext = jest
+      .fn<() => Promise<void>>()
+      .mockResolvedValue(undefined) as unknown as NextFunction;
 
-        mockPrisma = {
-            authProvider: {
-                findUnique: jest.fn(),
-                create: jest.fn(),
-            },
-            user: {
-                create: jest.fn(),
-            },
-            $transaction: jest.fn().mockImplementation(async (callback: any) => {
-                return callback(mockPrisma); // Передаем сам мок как tx
-            }),
-        };
+    const authProviderFindUnique = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+    const authProviderCreate = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+    const userCreate = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 
-        (getPrismaClient as jest.Mock).mockReturnValue(mockPrisma);
+    const prisma: MockPrismaClient = {
+      authProvider: {
+        findUnique: authProviderFindUnique,
+        create: authProviderCreate,
+      },
+      user: {
+        create: userCreate,
+      },
+      $transaction: jest
+        .fn<(callback: (tx: MockPrismaClient) => Promise<unknown>) => Promise<unknown>>()
+        .mockImplementation(async (callback) => {
+          return callback(prisma);
+        }),
+    };
+
+    mockPrisma = prisma;
+
+    (getPrismaClient as jest.Mock).mockReturnValue(mockPrisma);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('сохраняет существующего пользователя в контексте и вызывает next()', async () => {
+    const mockUser = { id: 'user-id-1', displayName: 'Test User' };
+    const mockAuthProvider = {
+      userId: mockUser.id,
+      user: mockUser,
+    };
+
+    mockPrisma.authProvider.findUnique.mockResolvedValue(mockAuthProvider);
+
+    await authMiddleware(mockCtx as CustomContext, mockNext);
+
+    expect(mockPrisma.authProvider.findUnique).toHaveBeenCalledWith({
+      where: {
+        provider_providerUserId: {
+          provider: 'telegram',
+          providerUserId: '123456789',
+        },
+      },
+      include: { user: true },
     });
+    expect(mockCtx.user).toEqual(mockUser);
+    expect(mockNext).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.user.create).not.toHaveBeenCalled();
+  });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+  it('создает нового пользователя, если он не найден, сохраняет в контекст и вызывает next()', async () => {
+    mockPrisma.authProvider.findUnique.mockResolvedValue(null);
+
+    const newUser = {
+      id: 'new-user-id',
+      telegramId: '123456789',
+      telegramUsername: 'testuser',
+      displayName: 'Test',
+    };
+    mockPrisma.user.create.mockResolvedValue(newUser);
+    mockPrisma.authProvider.create.mockResolvedValue({});
+
+    await authMiddleware(mockCtx as CustomContext, mockNext);
+
+    expect(mockPrisma.authProvider.findUnique).toHaveBeenCalled();
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.user.create).toHaveBeenCalledWith({
+      data: {
+        telegramId: '123456789',
+        telegramUsername: 'testuser',
+        displayName: 'Test',
+      },
     });
-
-    it('сохраняет существующего пользователя в контексте и вызывает next()', async () => {
-        const mockUser = { id: 'user-id-1', displayName: 'Test User' };
-        const mockAuthProvider = {
-            userId: mockUser.id,
-            user: mockUser,
-        };
-
-        mockPrisma.authProvider.findUnique.mockResolvedValue(mockAuthProvider);
-
-        await authMiddleware(mockCtx as CustomContext, mockNext);
-
-        expect(mockPrisma.authProvider.findUnique).toHaveBeenCalledWith({
-            where: {
-                provider_providerUserId: {
-                    provider: 'telegram',
-                    providerUserId: '123456789',
-                },
-            },
-            include: { user: true },
-        });
-        expect(mockCtx.user).toEqual(mockUser);
-        expect(mockNext).toHaveBeenCalledTimes(1);
-        expect(mockPrisma.user.create).not.toHaveBeenCalled();
+    expect(mockPrisma.authProvider.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'new-user-id',
+        provider: 'telegram',
+        providerUserId: '123456789',
+      },
     });
+    expect(mockCtx.user).toEqual(newUser);
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
 
-    it('создает нового пользователя, если он не найден, сохраняет в контекст и вызывает next()', async () => {
-        mockPrisma.authProvider.findUnique.mockResolvedValue(null);
+  it('пропускает обработку, если нет ctx.from', async () => {
+    const ctxWithoutFrom: Partial<CustomContext> = {};
 
-        const newUser = {
-            id: 'new-user-id',
-            telegramId: '123456789',
-            telegramUsername: 'testuser',
-            displayName: 'Test',
-        };
-        mockPrisma.user.create.mockResolvedValue(newUser);
-        mockPrisma.authProvider.create.mockResolvedValue({});
+    await authMiddleware(ctxWithoutFrom as CustomContext, mockNext);
 
-        await authMiddleware(mockCtx as CustomContext, mockNext);
-
-        expect(mockPrisma.authProvider.findUnique).toHaveBeenCalled();
-        expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-        expect(mockPrisma.user.create).toHaveBeenCalledWith({
-            data: {
-                telegramId: '123456789',
-                telegramUsername: 'testuser',
-                displayName: 'Test',
-            },
-        });
-        expect(mockPrisma.authProvider.create).toHaveBeenCalledWith({
-            data: {
-                userId: 'new-user-id',
-                provider: 'telegram',
-                providerUserId: '123456789',
-            },
-        });
-        expect(mockCtx.user).toEqual(newUser);
-        expect(mockNext).toHaveBeenCalledTimes(1);
-    });
-
-    it('пропускает обработку, если нет ctx.from', async () => {
-        mockCtx.from = undefined;
-
-        await authMiddleware(mockCtx as CustomContext, mockNext);
-
-        expect(mockPrisma.authProvider.findUnique).not.toHaveBeenCalled();
-        expect(mockNext).toHaveBeenCalledTimes(1);
-    });
+    expect(mockPrisma.authProvider.findUnique).not.toHaveBeenCalled();
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
 });

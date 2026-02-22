@@ -9,8 +9,11 @@ import { validateConfig } from './config/env.js';
 import { createLogger } from './logger/logger.js';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
+import { bot, setupBot } from './bot/bot.js';
 
-const logger = createLogger('main');
+const config = validateConfig();
+
+const mainLogger = createLogger('main');
 
 /**
  * Главная функция приложения.
@@ -18,8 +21,10 @@ const logger = createLogger('main');
  */
 async function main(): Promise<void> {
   // 1. Валидация конфигурации
-  const config = validateConfig();
-  logger.info({ env: config.NODE_ENV, logLevel: config.LOG_LEVEL }, '⚙️ Конфигурация загружена');
+  mainLogger.info(
+    { env: config.NODE_ENV, logLevel: config.LOG_LEVEL },
+    '⚙️ Конфигурация загружена',
+  );
 
   // 2. Подключение к БД
   await connectDatabase();
@@ -27,38 +32,29 @@ async function main(): Promise<void> {
   // 3. Подключение к Redis
   await connectRedis();
 
-  // TODO: создать и запустить бот
+  // 4. Setup and start the bot
+  setupBot();
+  bot.start({
+    onStart: (botInfo: any) => {
+      mainLogger.info({ username: botInfo.username }, '✅ FitBot started successfully');
+    },
+  });
 
-  logger.info('✅ FitBot успешно запущен');
-}
-
-/**
- * Обработчик graceful shutdown.
- * Корректно завершает все подключения перед выходом.
- *
- * @param signal - Полученный сигнал (SIGINT или SIGTERM)
- */
-async function shutdown(signal: string): Promise<void> {
-  logger.info({ signal }, '🛑 Получен сигнал завершения, останавливаю...');
-
-  try {
-    // TODO: bot.stop()
+  const gracefulShutdown = async (signal: string) => {
+    mainLogger.info(`${signal} signal received: closing connections`);
+    await bot.stop();
     await disconnectRedis();
     await disconnectDatabase();
-    logger.info('👋 FitBot остановлен');
-  } catch (error: unknown) {
-    logger.error({ error }, '❌ Ошибка при завершении');
-  }
+    process.exit(0);
+  };
 
-  process.exit(0);
+  // Регистрация обработчиков сигналов
+  process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
 }
-
-// Регистрация обработчиков сигналов
-process.on('SIGINT', () => void shutdown('SIGINT'));
-process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
 // Запуск приложения
 main().catch((error: unknown) => {
-  logger.error({ error }, '❌ Критическая ошибка при запуске FitBot');
+  mainLogger.error({ error }, '❌ Критическая ошибка при запуске FitBot');
   process.exit(1);
 });

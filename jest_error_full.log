@@ -1,0 +1,153 @@
+(node:56471) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL src/bot/middleware/__tests__/errorMiddleware.test.ts
+  Error Middleware
+    ✓ должна вызывать next() и не перехватывать успешное выполнение (1 ms)
+    ✓ должна перехватывать AppError (isOperational=true) и отвечать текстом ошибки (4 ms)
+    ✓ должна перехватывать неизвестные ошибки (isOperational=false) и отдавать дефолтный текст (1 ms)
+    ✓ должна использовать answerCallbackQuery, если ошибка произошла при нажатии на inline-кнопку
+    ✕ не должна крашить приложение, если сам ctx.reply выбросит ошибку (1 ms)
+
+  ● Error Middleware › не должна крашить приложение, если сам ctx.reply выбросит ошибку
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: undefined
+
+      77 |     // errorMiddleware должен проглотить ошибку отправки ответа и выкинуть исходную ошибку дальше экспрессу/grammy.
+      78 |     // Ожидаем, что промис зареджектится с оригинальной `First Error`, так как это обычная ошибка 500
+    > 79 |     await expect(
+         |           ^
+      80 |       errorMiddleware(mockCtx as CustomContext, mockNext as unknown as NextFunction),
+      81 |     ).rejects.toThrow('First Error');
+      82 |     expect(mockCtx.reply).toHaveBeenCalled();
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (src/bot/middleware/__tests__/errorMiddleware.test.ts:79:11)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 4 passed, 5 total
+Snapshots:   0 total
+Time:        0.215 s, estimated 1 s
+Ran all test suites matching /src\/bot\/middleware\/__tests__\/errorMiddleware.test.ts/i.
+[15:21:47.950] [31mERROR[39m (56471): [36mError processing update[39m
+    [35mmodule[39m: "ErrorMiddleware"
+    [35mupdateId[39m: 123
+    [35muserId[39m: 123456789
+    err: {
+      "type": "AppError",
+      "message": "Моя кастомная ошибка",
+      "stack":
+          AppError: Моя кастомная ошибка
+              at Object.<anonymous> (/Users/elizavetagolubenko/Projects/fit-tel-bot/src/bot/middleware/__tests__/errorMiddleware.test.ts:33:22)
+              at Promise.then.completed (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:298:28)
+              at new Promise (<anonymous>)
+              at callAsyncCircusFn (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:231:10)
+              at _callCircusTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:316:40)
+              at _runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:252:3)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:126:9)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:121:9)
+              at run (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:71:3)
+              at runAndTransformResultsToJestFormat (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+              at jestAdapter (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+              at runTestInternal (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:367:16)
+              at runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:444:34)
+      "statusCode": 400,
+      "isOperational": true,
+      "name": "AppError"
+    }
+[15:21:47.954] [31mERROR[39m (56471): [36mError processing update[39m
+    [35mmodule[39m: "ErrorMiddleware"
+    [35mupdateId[39m: 123
+    [35muserId[39m: 123456789
+    err: {
+      "type": "Error",
+      "message": "Database went away",
+      "stack":
+          Error: Database went away
+              at Object.<anonymous> (/Users/elizavetagolubenko/Projects/fit-tel-bot/src/bot/middleware/__tests__/errorMiddleware.test.ts:43:26)
+              at Promise.then.completed (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:298:28)
+              at new Promise (<anonymous>)
+              at callAsyncCircusFn (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:231:10)
+              at _callCircusTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:316:40)
+              at _runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:252:3)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:126:9)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:121:9)
+              at run (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:71:3)
+              at runAndTransformResultsToJestFormat (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+              at jestAdapter (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+              at runTestInternal (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:367:16)
+              at runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:444:34)
+    }
+[15:21:47.954] [31mERROR[39m (56471): [36mError processing update[39m
+    [35mmodule[39m: "ErrorMiddleware"
+    [35mupdateId[39m: 123
+    [35muserId[39m: 123456789
+    err: {
+      "type": "AppError",
+      "message": "Кнопка устарела",
+      "stack":
+          AppError: Кнопка устарела
+              at Object.<anonymous> (/Users/elizavetagolubenko/Projects/fit-tel-bot/src/bot/middleware/__tests__/errorMiddleware.test.ts:57:22)
+              at Promise.then.completed (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:298:28)
+              at new Promise (<anonymous>)
+              at callAsyncCircusFn (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:231:10)
+              at _callCircusTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:316:40)
+              at _runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:252:3)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:126:9)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:121:9)
+              at run (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:71:3)
+              at runAndTransformResultsToJestFormat (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+              at jestAdapter (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+              at runTestInternal (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:367:16)
+              at runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:444:34)
+      "statusCode": 400,
+      "isOperational": true,
+      "name": "AppError"
+    }
+[15:21:47.954] [31mERROR[39m (56471): [36mError processing update[39m
+    [35mmodule[39m: "ErrorMiddleware"
+    [35mupdateId[39m: 123
+    [35muserId[39m: 123456789
+    err: {
+      "type": "Error",
+      "message": "First Error",
+      "stack":
+          Error: First Error
+              at Object.<anonymous> (/Users/elizavetagolubenko/Projects/fit-tel-bot/src/bot/middleware/__tests__/errorMiddleware.test.ts:70:27)
+              at Promise.then.completed (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:298:28)
+              at new Promise (<anonymous>)
+              at callAsyncCircusFn (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:231:10)
+              at _callCircusTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:316:40)
+              at _runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:252:3)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:126:9)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:121:9)
+              at run (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:71:3)
+              at runAndTransformResultsToJestFormat (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+              at jestAdapter (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+              at runTestInternal (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:367:16)
+              at runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:444:34)
+    }
+[15:21:47.955] [31mERROR[39m (56471): [36mFailed to send error message to user[39m
+    [35mmodule[39m: "ErrorMiddleware"
+    [35mupdateId[39m: 123
+    err: {
+      "type": "Error",
+      "message": "Telegram API down",
+      "stack":
+          Error: Telegram API down
+              at Object.<anonymous> (/Users/elizavetagolubenko/Projects/fit-tel-bot/src/bot/middleware/__tests__/errorMiddleware.test.ts:75:61)
+              at Promise.then.completed (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:298:28)
+              at new Promise (<anonymous>)
+              at callAsyncCircusFn (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/utils.js:231:10)
+              at _callCircusTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:316:40)
+              at _runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:252:3)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:126:9)
+              at _runTestsForDescribeBlock (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:121:9)
+              at run (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/run.js:71:3)
+              at runAndTransformResultsToJestFormat (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+              at jestAdapter (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+              at runTestInternal (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:367:16)
+              at runTest (/Users/elizavetagolubenko/Projects/fit-tel-bot/node_modules/jest-runner/build/runTest.js:444:34)
+    }

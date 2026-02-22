@@ -1,4 +1,4 @@
-import type { CustomContext } from '../../../src/bot/types.js';
+import type { CustomContext } from '../../types.js';
 import type { NextFunction } from 'grammy';
 import { jest } from '@jest/globals';
 
@@ -17,12 +17,12 @@ interface MockPrismaClient {
 }
 
 // Мокаем получение Prisma клиента
-jest.unstable_mockModule('../../../src/config/database.js', () => ({
+jest.unstable_mockModule('../../../config/database.js', () => ({
   getPrismaClient: jest.fn(),
 }));
 
-const { authMiddleware } = await import('../../../src/bot/middleware/authMiddleware.js');
-const { getPrismaClient } = await import('../../../src/config/database.js');
+const { authMiddleware } = await import('../authMiddleware.js');
+const { getPrismaClient } = await import('../../../config/database.js');
 
 describe('Auth Middleware', () => {
   let mockCtx: Partial<CustomContext>;

@@ -12,7 +12,9 @@ import { validateConfig } from './config/env.js';
 import { createLogger, setupLogger } from './logger/logger.js';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
-import { bot, setupBot } from './bot/bot.js';
+import { createBot } from './bot/bot.js';
+import type { Bot } from 'grammy';
+import type { CustomContext } from './bot/types.js';
 
 const config = validateConfig();
 
@@ -20,6 +22,8 @@ const config = validateConfig();
 setupLogger(config);
 
 const mainLogger = createLogger('main');
+
+let bot: Bot<CustomContext> | undefined;
 
 /**
  * Выполняет graceful shutdown: останавливает бота и закрывает соединения.
@@ -29,7 +33,9 @@ const mainLogger = createLogger('main');
 async function gracefulShutdown(signal: string): Promise<void> {
   mainLogger.info(`${signal} получен: завершение работы...`);
   try {
-    await bot.stop();
+    if (bot) {
+      await bot.stop();
+    }
     await disconnectRedis();
     await disconnectDatabase();
     mainLogger.info('✅ FitBot остановлен корректно');
@@ -69,10 +75,10 @@ async function main(): Promise<void> {
   });
 
   // 4. Настройка и запуск бота
-  setupBot();
+  bot = createBot(config.BOT_TOKEN);
   await bot.start({
-    onStart: ({ username }): void => {
-      mainLogger.info({ username }, '✅ FitBot запущен успешно');
+    onStart: (botInfo): void => {
+      mainLogger.info({ username: botInfo.username }, '✅ FitBot запущен успешно');
     },
   });
 }

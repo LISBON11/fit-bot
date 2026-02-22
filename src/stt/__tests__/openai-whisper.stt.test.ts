@@ -43,7 +43,7 @@ jest.unstable_mockModule('openai', () => ({
 }));
 
 // Мокаем получение конфигурации
-jest.unstable_mockModule('../../../src/config/env.js', () => ({
+jest.unstable_mockModule('../../config/env.js', () => ({
   getConfig: jest.fn().mockReturnValue({
     OPENAI_API_KEY: 'test-api-key',
     LOG_LEVEL: 'info',
@@ -53,7 +53,7 @@ jest.unstable_mockModule('../../../src/config/env.js', () => ({
 
 // Получаем класс после моков
 const { OpenAiWhisperStt: SttClass, SttError: ErrorClass } =
-  await import('../../../src/stt/openai-whisper.stt.js');
+  await import('../openai-whisper.stt.js');
 
 describe('OpenAiWhisperStt', () => {
   let sttService: typeof SttClass.prototype;

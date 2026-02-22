@@ -1,5 +1,5 @@
-import type { WorkoutParser } from '../../../src/nlu/workout-parser.js';
-import type { ParsedWorkout } from '../../../src/nlu/nlu.types.js';
+import type { WorkoutParser } from '../workout-parser.js';
+import type { ParsedWorkout } from '../nlu.types.js';
 import { jest } from '@jest/globals';
 
 /** Интерфейс мока конструктора OpenAI для подмены в тестах */
@@ -15,7 +15,7 @@ interface MockOpenAIConstructor {
 }
 
 // Мокаем получение конфигурации
-jest.unstable_mockModule('../../../src/config/env.js', () => ({
+jest.unstable_mockModule('../../config/env.js', () => ({
   getConfig: jest.fn().mockReturnValue({
     OPENAI_API_KEY: 'test-api-key',
     LOG_LEVEL: 'info',
@@ -102,7 +102,7 @@ describe('WorkoutParser', () => {
       OpenAI: mockParseSuccess(validWorkout),
     }));
 
-    const imported = await import('../../../src/nlu/workout-parser.js');
+    const imported = await import('../workout-parser.js');
     ParserClass = imported.WorkoutParser;
 
     const parser = new ParserClass();
@@ -116,7 +116,7 @@ describe('WorkoutParser', () => {
       OpenAI: mockParseFailure('Я не могу обработать этот запрос.'),
     }));
 
-    const imported = await import('../../../src/nlu/workout-parser.js');
+    const imported = await import('../workout-parser.js');
     ParserClass = imported.WorkoutParser;
 
     const parser = new ParserClass();

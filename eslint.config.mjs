@@ -44,7 +44,7 @@ export default defineConfig(
   prettier,
   // Jest rules for test files only
   {
-    files: ['tests/**/*.ts'],
+    files: ['tests/**/*.ts', 'src/**/__tests__/**/*.ts'],
     plugins: {
       jest: jestPlugin,
     },

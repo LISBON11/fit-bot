@@ -1,14 +1,9 @@
 import type { CustomContext } from '../types.js';
-import { OpenAiWhisperStt } from '../../stt/openai-whisper.stt.js';
-import { WorkoutParser } from '../../nlu/workout-parser.js';
+import { getSttService, getNluParser } from '../../services/index.js';
 import { createLogger } from '../../logger/logger.js';
 import { AppError } from '../../errors/app-errors.js';
 
 const handlerLogger = createLogger('voiceHandler');
-
-// Инициализируем STT сервис (можно передавать через DI в будущем)
-const sttService = new OpenAiWhisperStt();
-const nluParser = new WorkoutParser();
 
 /**
  * Обработчик голосовых сообщений.
@@ -55,12 +50,14 @@ export async function handleVoiceMessage(ctx: CustomContext): Promise<void> {
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const sttService = getSttService();
     // Транскрибируем аудио
     const text = await sttService.transcribe(buffer, 'ru');
     handlerLogger.debug({ text }, 'Голосовое сообщение расшифровано');
 
     // Отправляем текст в парсер
     const today = new Date().toISOString().split('T')[0];
+    const nluParser = getNluParser();
     const parsedWorkout = await nluParser.parse(text, today);
 
     // Отправляем JSON-результат для наглядности (MVP Stage 2)

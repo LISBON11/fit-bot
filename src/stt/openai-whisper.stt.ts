@@ -22,28 +22,37 @@ export class OpenAiWhisperStt implements SttService {
     this.openai = new OpenAI({ apiKey: getConfig().OPENAI_API_KEY });
   }
 
-  /**
-   * Конвертирует аудио буфер (например, OGG/OPUS из Telegram) в MP3 буфер
-   * используя стримы в оперативной памяти (без создания временных файлов).
-   *
-   * @param inputBuffer Исходный буфер (OGG)
-   * @returns Сконвертированный буфер (MP3)
-   */
   private async convertAudio(inputBuffer: Buffer): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const inputStream = Readable.from(inputBuffer);
       const outputStream = new PassThrough();
       const chunks: Buffer[] = [];
 
+      const timeoutId = setTimeout(() => {
+        inputStream.destroy();
+        outputStream.destroy();
+        reject(new SttError('Таймаут конвертации аудио'));
+      }, 30000);
+
       outputStream.on('data', (chunk) => chunks.push(chunk));
-      outputStream.on('end', () => resolve(Buffer.concat(chunks)));
-      outputStream.on('error', reject);
+      outputStream.on('end', () => {
+        clearTimeout(timeoutId);
+        resolve(Buffer.concat(chunks));
+      });
+      outputStream.on('error', (err) => {
+        clearTimeout(timeoutId);
+        inputStream.destroy();
+        reject(err);
+      });
 
       ffmpeg(inputStream)
         .outputOptions(['-ac 1', '-ar 16000']) // Mono, 16kHz for Whisper
         .format('mp3')
         .on('error', (err) => {
+          clearTimeout(timeoutId);
           logger.error({ err }, 'Ошибка конвертации аудио');
+          inputStream.destroy();
+          outputStream.destroy();
           reject(new SttError('Не удалось сконвертировать аудио файл для распознавания'));
         })
         .pipe(outputStream, { end: true });

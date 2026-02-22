@@ -2,7 +2,6 @@ import type { BotError } from 'grammy';
 import { Bot, session } from 'grammy';
 import { conversations } from '@grammyjs/conversations';
 import type { CustomContext, SessionData } from './types.js';
-import { getConfig } from '../config/env.js';
 import { loggingMiddleware } from './middleware/loggingMiddleware.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 import { errorMiddleware } from './middleware/errorMiddleware.js';
@@ -12,11 +11,10 @@ import { logger } from '../logger/logger.js';
 
 const botLogger = logger.child({ module: 'BotInit' });
 
-// Инициализация бота
-export const bot = new Bot<CustomContext>(getConfig().BOT_TOKEN);
-
-export function setupBot(): void {
+export function createBot(token: string): Bot<CustomContext> {
   botLogger.info('Configuring bot plugins and middleware...');
+
+  const bot = new Bot<CustomContext>(token);
 
   // Глобальный перехватчик ошибок
   bot.catch((err: BotError<CustomContext>) => {
@@ -55,4 +53,6 @@ export function setupBot(): void {
   bot.on('message:voice', handleVoiceMessage);
 
   // Остальные обработчики (текст, голос) будут добавлены в следующих шагах (2.2, 4.1)
+
+  return bot;
 }

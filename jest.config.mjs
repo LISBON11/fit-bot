@@ -2,7 +2,11 @@
 const config = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests/'],
+  roots: ['<rootDir>/src/', '<rootDir>/tests/'],
+  testMatch: [
+    '<rootDir>/src/**/__tests__/**/*.test.ts',
+    '<rootDir>/tests/integration/**/*.test.ts',
+  ],
   moduleNameMapper: {
     '^\\.\\./\\.\\./src/(.*)\\.js$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',

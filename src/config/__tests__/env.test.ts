@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { validateConfig, getConfig, _resetConfigForTesting } from '../../../src/config/env.js';
+import { validateConfig, getConfig, _resetConfigForTesting } from '../env.js';
 
 /**
  * Хелпер: устанавливает минимально валидные переменные окружения для тестов.

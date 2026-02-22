@@ -28,6 +28,7 @@ export async function errorMiddleware(ctx: CustomContext, next: NextFunction): P
       }
     } catch (replyError) {
       errorLogger.error({ err: replyError, updateId }, 'Failed to send error message to user');
+      throw error;
     }
   }
 }

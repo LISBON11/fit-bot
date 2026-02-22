@@ -6,7 +6,7 @@ import {
   SttError,
   NluParseError,
   ExternalServiceError,
-} from '../../../src/errors/app-errors.js';
+} from '../app-errors.js';
 
 describe('AppError', () => {
   it('должен иметь правильные значения по умолчанию', () => {

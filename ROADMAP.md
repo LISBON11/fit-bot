@@ -82,13 +82,13 @@ Acceptance criteria:
 
 Задачи:
 1. Установить jest, ts-jest, @types/jest, eslint-plugin-jest.
-2. jest.config.ts: preset ts-jest, testEnvironment node, roots: ['tests/'], moduleNameMapper для src/ алиасов (если есть paths в tsconfig), coverageThreshold: branches/functions/lines ≥ 70%.
+2. jest.config.ts: preset ts-jest, testEnvironment node, roots: ['src/', 'tests/'], testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts', '<rootDir>/tests/integration/**/*.test.ts'], moduleNameMapper для src/ алиасов (если есть paths в tsconfig), coverageThreshold: branches/functions/lines ≥ 70%.
 3. Добавить jest-плагин в eslint.config.mjs для файлов tests/.
-4. Создать smoke-тест tests/unit/smoke.test.ts (проверяет что 1+1=2).
+4. Создать smoke-тест src/__tests__/smoke.test.ts (проверяет что 1+1=2).
 5. npm-скрипты: test (jest), test:watch (jest --watch), test:coverage (jest --coverage).
 
 Ограничения:
-- Тесты ТОЛЬКО в tests/unit и tests/integration, НЕ рядом с исходниками.
+- Unit-тесты должны лежать в папках __tests__ рядом с исходниками в src/. Integration-тесты — в tests/integration/.
 - НЕ писать бизнес-тесты — только инфраструктура тестирования.
 
 Acceptance criteria:
@@ -199,7 +199,7 @@ Acceptance criteria:
 
 6. **Обнови src/index.ts**: порядок инициализации: validateConfig → createLogger → connectDatabase → connectRedis → «✅ FitBot started». Graceful shutdown: disconnectRedis → disconnectDatabase → exit.
 
-7. **Тесты** (tests/unit/):
+7. **Тесты** (src/**/__tests__/):
    - config/env.test.ts: валидный конфиг, недостающие переменные, невалидный LOG_LEVEL.
    - errors/app-errors.test.ts: проверка statusCode, isOperational, instanceof для каждого класса ошибки.
 
@@ -237,7 +237,7 @@ Acceptance criteria:
 6. **Logging middleware** (src/bot/middleware/loggingMiddleware.ts): логировать тип update, userId, время обработки в мс.
 7. **Команды** (src/bot/handlers/commandHandlers.ts): /start (приветственное сообщение), /help (список команд и инструкция), /cancel (сброс conversation state).
 8. **Подключение в index.ts**: после инициализации инфраструктуры → создать бот → подключить middleware (logging → auth → session → conversations → error) → bot.start() → graceful shutdown bot.stop().
-9. **Тесты** (tests/unit/bot/): authMiddleware.test.ts — мок Prisma, проверить: новый пользователь создаётся, существующий находится, ctx.user заполнен.
+9. **Тесты** (src/**/__tests__/bot/): authMiddleware.test.ts — мок Prisma, проверить: новый пользователь создаётся, существующий находится, ctx.user заполнен.
 
 Ограничения:
 - НЕ реализовывать STT/NLU/Workout flow — только каркас.
@@ -276,7 +276,7 @@ Acceptance criteria:
    - Передать buffer в SttService.transcribe().
    - ПОКА просто отправить текст транскрипции обратно пользователю (NLU подключим в следующем шаге).
 5. Зарегистрировать voiceHandler в bot.ts (bot.on('message:voice', ...)).
-6. **Тесты** (tests/unit/stt/): мок openai клиента, проверить: успешная транскрипция, SttError при ошибке API, пустой текст.
+6. **Тесты** (src/**/__tests__/stt/): мок openai клиента, проверить: успешная транскрипция, SttError при ошибке API, пустой текст.
 
 Ограничения:
 - НЕ сохранять аудио на диск и НЕ хранить — только Buffer в памяти.
@@ -316,7 +316,7 @@ Acceptance criteria:
    - Валидация через Zod-схему.
    - При невалидном ответе — NluParseError.
    - Логирование: время парсинга, количество упражнений, есть ли неоднозначности.
-5. **Тесты** (tests/unit/nlu/): мок OpenAI, 3 fixture-ответа: валидный (все упражнения распознаны), с неоднозначностями (is_ambiguous=true), невалидный JSON.
+5. **Тесты** (src/**/__tests__/nlu/): мок OpenAI, 3 fixture-ответа: валидный (все упражнения распознаны), с неоднозначностями (is_ambiguous=true), невалидный JSON.
 
 Ограничения:
 - НЕ реализовывать disambiguation flow (inline-кнопки) — это шаг 4.1.
@@ -354,7 +354,7 @@ Acceptance criteria:
    - confirmMapping(userId, inputText, exerciseId) — сохраняет выбор пользователя.
    - getExerciseListForNlu() — список для NLU-промпта { canonical_name, display_name_ru }.
 3. **Типы** (src/services/exercise.types.ts): ResolveResult с discriminated union.
-4. **Тесты** (tests/unit/services/exercise.service.test.ts): все 3 ветки resolveExercise + confirmMapping + getExerciseListForNlu. Мок repository.
+4. **Тесты** (src/**/__tests__/services/exercise.service.test.ts): все 3 ветки resolveExercise + confirmMapping + getExerciseListForNlu. Мок repository.
 
 Ограничения:
 - НЕ реализовывать fuzzy/Levenshtein поиск на MVP — только exact match LOWER.
@@ -392,7 +392,7 @@ Acceptance criteria:
    - getDraftForUser(userId) → текущий draft (если есть).
    - findByDate(userId, date) → для /edit.
    - applyEdits(workoutId, parsedDelta) → обновить тренировку.
-3. **Тесты** (tests/unit/services/workout.service.test.ts): createDraft (оба сценария), approveDraft, cancelDraft, findByDate. Мок repository + exerciseService.
+3. **Тесты** (src/**/__tests__/services/workout.service.test.ts): createDraft (оба сценария), approveDraft, cancelDraft, findByDate. Мок repository + exerciseService.
 
 Ограничения:
 - НЕ реализовывать conversation/inline-кнопки — только бизнес-логику.
@@ -422,7 +422,7 @@ Acceptance criteria:
 2. **Service** (src/services/user.service.ts):
    - getOrCreateByTelegram(telegramId, username?, firstName?) — findByTelegramId → если нет, createWithTelegram. Логирование создания нового пользователя (info).
 3. **Рефакторинг** src/bot/middleware/authMiddleware.ts: заменить прямые Prisma-запросы на вызов UserService.getOrCreateByTelegram.
-4. **Тесты** (tests/unit/services/user.service.test.ts): новый пользователь создаётся, существующий находится.
+4. **Тесты** (src/**/__tests__/services/user.service.test.ts): новый пользователь создаётся, существующий находится.
 
 Acceptance criteria:
 - [ ] `npm run lint && npm test` — без ошибок
@@ -464,7 +464,7 @@ Acceptance criteria:
    - exercisePicker.ts: варианты при disambiguation + «➕ Создать новое».
 4. **Publisher** (src/services/publisher.service.ts): bot.api.sendMessage(PUBLISH_CHAT_ID, formattedText, { parse_mode: 'HTML' }), вернуть message_id → сохранить в workout.published_message_id.
 5. **Подключение**: voice handler и text handler запускают conversation newWorkout.
-6. **Тесты** (tests/unit/bot/): formatter (snapshot-тесты превью), publisher (мок bot.api.sendMessage).
+6. **Тесты** (src/**/__tests__/bot/): formatter (snapshot-тесты превью), publisher (мок bot.api.sendMessage).
 
 Ограничения:
 - НЕ реализовывать /edit (редактирование по дате) — это шаг 4.2.

@@ -3,35 +3,72 @@ import { createLogger } from '../logger/logger.js';
 
 const logger = createLogger('database');
 
-/** Singleton PrismaClient с логированием query/error событий */
-let prisma: PrismaClient | null = null;
+/**
+ * Возвращаемый тип PrismaClient с расширением для логирования.
+ * Используется `$extends`, чтобы сохранить type safety (без `as never`).
+ */
+type PrismaClientWithLogging = ReturnType<typeof createPrismaClientWithLogging>;
 
 /**
- * Возвращает singleton PrismaClient.
- * Если клиент ещё не создан — создаёт и настраивает логирование.
+ * Создаёт PrismaClient с middleware-логированием через `$extends`.
+ * Логирует каждый запрос (model, operation, duration) на уровне debug.
+ *
+ * @returns PrismaClient, расширенный query middleware
+ */
+function createPrismaClientWithLogging(): PrismaClient {
+  const client = new PrismaClient({
+    log: [
+      { emit: 'stdout', level: 'error' },
+      { emit: 'stdout', level: 'warn' },
+    ],
+  });
+
+  return client.$extends({
+    query: {
+      async $allOperations({
+        operation,
+        model,
+        args,
+        query,
+      }: {
+        operation: string;
+        model?: string;
+        args: unknown;
+        query: (args: unknown) => Promise<unknown>;
+      }) {
+        const start = Date.now();
+        try {
+          const result = await query(args);
+          logger.debug(
+            { model, operation, durationMs: Date.now() - start },
+            'Prisma query выполнен',
+          );
+          return result;
+        } catch (error: unknown) {
+          logger.error(
+            { model, operation, durationMs: Date.now() - start, error },
+            'Ошибка Prisma query',
+          );
+          throw error;
+        }
+      },
+    },
+  }) as unknown as PrismaClient;
+}
+
+/** Singleton PrismaClient с middleware-логированием */
+let prisma: PrismaClientWithLogging | null = null;
+
+/**
+ * Возвращает singleton PrismaClient с query-логированием.
+ * Если клиент ещё не создан — инициализирует его.
  *
  * @returns PrismaClient instance
  */
-export function getPrismaClient(): PrismaClient {
+export function getPrismaClient(): PrismaClientWithLogging {
   if (!prisma) {
-    prisma = new PrismaClient({
-      log: [
-        { emit: 'event', level: 'query' },
-        { emit: 'event', level: 'error' },
-        { emit: 'event', level: 'warn' },
-      ],
-    });
-
-    // Логирование SQL-запросов в debug
-    prisma.$on('query' as never, (e: { query: string; duration: number }) => {
-      logger.debug({ query: e.query, duration: e.duration }, 'Prisma query');
-    });
-
-    prisma.$on('error' as never, (e: { message: string }) => {
-      logger.error({ error: e.message }, 'Prisma error');
-    });
+    prisma = createPrismaClientWithLogging();
   }
-
   return prisma;
 }
 

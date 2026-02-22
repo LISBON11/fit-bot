@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ExerciseCategory } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -12,7 +12,7 @@ const exercises = [
     displayNameRu: 'Присед со штангой',
     displayNameEn: 'Back Squat',
     muscleGroups: ['quadriceps', 'glutes', 'hamstrings'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'присед со штангой', language: 'ru' },
       { synonym: 'приседания', language: 'ru' },
@@ -25,7 +25,7 @@ const exercises = [
     displayNameRu: 'Фронтальный присед',
     displayNameEn: 'Front Squat',
     muscleGroups: ['quadriceps', 'glutes', 'core'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'фронтальный присед', language: 'ru' },
       { synonym: 'фронтальные приседания', language: 'ru' },
@@ -37,7 +37,7 @@ const exercises = [
     displayNameRu: 'Становая тяга',
     displayNameEn: 'Deadlift',
     muscleGroups: ['hamstrings', 'glutes', 'back', 'core'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'становая тяга', language: 'ru' },
       { synonym: 'становая', language: 'ru' },
@@ -49,7 +49,7 @@ const exercises = [
     displayNameRu: 'Румынская тяга',
     displayNameEn: 'Romanian Deadlift',
     muscleGroups: ['hamstrings', 'glutes'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'румынская тяга', language: 'ru' },
       { synonym: 'румынка', language: 'ru' },
@@ -63,7 +63,7 @@ const exercises = [
     displayNameRu: 'Жим лёжа',
     displayNameEn: 'Bench Press',
     muscleGroups: ['chest', 'triceps', 'shoulders'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'жим лёжа', language: 'ru' },
       { synonym: 'жим лежа', language: 'ru' },
@@ -76,7 +76,7 @@ const exercises = [
     displayNameRu: 'Жим стоя',
     displayNameEn: 'Overhead Press',
     muscleGroups: ['shoulders', 'triceps'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'жим стоя', language: 'ru' },
       { synonym: 'жим над головой', language: 'ru' },
@@ -89,7 +89,7 @@ const exercises = [
     displayNameRu: 'Ягодичный мостик со штангой',
     displayNameEn: 'Hip Thrust',
     muscleGroups: ['glutes', 'hamstrings'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'хип траст', language: 'ru' },
       { synonym: 'ягодичный мостик', language: 'ru' },
@@ -102,7 +102,7 @@ const exercises = [
     displayNameRu: 'Жим ногами',
     displayNameEn: 'Leg Press',
     muscleGroups: ['quadriceps', 'glutes'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'жим ногами', language: 'ru' },
       { synonym: 'жим платформы', language: 'ru' },
@@ -114,7 +114,7 @@ const exercises = [
     displayNameRu: 'Тяга верхнего блока',
     displayNameEn: 'Lat Pulldown',
     muscleGroups: ['lats', 'biceps'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'тяга верхнего блока', language: 'ru' },
       { synonym: 'вертикальная тяга', language: 'ru' },
@@ -126,7 +126,7 @@ const exercises = [
     displayNameRu: 'Тяга штанги в наклоне',
     displayNameEn: 'Barbell Row',
     muscleGroups: ['lats', 'rhomboids', 'biceps'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'тяга штанги в наклоне', language: 'ru' },
       { synonym: 'тяга в наклоне', language: 'ru' },
@@ -138,7 +138,7 @@ const exercises = [
     displayNameRu: 'Подтягивания',
     displayNameEn: 'Pull-Up',
     muscleGroups: ['lats', 'biceps', 'core'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'подтягивания', language: 'ru' },
       { synonym: 'подтягивание', language: 'ru' },
@@ -150,7 +150,7 @@ const exercises = [
     displayNameRu: 'Гоблет присед',
     displayNameEn: 'Goblet Squat',
     muscleGroups: ['quadriceps', 'glutes'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'гоблет присед', language: 'ru' },
       { synonym: 'кубковый присед', language: 'ru' },
@@ -162,7 +162,7 @@ const exercises = [
     displayNameRu: 'Болгарские выпады',
     displayNameEn: 'Bulgarian Split Squat',
     muscleGroups: ['quadriceps', 'glutes'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'болгарские выпады', language: 'ru' },
       { synonym: 'сплит присед', language: 'ru' },
@@ -174,7 +174,7 @@ const exercises = [
     displayNameRu: 'Выпады',
     displayNameEn: 'Lunges',
     muscleGroups: ['quadriceps', 'glutes'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'выпады', language: 'ru' },
       { synonym: 'выпад', language: 'ru' },
@@ -186,7 +186,7 @@ const exercises = [
     displayNameRu: 'Сгибание ног',
     displayNameEn: 'Leg Curl',
     muscleGroups: ['hamstrings'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'сгибание ног', language: 'ru' },
       { synonym: 'сгибание ног лёжа', language: 'ru' },
@@ -198,7 +198,7 @@ const exercises = [
     displayNameRu: 'Разгибание ног',
     displayNameEn: 'Leg Extension',
     muscleGroups: ['quadriceps'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'разгибание ног', language: 'ru' },
       { synonym: 'разгибание', language: 'ru' },
@@ -210,7 +210,7 @@ const exercises = [
     displayNameRu: 'Тяга нижнего блока',
     displayNameEn: 'Cable Row',
     muscleGroups: ['lats', 'rhomboids'],
-    category: 'compound',
+    category: 'COMPOUND',
     synonyms: [
       { synonym: 'тяга нижнего блока', language: 'ru' },
       { synonym: 'горизонтальная тяга', language: 'ru' },
@@ -222,7 +222,7 @@ const exercises = [
     displayNameRu: 'Сгибание рук с гантелями',
     displayNameEn: 'Dumbbell Curl',
     muscleGroups: ['biceps'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'сгибание рук', language: 'ru' },
       { synonym: 'бицепс с гантелями', language: 'ru' },
@@ -234,7 +234,7 @@ const exercises = [
     displayNameRu: 'Разгибание рук на блоке',
     displayNameEn: 'Tricep Pushdown',
     muscleGroups: ['triceps'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'разгибание рук на блоке', language: 'ru' },
       { synonym: 'трицепс на блоке', language: 'ru' },
@@ -246,7 +246,7 @@ const exercises = [
     displayNameRu: 'Планка',
     displayNameEn: 'Plank',
     muscleGroups: ['core'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'планка', language: 'ru' },
       { synonym: 'plank', language: 'en' },
@@ -257,7 +257,7 @@ const exercises = [
     displayNameRu: 'Махи гантелями в стороны',
     displayNameEn: 'Lateral Raise',
     muscleGroups: ['shoulders'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'махи в стороны', language: 'ru' },
       { synonym: 'разводка гантелей', language: 'ru' },
@@ -269,7 +269,7 @@ const exercises = [
     displayNameRu: 'Ягодичный мостик',
     displayNameEn: 'Glute Bridge',
     muscleGroups: ['glutes'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'ягодичный мостик без штанги', language: 'ru' },
       { synonym: 'мостик', language: 'ru' },
@@ -281,7 +281,7 @@ const exercises = [
     displayNameRu: 'Подъём на носки',
     displayNameEn: 'Calf Raise',
     muscleGroups: ['calves'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'подъём на носки', language: 'ru' },
       { synonym: 'подъем на носки', language: 'ru' },
@@ -293,7 +293,7 @@ const exercises = [
     displayNameRu: 'Разводка гантелей лёжа',
     displayNameEn: 'Dumbbell Fly',
     muscleGroups: ['chest'],
-    category: 'isolation',
+    category: 'ISOLATION',
     synonyms: [
       { synonym: 'разводка лёжа', language: 'ru' },
       { synonym: 'разводка гантелей лёжа', language: 'ru' },
@@ -315,14 +315,14 @@ async function seed(): Promise<void> {
         displayNameRu: ex.displayNameRu,
         displayNameEn: ex.displayNameEn,
         muscleGroups: ex.muscleGroups,
-        category: ex.category,
+        category: ex.category as ExerciseCategory,
       },
       create: {
         canonicalName: ex.canonicalName,
         displayNameRu: ex.displayNameRu,
         displayNameEn: ex.displayNameEn,
         muscleGroups: ex.muscleGroups,
-        category: ex.category,
+        category: ex.category as ExerciseCategory,
         isGlobal: true,
       },
     });

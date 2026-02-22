@@ -9,6 +9,7 @@ let redis: Redis | null = null;
 
 /**
  * Создаёт и возвращает singleton Redis-клиент с reconnect strategy.
+ * Использует стандартный exponential backoff: 1s, 2s, 4s, ..., max 30s.
  *
  * @returns Redis instance
  */
@@ -20,11 +21,14 @@ export function getRedisClient(): Redis {
       maxRetriesPerRequest: null,
       retryStrategy: (times: number): number | null => {
         if (times > 10) {
-          logger.error('Превышено максимальное количество попыток подключения к Redis');
+          logger.error(
+            { attempts: times },
+            'Превышено максимальное количество попыток подключения к Redis',
+          );
           return null; // Прекратить попытки
         }
-        // Exponential backoff: 100ms, 200ms, 400ms, ..., max 30s
-        const delay = Math.min(times * 100 * Math.pow(2, times - 1), 30000);
+        // Стандартный exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s (max)
+        const delay = Math.min(1000 * Math.pow(2, times - 1), 30000);
         logger.warn({ attempt: times, nextRetryMs: delay }, 'Переподключение к Redis...');
         return delay;
       },
@@ -47,22 +51,36 @@ export function getRedisClient(): Redis {
 }
 
 /**
- * Подключается к Redis.
- * Если клиент уже подключён — ничего не делает.
+ * Подключается к Redis с retry-логикой (3 попытки, exponential backoff).
+ * Проверяет доступность через PING.
+ *
+ * @throws Error если не удалось подключиться после всех попыток
  */
 export async function connectRedis(): Promise<void> {
   const client = getRedisClient();
+  const maxRetries = 3;
 
-  // Проверяем подключение через PING
-  try {
-    await client.ping();
-    logger.info('✅ Redis доступен (PING → PONG)');
-  } catch (error: unknown) {
-    logger.error(
-      { error: error instanceof Error ? error.message : error },
-      'Не удалось подключиться к Redis',
-    );
-    throw error;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await client.ping();
+      logger.info('✅ Redis доступен (PING → PONG)');
+      return;
+    } catch (error: unknown) {
+      logger.warn(
+        { attempt, maxRetries, error: error instanceof Error ? error.message : error },
+        `Попытка подключения к Redis ${attempt}/${maxRetries} не удалась`,
+      );
+
+      if (attempt === maxRetries) {
+        throw new Error(`Не удалось подключиться к Redis после ${maxRetries} попыток`, {
+          cause: error,
+        });
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = Math.pow(2, attempt - 1) * 1000;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
   }
 }
 

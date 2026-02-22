@@ -18,6 +18,9 @@ describe('AppError', () => {
     expect(error.name).toBe('AppError');
     expect(error).toBeInstanceOf(Error);
     expect(error).toBeInstanceOf(AppError);
+    expect(error.stack).toBeDefined();
+    // Убеждаемся, что captureStackTrace сработал (первая строка стэка не содержит сам конструктор AppError)
+    expect(error.stack).not.toMatch(/^Error\n\s+at new AppError/);
   });
 
   it('должен принимать кастомные параметры', () => {
@@ -55,6 +58,11 @@ describe('ValidationError', () => {
     expect(error.name).toBe('ValidationError');
     expect(error).toBeInstanceOf(AppError);
   });
+
+  it('должен принимать кастомное сообщение', () => {
+    const error = new ValidationError('Неверный формат даты');
+    expect(error.message).toBe('Неверный формат даты');
+  });
 });
 
 describe('SttError', () => {
@@ -82,6 +90,11 @@ describe('NluParseError', () => {
     expect(error.isOperational).toBe(true);
     expect(error.name).toBe('NluParseError');
     expect(error).toBeInstanceOf(AppError);
+  });
+
+  it('должен принимать кастомное сообщение', () => {
+    const error = new NluParseError('Не удалось извлечь вес');
+    expect(error.message).toBe('Не удалось извлечь вес');
   });
 });
 

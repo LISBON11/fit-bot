@@ -11,7 +11,7 @@ datasource db {
 
 model User {
   id                String   @id @default(uuid()) @db.Uuid
-  telegramId        String?  @unique @map("telegram_id")
+  telegramId        String?  @map("telegram_id")
   telegramUsername   String?  @map("telegram_username")
   email             String?  @unique
   passwordHash      String?  @map("password_hash")
@@ -44,11 +44,17 @@ model AuthProvider {
 
 // ─── Тренировки ──────────────────────────────────────────────────
 
+enum WorkoutStatus {
+  DRAFT
+  APPROVED
+  CANCELLED
+}
+
 model Workout {
   id                 String   @id @default(uuid()) @db.Uuid
   userId             String   @map("user_id") @db.Uuid
   workoutDate        DateTime @map("workout_date") @db.Date
-  status             String   @default("draft") // draft | approved | cancelled
+  status             WorkoutStatus @default(DRAFT)
   focus              String[] // legs, glutes, back, chest, shoulders, arms, core, cardio
   location           String?
   rawTranscript      String?  @map("raw_transcript") @db.Text
@@ -68,13 +74,19 @@ model Workout {
 
 // ─── Упражнения ──────────────────────────────────────────────────
 
+enum ExerciseCategory {
+  COMPOUND
+  ISOLATION
+  CARDIO
+}
+
 model Exercise {
   id            String   @id @default(uuid()) @db.Uuid
   canonicalName String   @unique @map("canonical_name")
   displayNameRu String?  @map("display_name_ru")
   displayNameEn String?  @map("display_name_en")
   muscleGroups  String[] @map("muscle_groups")
-  category      String?  // compound | isolation | cardio
+  category      ExerciseCategory?
   isGlobal      Boolean  @default(true) @map("is_global")
   createdBy     String?  @map("created_by") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at")
@@ -135,7 +147,13 @@ model WorkoutExercise {
   sets     ExerciseSet[]
   comments WorkoutComment[]
 
+  @@index([workoutId], map: "idx_workout_exercises_workout")
   @@map("workout_exercises")
+}
+
+enum WeightUnit {
+  KG
+  LB
 }
 
 model ExerciseSet {
@@ -144,7 +162,7 @@ model ExerciseSet {
   setNumber         Int      @map("set_number")
   reps              Int
   weight            Decimal? @db.Decimal(8, 2)
-  unit              String   @default("kg") // kg | lb
+  unit              WeightUnit @default(KG)
   createdAt         DateTime @default(now()) @map("created_at")
 
   workoutExercise WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
@@ -155,14 +173,33 @@ model ExerciseSet {
 
 // ─── Комментарии к тренировке ────────────────────────────────────
 
+enum CommentType {
+  TECHNIQUE
+  SENSATION
+  ASYMMETRY
+  OTHER
+}
+
+enum BodySide {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+enum SensationType {
+  PAIN
+  TENSION
+  BURN
+}
+
 model WorkoutComment {
   id                String   @id @default(uuid()) @db.Uuid
   workoutId         String   @map("workout_id") @db.Uuid
   workoutExerciseId String?  @map("workout_exercise_id") @db.Uuid
-  commentType       String   @map("comment_type") // technique | sensation | asymmetry | other
+  commentType       CommentType @map("comment_type")
   bodyPart          String?  @map("body_part")
-  side              String?  // left | right | both
-  sensationType     String?  @map("sensation_type") // pain | tension | burn
+  side              BodySide?
+  sensationType     SensationType?  @map("sensation_type")
   rawText           String   @map("raw_text") @db.Text
   createdAt         DateTime @default(now()) @map("created_at")
 

@@ -1,25 +1,21 @@
 import pino from 'pino';
-import { getConfig } from '../config/env.js';
 
 /**
- * Создаёт корневой логгер pino с конфигурацией по окружению.
+ * Конфигурация для логгера (NODE_ENV + LOG_LEVEL).
+ */
+interface LoggerConfig {
+  LOG_LEVEL: string;
+  NODE_ENV: string;
+}
+
+/**
+ * Создаёт pino-логгер с настройками по окружению.
  * В development — pino-pretty с цветом, в production — JSON.
  *
+ * @param config - Конфигурация уровня и окружения
  * @returns Корневой pino-логгер
  */
-function createRootLogger(): pino.Logger {
-  let config: { LOG_LEVEL: string; NODE_ENV: string };
-
-  try {
-    config = getConfig();
-  } catch {
-    // Конфигурация ещё не загружена — используем defaults
-    config = {
-      LOG_LEVEL: process.env.LOG_LEVEL ?? 'info',
-      NODE_ENV: process.env.NODE_ENV ?? 'development',
-    };
-  }
-
+function buildLogger(config: LoggerConfig): pino.Logger {
   return pino({
     level: config.LOG_LEVEL,
     transport:
@@ -29,7 +25,20 @@ function createRootLogger(): pino.Logger {
   });
 }
 
-const rootLogger = createRootLogger();
+let rootLogger: pino.Logger = buildLogger({
+  LOG_LEVEL: process.env.LOG_LEVEL ?? 'info',
+  NODE_ENV: process.env.NODE_ENV ?? 'development',
+});
+
+/**
+ * Инициализирует корневой логгер с конфигурацией из env.
+ * Должна вызываться один раз при старте после `validateConfig()`.
+ *
+ * @param config - Типизированная конфигурация (LOG_LEVEL, NODE_ENV)
+ */
+export function setupLogger(config: LoggerConfig): void {
+  rootLogger = buildLogger(config);
+}
 
 /**
  * Фабрика child-логгеров с контекстом модуля.

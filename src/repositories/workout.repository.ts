@@ -1,0 +1,238 @@
+import type { PrismaClient, Prisma, Workout } from '@prisma/client';
+import { WorkoutStatus, CommentType } from '@prisma/client';
+import type { ParsedExercise, ParsedComment } from '../nlu/nlu.types.js';
+
+export class WorkoutRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  /**
+   * Создает тренировку со всеми вложенными связями (упражнения, подходы, комментарии)
+   */
+  async createWithRelations(
+    userId: string,
+    workoutDate: Date,
+    focusArray: string[],
+    resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[],
+    generalComments: ParsedComment[],
+  ): Promise<Workout | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const workout = await tx.workout.create({
+        data: {
+          user: { connect: { id: userId } },
+          workoutDate,
+          focus: focusArray,
+          status: WorkoutStatus.DRAFT,
+        },
+      });
+
+      for (let i = 0; i < resolvedExercises.length; i++) {
+        const resData = resolvedExercises[i];
+        const we = await tx.workoutExercise.create({
+          data: {
+            workoutId: workout.id,
+            exerciseId: resData.exerciseId,
+            sortOrder: i,
+            rawName: resData.parsed.originalName,
+          },
+        });
+
+        if (resData.parsed.sets.length > 0) {
+          await tx.exerciseSet.createMany({
+            data: resData.parsed.sets.map((set, setIndex) => ({
+              workoutExerciseId: we.id,
+              setNumber: setIndex + 1,
+              reps: set.reps || 0,
+              weight: set.weight || null,
+            })),
+          });
+        }
+
+        if (resData.parsed.comments.length > 0) {
+          await tx.workoutComment.createMany({
+            data: resData.parsed.comments.map((c) => ({
+              workoutId: workout.id,
+              workoutExerciseId: we.id,
+              commentType: CommentType.OTHER,
+              rawText: c.text,
+            })),
+          });
+        }
+      }
+
+      if (generalComments.length > 0) {
+        await tx.workoutComment.createMany({
+          data: generalComments.map((c) => ({
+            workoutId: workout.id,
+            commentType: CommentType.OTHER,
+            rawText: c.text,
+          })),
+        });
+      }
+
+      return tx.workout.findUnique({
+        where: { id: workout.id },
+        include: {
+          workoutExercises: {
+            include: {
+              exercise: true,
+              sets: { orderBy: { setNumber: 'asc' } },
+              comments: true,
+            },
+            orderBy: { sortOrder: 'asc' },
+          },
+          comments: true,
+        },
+      });
+    });
+  }
+
+  /**
+   * Находит тренировку по ID со всеми связями
+   */
+  async findById(id: string): Promise<Workout | null> {
+    return this.prisma.workout.findUnique({
+      where: { id },
+      include: {
+        workoutExercises: {
+          include: {
+            exercise: true,
+            sets: {
+              orderBy: { setNumber: 'asc' },
+            },
+            comments: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        comments: true,
+      },
+    });
+  }
+
+  /**
+   * Находит тренировку пользователя за указанную дату
+   */
+  async findByUserAndDate(userId: string, targetDate: Date): Promise<Workout | null> {
+    // В PostgreSQL db.Date хранит только дату. Но в Prisma это объект Date.
+    // Сделаем поиск по диапазону дня (с начала до конца суток в UTC), чтобы быть уверенными.
+    const startOfDay = new Date(targetDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(targetDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    return this.prisma.workout.findFirst({
+      where: {
+        userId,
+        workoutDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      include: {
+        workoutExercises: {
+          include: {
+            exercise: true,
+            sets: {
+              orderBy: { setNumber: 'asc' },
+            },
+            comments: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        comments: true,
+      },
+    });
+  }
+
+  /**
+   * Находит черновик тренировки пользователя
+   */
+  async findDraftByUser(userId: string): Promise<Workout | null> {
+    return this.prisma.workout.findFirst({
+      where: {
+        userId,
+        status: WorkoutStatus.DRAFT,
+      },
+      include: {
+        workoutExercises: {
+          include: {
+            exercise: true,
+            sets: {
+              orderBy: { setNumber: 'asc' },
+            },
+            comments: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        comments: true,
+      },
+    });
+  }
+
+  /**
+   * Обновляет статус тренировки
+   */
+  async updateStatus(id: string, status: WorkoutStatus): Promise<Workout> {
+    return this.prisma.workout.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
+  /**
+   * Обновляет ID сообщений Telegram
+   */
+  async updateMessageIds(
+    id: string,
+    data: { sourceMessageId?: number; previewMessageId?: number; publishedMessageId?: number },
+  ): Promise<Workout> {
+    return this.prisma.workout.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Удаляет тренировку по ID
+   */
+  async deleteById(id: string): Promise<Workout> {
+    return this.prisma.workout.delete({
+      where: { id },
+    });
+  }
+
+  /**
+   * Полностью заменяет старые упражнения на новые в рамках транзакции
+   */
+  async replaceExercises(
+    workoutId: string,
+    workoutExercisesCreateInput: Prisma.WorkoutExerciseCreateWithoutWorkoutInput[],
+  ): Promise<Workout> {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Удаляем все старые упражнения (и каскадно подходы/комментарии к ним)
+      await tx.workoutExercise.deleteMany({
+        where: { workoutId },
+      });
+
+      // 2. Обновляем тренировку, добавляя новые
+      return tx.workout.update({
+        where: { id: workoutId },
+        data: {
+          workoutExercises: {
+            create: workoutExercisesCreateInput,
+          },
+        },
+        include: {
+          workoutExercises: {
+            include: {
+              exercise: true,
+              sets: true,
+              comments: true,
+            },
+          },
+          comments: true,
+        },
+      });
+    });
+  }
+}

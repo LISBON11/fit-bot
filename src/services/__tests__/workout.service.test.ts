@@ -5,6 +5,7 @@ import type { ExerciseService } from '../exercise.service.js';
 import type { ParsedWorkout } from '../../nlu/nlu.types.js';
 import { WorkoutStatus } from '@prisma/client';
 import type { Exercise, Workout } from '@prisma/client';
+import type { WorkoutWithRelations } from '../../bot/formatters/workoutFormatter.js';
 
 describe('WorkoutService', () => {
   let service: WorkoutService;
@@ -85,7 +86,9 @@ describe('WorkoutService', () => {
         status: 'resolved',
         exercise: { id: 'ex1' } as unknown as Exercise,
       });
-      workoutRepoMock.findDraftByUser.mockResolvedValue({ id: 'old-draft' } as unknown as Workout);
+      workoutRepoMock.findDraftByUser.mockResolvedValue({
+        id: 'old-draft',
+      } as unknown as WorkoutWithRelations);
       workoutRepoMock.createWithRelations.mockResolvedValue({
         id: 'workout1',
         status: WorkoutStatus.DRAFT,
@@ -157,7 +160,9 @@ describe('WorkoutService', () => {
 
   describe('getDraftForUser', () => {
     it('should return the current draft for a user', async () => {
-      workoutRepoMock.findDraftByUser.mockResolvedValue({ id: 'draft-id' } as unknown as Workout);
+      workoutRepoMock.findDraftByUser.mockResolvedValue({
+        id: 'draft-id',
+      } as unknown as WorkoutWithRelations);
       const result = await service.getDraftForUser('user1');
       expect(result).toEqual({ id: 'draft-id' });
       expect(workoutRepoMock.findDraftByUser).toHaveBeenCalledWith('user1');
@@ -165,10 +170,35 @@ describe('WorkoutService', () => {
   });
 
   describe('applyEdits', () => {
-    it('should throw "not implemented" error', async () => {
-      await expect(service.applyEdits('workout-id', {})).rejects.toThrow(
-        'Method applyEdits not implemented yet.',
+    const mockParsedWorkout: ParsedWorkout = {
+      date: '2026-02-22',
+      focus: 'legs',
+      exercises: [],
+      generalComments: [],
+    };
+
+    it('should throw AppError if workout not found', async () => {
+      workoutRepoMock.findById.mockResolvedValue(null);
+      await expect(service.applyEdits('w1', 'user1', mockParsedWorkout)).rejects.toThrow(
+        'Тренировка не найдена',
       );
+    });
+
+    it('should throw AppError if user does not own workout', async () => {
+      workoutRepoMock.findById.mockResolvedValue({ userId: 'other-user' } as unknown as Workout);
+      await expect(service.applyEdits('w1', 'user1', mockParsedWorkout)).rejects.toThrow(
+        'Нет прав на редактирование этой тренировки',
+      );
+    });
+
+    it('should call replaceExercises and return updated status', async () => {
+      workoutRepoMock.findById.mockResolvedValue({ userId: 'user1' } as unknown as Workout);
+      workoutRepoMock.replaceExercises.mockResolvedValue({ id: 'w1' } as unknown as Workout);
+
+      const result = await service.applyEdits('w1', 'user1', mockParsedWorkout);
+
+      expect(result.status).toBe('updated');
+      expect(workoutRepoMock.replaceExercises).toHaveBeenCalled();
     });
   });
 });

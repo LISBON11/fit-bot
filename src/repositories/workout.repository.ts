@@ -1,6 +1,7 @@
 import type { PrismaClient, Prisma, Workout } from '@prisma/client';
 import { WorkoutStatus, CommentType } from '@prisma/client';
 import type { ParsedExercise, ParsedComment } from '../nlu/nlu.types.js';
+import type { WorkoutWithRelations } from '../bot/formatters/workoutFormatter.js';
 
 /**
  * Репозиторий для управления тренировками и связанными сущностями (упражнения, подходы, комментарии)
@@ -163,7 +164,7 @@ export class WorkoutRepository {
    * @param userId ID пользователя
    * @returns Тренировка со статусом DRAFT и всеми связями или null, если черновика нет
    */
-  async findDraftByUser(userId: string): Promise<Workout | null> {
+  async findDraftByUser(userId: string): Promise<WorkoutWithRelations | null> {
     return this.prisma.workout.findFirst({
       where: {
         userId,
@@ -226,36 +227,90 @@ export class WorkoutRepository {
   }
 
   /**
-   * Полностью заменяет старые упражнения на новые в рамках транзакции
+   * Полностью заменяет старые упражнения на новые в рамках транзакции и обновляет саму тренировку (дату, фокус).
    * @param workoutId ID тренировки
-   * @param workoutExercisesCreateInput Данные новых упражнений для создания
+   * @param workoutUpdateData Данные для обновления самой тренировки (дата, фокус)
+   * @param resolvedExercises Список распознанных упражнений
+   * @param generalComments Общие комментарии
    * @returns Обновленная тренировка с новыми упражнениями
    */
   async replaceExercises(
     workoutId: string,
-    workoutExercisesCreateInput: Prisma.WorkoutExerciseCreateWithoutWorkoutInput[],
+    workoutUpdateData: Prisma.WorkoutUpdateInput,
+    resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[],
+    generalComments: ParsedComment[],
   ): Promise<Workout> {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Удаляем все старые упражнения (и каскадно подходы/комментарии к ним)
+      // 1. Удаляем все старые упражнения и их комментарии
       await tx.workoutExercise.deleteMany({
         where: { workoutId },
       });
+      // 2. Удаляем старые общие комментарии к тренировке
+      await tx.workoutComment.deleteMany({
+        where: { workoutId, workoutExerciseId: null },
+      });
 
-      // 2. Обновляем тренировку, добавляя новые
-      return tx.workout.update({
+      // 3. Обновляем базовые поля тренировки
+      await tx.workout.update({
         where: { id: workoutId },
-        data: {
-          workoutExercises: {
-            create: workoutExercisesCreateInput,
+        data: workoutUpdateData,
+      });
+
+      // 4. Воссоздаем упражнения, подходы и комментарии
+      for (let i = 0; i < resolvedExercises.length; i++) {
+        const resData = resolvedExercises[i];
+        const we = await tx.workoutExercise.create({
+          data: {
+            workoutId,
+            exerciseId: resData.exerciseId,
+            sortOrder: i,
+            rawName: resData.parsed.originalName,
           },
-        },
+        });
+
+        if (resData.parsed.sets.length > 0) {
+          await tx.exerciseSet.createMany({
+            data: resData.parsed.sets.map((set, setIndex) => ({
+              workoutExerciseId: we.id,
+              setNumber: setIndex + 1,
+              reps: set.reps || 0,
+              weight: set.weight || null,
+            })),
+          });
+        }
+
+        if (resData.parsed.comments.length > 0) {
+          await tx.workoutComment.createMany({
+            data: resData.parsed.comments.map((c) => ({
+              workoutId,
+              workoutExerciseId: we.id,
+              commentType: CommentType.OTHER,
+              rawText: c.text,
+            })),
+          });
+        }
+      }
+
+      if (generalComments.length > 0) {
+        await tx.workoutComment.createMany({
+          data: generalComments.map((c) => ({
+            workoutId,
+            commentType: CommentType.OTHER,
+            rawText: c.text,
+          })),
+        });
+      }
+
+      return tx.workout.findUniqueOrThrow({
+        where: { id: workoutId },
         include: {
           workoutExercises: {
             include: {
               exercise: true,
-              sets: true,
+              sets: { orderBy: { setNumber: 'asc' } },
               comments: true,
             },
+            orderBy: { sortOrder: 'asc' },
           },
           comments: true,
         },

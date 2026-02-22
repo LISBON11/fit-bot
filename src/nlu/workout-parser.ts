@@ -5,6 +5,8 @@ import { createLogger } from '../logger/logger.js';
 import { AppError } from '../errors/app-errors.js';
 import { ParsedWorkoutSchema } from './nlu.schema.js';
 import { buildParsePrompt } from './prompts/workout-parse.prompt.js';
+import { buildEditPrompt } from './prompts/workout-edit.prompt.js';
+import { DateParseSchema, dateParseSystemPrompt } from './prompts/date-parse.prompt.js';
 import type { ParsedWorkout } from './nlu.types.js';
 
 const logger = createLogger('nlu');
@@ -87,6 +89,98 @@ export class WorkoutParser {
           ? error.message
           : 'Произошла непредвиденная ошибка при распознавании';
       throw new NluParseError(message);
+    }
+  }
+
+  /**
+   * Парсит дельту (изменения) и применяет их к существующей тренировке.
+   *
+   * @param rawText Текст от пользователя с изменениями
+   * @param currentDate Текущая дата
+   * @param currentWorkoutJson JSON строка текущей тренировки
+   * @returns Валидированный обновленный объект ParsedWorkout
+   */
+  async parseEdit(
+    rawText: string,
+    currentDate: string,
+    currentWorkoutJson: string,
+  ): Promise<ParsedWorkout> {
+    try {
+      const start = Date.now();
+      logger.debug('Запуск NLU парсера для редактирования (OpenAI)...');
+
+      const messages = buildEditPrompt(currentWorkoutJson, rawText, currentDate);
+
+      const completion = await this.openai.chat.completions.parse({
+        model: 'gpt-4o-mini',
+        messages,
+        response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),
+        temperature: 0.1,
+      });
+
+      const parsedData = completion.choices[0]?.message?.parsed;
+
+      if (!parsedData) {
+        throw new NluParseError(
+          completion.choices[0]?.message?.refusal || 'Не удалось применить изменения к тренировке',
+        );
+      }
+
+      logger.info({ durationMs: Date.now() - start }, 'Изменения успешно применены с помощью NLU');
+
+      return parsedData as ParsedWorkout;
+    } catch (error: unknown) {
+      logger.error({ err: error }, 'Ошибка NLU парсера при редактировании');
+
+      if (error instanceof OpenAI.APIError) {
+        throw new NluParseError(`Ошибка API OpenAI: ${error.message}`);
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Произошла непредвиденная ошибка при редактировании';
+      throw new NluParseError(message);
+    }
+  }
+
+  /**
+   * Извлекает только дату из произвольного текста пользователя (например, для команды /edit)
+   * @param rawText Текст от пользователя ("вчера", "12 марта" и т.д.)
+   * @param currentDate Сегодняшняя дата (YYYY-MM-DD) для точки отсчета
+   * @returns Дата в формате YYYY-MM-DD
+   */
+  async parseDate(rawText: string, currentDate: string): Promise<string> {
+    try {
+      logger.debug('Запуск NLU парсера даты...');
+
+      const systemPrompt = dateParseSystemPrompt.replace('{{currentDate}}', currentDate);
+
+      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: rawText },
+      ];
+
+      const completion = await this.openai.chat.completions.parse({
+        model: 'gpt-4o-mini',
+        messages,
+        response_format: zodResponseFormat(DateParseSchema, 'date_data'),
+        temperature: 0,
+      });
+
+      const parsedData = completion.choices[0].message.parsed;
+      if (!parsedData || !parsedData.date) {
+        throw new NluParseError('Не удалось извлечь дату (OpenAI вернул пустоту)');
+      }
+
+      logger.info({ parsedDate: parsedData.date }, 'Дата успешно извлечена');
+      return parsedData.date;
+    } catch (error) {
+      logger.error({ err: error, text: rawText }, 'Ошибка при работе NLU парсера даты (OpenAI)');
+      if (error instanceof NluParseError) throw error;
+      throw new NluParseError(
+        `OpenAI API Error: ${error instanceof Error ? error.message : 'Unknown'}`,
+      );
     }
   }
 }

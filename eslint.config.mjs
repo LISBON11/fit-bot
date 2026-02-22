@@ -1,55 +1,68 @@
 // @ts-check
 
 import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 import jestPlugin from 'eslint-plugin-jest';
 
-export default tseslint.config(
-    {
-        ignores: ['**/dist/**', '**/node_modules/**', 'coverage/**', 'jest.config.ts'],
+export default defineConfig(
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      'coverage/**',
+      'jest.config.ts',
+      'test-openai.ts',
+      'prisma/seed.ts',
+      '*.mjs',
+    ],
+  },
+  eslint.configs.recommended,
+  {
+    extends: [...tseslint.configs.strict],
+    plugins: {
+      prettier: prettierPlugin,
     },
-    eslint.configs.recommended,
-    ...tseslint.configs.strict,
-    prettier,
-    {
-        plugins: {
-            prettier: prettierPlugin,
-        },
-        languageOptions: {
-            parser: tseslint.parser,
-            parserOptions: {
-                projectService: true,
-                tsconfigRootDir: import.meta.dirname,
-            },
-        },
-        rules: {
-            'prettier/prettier': 'error',
-            '@typescript-eslint/explicit-function-return-type': 'warn',
-            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-            '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/consistent-type-imports': 'error',
-        },
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: './tsconfig.eslint.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
-    // Jest rules for test files only
-    {
-        files: ['tests/**/*.ts'],
-        plugins: {
-            jest: jestPlugin,
-        },
-        ...jestPlugin.configs['flat/recommended'],
-        languageOptions: {
-            globals: {
-                describe: 'readonly',
-                it: 'readonly',
-                expect: 'readonly',
-                beforeEach: 'readonly',
-                afterEach: 'readonly',
-                beforeAll: 'readonly',
-                afterAll: 'readonly',
-                jest: 'readonly',
-            },
-        },
+    rules: {
+      'prettier/prettier': 'error',
+      '@typescript-eslint/explicit-function-return-type': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-deprecated': 'error',
     },
+  },
+  prettier,
+  // Jest rules for test files only
+  {
+    files: ['tests/**/*.ts'],
+    plugins: {
+      jest: jestPlugin,
+    },
+    ...jestPlugin.configs['flat/recommended'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        jest: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
+  },
 );

@@ -1,3 +1,6 @@
+/**
+ * Описание одного подхода упражнения
+ */
 export interface ParsedSet {
   weight: number | null; // kg
   reps: number | null;
@@ -6,10 +9,16 @@ export interface ParsedSet {
   rpe: number | null; // 1-10
 }
 
+/**
+ * Описание комментария или заметки
+ */
 export interface ParsedComment {
   text: string;
 }
 
+/**
+ * Описание распознанного упражнения
+ */
 export interface ParsedExercise {
   originalName: string; // То, как назвал пользователь
   mappedExerciseId: string | null; // ID из БД (опционально, если не распознано или нет базы в промпте)
@@ -18,6 +27,9 @@ export interface ParsedExercise {
   comments: ParsedComment[];
 }
 
+/**
+ * Структура распознанной тренировки
+ */
 export interface ParsedWorkout {
   date: string; // YYYY-MM-DD
   focus:

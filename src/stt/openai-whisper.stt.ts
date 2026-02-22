@@ -8,6 +8,9 @@ import { createLogger } from '../logger/logger.js';
 
 const logger = createLogger('stt');
 
+/**
+ * Ошибка работы со Speech-to-Text сервисом
+ */
 export class SttError extends AppError {
   constructor(message: string, isOperational = true) {
     super(message, 500, isOperational);
@@ -15,6 +18,9 @@ export class SttError extends AppError {
   }
 }
 
+/**
+ * Реализация STT сервиса с использованием OpenAI Whisper API
+ */
 export class OpenAiWhisperStt implements SttService {
   private openai: OpenAI;
 
@@ -22,6 +28,11 @@ export class OpenAiWhisperStt implements SttService {
     this.openai = new OpenAI({ apiKey: getConfig().OPENAI_API_KEY });
   }
 
+  /**
+   * Конвертирует аудио буфер из произвольного формата (OGG и др.) в формат MP3 для Whisper API
+   * @param inputBuffer Буфер с исходным аудио
+   * @returns Буфер со сконвертированным MP3-аудио
+   */
   private async convertAudio(inputBuffer: Buffer): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const inputStream = Readable.from(inputBuffer);
@@ -59,6 +70,12 @@ export class OpenAiWhisperStt implements SttService {
     });
   }
 
+  /**
+   * Транскрибирует аудио буфер в текстовую строку
+   * @param audioBuffer Буфер с аудиоданными
+   * @param language Опциональный код языка (по умолчанию 'ru')
+   * @returns Распознанный текст
+   */
   async transcribe(audioBuffer: Buffer, language: string = 'ru'): Promise<string> {
     try {
       const start = Date.now();

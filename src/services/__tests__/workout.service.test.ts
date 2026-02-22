@@ -91,10 +91,45 @@ describe('WorkoutService', () => {
         status: WorkoutStatus.DRAFT,
       } as unknown as Workout);
 
-      await service.createDraft('user1', mockParsedWorkout);
+      const result = await service.createDraft('user1', mockParsedWorkout);
 
       expect(workoutRepoMock.deleteById).toHaveBeenCalledWith('old-draft');
-      expect(workoutRepoMock.createWithRelations).toHaveBeenCalled();
+      expect(result.status).toBe('created');
+    });
+
+    it('should use mappedExerciseId if provided', async () => {
+      const mockWithMapped: ParsedWorkout = {
+        date: '2026-02-21',
+        focus: 'legs',
+        exercises: [
+          {
+            originalName: 'unknown',
+            sets: [],
+            isAmbiguous: false,
+            comments: [],
+            mappedExerciseId: 'mapped1',
+          },
+        ],
+        generalComments: [],
+      };
+
+      workoutRepoMock.findDraftByUser.mockResolvedValue(null);
+      workoutRepoMock.createWithRelations.mockResolvedValue({
+        id: 'workout1',
+        status: WorkoutStatus.DRAFT,
+      } as unknown as Workout);
+
+      const result = await service.createDraft('user1', mockWithMapped);
+
+      expect(exerciseServiceMock.resolveExercise).not.toHaveBeenCalled();
+      expect(workoutRepoMock.createWithRelations).toHaveBeenCalledWith(
+        'user1',
+        expect.any(Date),
+        ['legs'],
+        [{ parsed: mockWithMapped.exercises[0], exerciseId: 'mapped1' }],
+        [],
+      );
+      expect(result.status).toBe('created');
     });
   });
 
@@ -117,6 +152,23 @@ describe('WorkoutService', () => {
       const date = new Date();
       await service.findByDate('user1', date);
       expect(workoutRepoMock.findByUserAndDate).toHaveBeenCalledWith('user1', date);
+    });
+  });
+
+  describe('getDraftForUser', () => {
+    it('should return the current draft for a user', async () => {
+      workoutRepoMock.findDraftByUser.mockResolvedValue({ id: 'draft-id' } as unknown as Workout);
+      const result = await service.getDraftForUser('user1');
+      expect(result).toEqual({ id: 'draft-id' });
+      expect(workoutRepoMock.findDraftByUser).toHaveBeenCalledWith('user1');
+    });
+  });
+
+  describe('applyEdits', () => {
+    it('should throw "not implemented" error', async () => {
+      await expect(service.applyEdits('workout-id', {})).rejects.toThrow(
+        'Method applyEdits not implemented yet.',
+      );
     });
   });
 });

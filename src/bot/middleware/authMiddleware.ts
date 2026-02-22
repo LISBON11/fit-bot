@@ -5,6 +5,12 @@ import { logger } from '../../logger/logger.js';
 
 const authLogger = logger.child({ module: 'AuthMiddleware' });
 
+/**
+ * Middleware для аутентификации пользователя в системе.
+ * Создает пользователя в БД, если его еще нет.
+ * @param ctx Контекст бота
+ * @param next Функция перехода к следующему middleware
+ */
 export async function authMiddleware(ctx: CustomContext, next: NextFunction): Promise<void> {
   if (!ctx.from || !ctx.from.id) {
     return next();

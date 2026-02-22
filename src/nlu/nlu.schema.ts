@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/**
+ * Zod схема для одного подхода упражнения
+ */
 export const ParsedSetSchema = z
   .object({
     weight: z.number().nullable().describe('Вес отягощения в килограммах'),
@@ -15,12 +18,18 @@ export const ParsedSetSchema = z
   })
   .describe('Один подход упражнения');
 
+/**
+ * Zod схема для комментария к упражнению или тренировке
+ */
 export const ParsedCommentSchema = z
   .object({
     text: z.string().describe('Текст комментария или заметки'),
   })
   .describe('Комментарий к упражнению или тренировке в целом');
 
+/**
+ * Zod схема для одного распознанного упражнения
+ */
 export const ParsedExerciseSchema = z
   .object({
     originalName: z.string().describe('Название упражнения так, как его произнес пользователь'),
@@ -38,6 +47,9 @@ export const ParsedExerciseSchema = z
   })
   .describe('Одно выполненное упражнение');
 
+/**
+ * Zod схема для всей распознанной тренировки
+ */
 export const ParsedWorkoutSchema = z
   .object({
     date: z
@@ -69,4 +81,7 @@ export const ParsedWorkoutSchema = z
   .describe('Распознанная структура всей тренировки');
 
 // Экспорт типов, выведенных из Zod (для проверок совместимости с nlu.types.ts)
+/**
+ * Тип распознанной тренировки, выведенный из Zod схемы
+ */
 export type ZodParsedWorkout = z.infer<typeof ParsedWorkoutSchema>;

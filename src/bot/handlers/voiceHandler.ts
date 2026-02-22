@@ -8,6 +8,7 @@ const handlerLogger = createLogger('voiceHandler');
 /**
  * Обработчик голосовых сообщений.
  * Скачивает голосовое сообщение, переводит его в текст и (пока временно) отправляет текст обратно пользователю.
+ * @param ctx Контекст бота, содержащий голосовое сообщение
  */
 export async function handleVoiceMessage(ctx: CustomContext): Promise<void> {
   if (!ctx.message?.voice) {

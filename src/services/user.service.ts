@@ -4,11 +4,18 @@ import { createLogger } from '../logger/logger.js';
 
 const logger = createLogger('UserService');
 
+/**
+ * Сервис для бизнес-логики, связанной с пользователями
+ */
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   /**
-   * Находит пользователя по telegramId или создает нового, если он не найден.
+   * Находит пользователя по telegramId или создает нового, если он не найден
+   * @param telegramId Идентификатор пользователя в Telegram
+   * @param username Имя пользователя в Telegram (опционально)
+   * @param firstName Имя пользователя из Telegram
+   * @returns Найденный или созданный пользователь
    */
   async getOrCreateByTelegram(
     telegramId: string,

@@ -6,6 +6,9 @@ import type {
   ExerciseSynonym,
 } from '@prisma/client';
 
+/**
+ * Репозиторий для управления упражнениями, синонимами и пользовательскими маппингами
+ */
 export class ExerciseRepository {
   constructor(private readonly prisma: PrismaClient) {}
 

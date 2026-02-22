@@ -2,11 +2,20 @@ import type { PrismaClient, Prisma, Workout } from '@prisma/client';
 import { WorkoutStatus, CommentType } from '@prisma/client';
 import type { ParsedExercise, ParsedComment } from '../nlu/nlu.types.js';
 
+/**
+ * Репозиторий для управления тренировками и связанными сущностями (упражнения, подходы, комментарии)
+ */
 export class WorkoutRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   /**
    * Создает тренировку со всеми вложенными связями (упражнения, подходы, комментарии)
+   * @param userId ID пользователя, для которого создается тренировка
+   * @param workoutDate Дата тренировки
+   * @param focusArray Массив мышечных групп, на которые направлена тренировка
+   * @param resolvedExercises Список распознанных упражнений с их подходами
+   * @param generalComments Общие комментарии к тренировке
+   * @returns Созданная тренировка со всеми вложенными связями или null при ошибке
    */
   async createWithRelations(
     userId: string,
@@ -88,6 +97,8 @@ export class WorkoutRepository {
 
   /**
    * Находит тренировку по ID со всеми связями
+   * @param id ID тренировки
+   * @returns Тренировка со всеми вложенными связями или null, если не найдена
    */
   async findById(id: string): Promise<Workout | null> {
     return this.prisma.workout.findUnique({
@@ -110,6 +121,9 @@ export class WorkoutRepository {
 
   /**
    * Находит тренировку пользователя за указанную дату
+   * @param userId ID пользователя
+   * @param targetDate Целевая дата поиска
+   * @returns Тренировка за указанный день со всеми связями или null, если не найдена
    */
   async findByUserAndDate(userId: string, targetDate: Date): Promise<Workout | null> {
     // В PostgreSQL db.Date хранит только дату. Но в Prisma это объект Date.
@@ -146,6 +160,8 @@ export class WorkoutRepository {
 
   /**
    * Находит черновик тренировки пользователя
+   * @param userId ID пользователя
+   * @returns Тренировка со статусом DRAFT и всеми связями или null, если черновика нет
    */
   async findDraftByUser(userId: string): Promise<Workout | null> {
     return this.prisma.workout.findFirst({
@@ -171,6 +187,9 @@ export class WorkoutRepository {
 
   /**
    * Обновляет статус тренировки
+   * @param id ID тренировки
+   * @param status Новый статус тренировки
+   * @returns Обновленная тренировка
    */
   async updateStatus(id: string, status: WorkoutStatus): Promise<Workout> {
     return this.prisma.workout.update({
@@ -180,7 +199,10 @@ export class WorkoutRepository {
   }
 
   /**
-   * Обновляет ID сообщений Telegram
+   * Обновляет ID сообщений Telegram, связанных с тренировкой
+   * @param id ID тренировки
+   * @param data Объект с идентификаторами сообщений (source, preview, published)
+   * @returns Обновленная тренировка
    */
   async updateMessageIds(
     id: string,
@@ -194,6 +216,8 @@ export class WorkoutRepository {
 
   /**
    * Удаляет тренировку по ID
+   * @param id ID тренировки
+   * @returns Удаленная тренировка
    */
   async deleteById(id: string): Promise<Workout> {
     return this.prisma.workout.delete({
@@ -203,6 +227,9 @@ export class WorkoutRepository {
 
   /**
    * Полностью заменяет старые упражнения на новые в рамках транзакции
+   * @param workoutId ID тренировки
+   * @param workoutExercisesCreateInput Данные новых упражнений для создания
+   * @returns Обновленная тренировка с новыми упражнениями
    */
   async replaceExercises(
     workoutId: string,

@@ -4,6 +4,12 @@ import { logger } from '../../logger/logger.js';
 
 const updateLogger = logger.child({ module: 'BotUpdate' });
 
+/**
+ * Middleware для логирования каждого входящего апдейта в бота.
+ * Замеряет время обработки запроса.
+ * @param ctx Контекст бота
+ * @param next Функция перехода к следующему middleware
+ */
 export async function loggingMiddleware(ctx: CustomContext, next: NextFunction): Promise<void> {
   const start = Date.now();
 

@@ -9,6 +9,9 @@ import type { ParsedWorkout } from './nlu.types.js';
 
 const logger = createLogger('nlu');
 
+/**
+ * Ошибка парсинга NLU
+ */
 export class NluParseError extends AppError {
   constructor(message: string, isOperational = true) {
     super(message, 400, isOperational);
@@ -16,6 +19,9 @@ export class NluParseError extends AppError {
   }
 }
 
+/**
+ * Сервис для парсинга текста в структурированные данные о тренировке с использованием LLM
+ */
 export class WorkoutParser {
   private openai: OpenAI;
 

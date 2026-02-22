@@ -1,7 +1,8 @@
 import type { CustomContext } from '../types.js';
 
 /**
- * Обработчик команды /start
+ * Обработчик команды /start. Приветствует пользователя.
+ * @param ctx Контекст бота
  */
 export async function handleStart(ctx: CustomContext): Promise<void> {
   const name = ctx.user?.displayName || ctx.from?.first_name || 'Спортсмен';
@@ -11,7 +12,8 @@ export async function handleStart(ctx: CustomContext): Promise<void> {
 }
 
 /**
- * Обработчик команды /help
+ * Обработчик команды /help. Выводит справочную информацию по использованию бота.
+ * @param ctx Контекст бота
  */
 export async function handleHelp(ctx: CustomContext): Promise<void> {
   const helpText = `
@@ -31,7 +33,8 @@ export async function handleHelp(ctx: CustomContext): Promise<void> {
 }
 
 /**
- * Обработчик команды /cancel
+ * Обработчик команды /cancel. Прерывает текущий диалог и сбрасывает состояние.
+ * @param ctx Контекст бота
  */
 export async function handleCancel(ctx: CustomContext): Promise<void> {
   // Очищаем активные conversation state

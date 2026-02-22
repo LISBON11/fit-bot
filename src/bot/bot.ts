@@ -11,6 +11,11 @@ import { logger } from '../logger/logger.js';
 
 const botLogger = logger.child({ module: 'BotInit' });
 
+/**
+ * Создает инстанс Telegram-бота, регистрирует middleware и обработчики
+ * @param token Токен Telegram бота
+ * @returns Настроенный экземпляр бота
+ */
 export function createBot(token: string): Bot<CustomContext> {
   botLogger.info('Configuring bot plugins and middleware...');
 

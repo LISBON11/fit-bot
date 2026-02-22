@@ -1,6 +1,9 @@
 import type { ExerciseRepository } from '../repositories/exercise.repository.js';
 import type { ResolveResult, ExerciseForNlu } from './exercise.types.js';
 
+/**
+ * Сервис для бизнес-логики, связанной с поиском и разрешением названий упражнений
+ */
 export class ExerciseService {
   constructor(private readonly exerciseRepository: ExerciseRepository) {}
 
@@ -15,6 +18,7 @@ export class ExerciseService {
    *
    * @param inputText Введенное пользователем название
    * @param userId ID пользователя
+   * @returns Результат разрешения названия (успех, неоднозначность или не найдено)
    */
   async resolveExercise(inputText: string, userId: string): Promise<ResolveResult> {
     // 1. Поиск в user_mapping
@@ -61,6 +65,7 @@ export class ExerciseService {
 
   /**
    * Возвращает список упражнений для NLU промпта
+   * @returns Массив объектов упражнений для передачи в контекст NLU
    */
   async getExerciseListForNlu(): Promise<ExerciseForNlu[]> {
     const exercises = await this.exerciseRepository.getAll();

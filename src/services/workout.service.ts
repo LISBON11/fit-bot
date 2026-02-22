@@ -4,10 +4,16 @@ import type { ParsedWorkout, ParsedExercise } from '../nlu/nlu.types.js';
 import type { Workout } from '@prisma/client';
 import { WorkoutStatus } from '@prisma/client';
 
+/**
+ * Результат создания черновика тренировки
+ */
 export type CreateDraftResult =
   | { status: 'created'; workout: Workout }
   | { status: 'needs_disambiguation'; ambiguousExercises: ParsedExercise[] };
 
+/**
+ * Сервис для бизнес-логики, связанной с тренировками и их жизненным циклом (создание, черновики, подтверждение)
+ */
 export class WorkoutService {
   constructor(
     private readonly workoutRepository: WorkoutRepository,
@@ -17,6 +23,9 @@ export class WorkoutService {
   /**
    * Создает черновик тренировки на основе распарсенных данных.
    * Если есть неизвестные или неоднозначные упражнения - возвращает needs_disambiguation.
+   * @param userId ID пользователя
+   * @param parsedWorkout Распознанная тренировка из NLU
+   * @returns Статус создания (успешно или требуется уточнение)
    */
   async createDraft(userId: string, parsedWorkout: ParsedWorkout): Promise<CreateDraftResult> {
     const ambiguousExercises: ParsedExercise[] = [];
@@ -69,6 +78,8 @@ export class WorkoutService {
 
   /**
    * Переводит черновик в статус APPROVED
+   * @param workoutId ID черновика тренировки
+   * @returns Обновленная тренировка со статусом APPROVED
    */
   async approveDraft(workoutId: string): Promise<Workout> {
     return this.workoutRepository.updateStatus(workoutId, WorkoutStatus.APPROVED);
@@ -76,6 +87,8 @@ export class WorkoutService {
 
   /**
    * Удаляет черновик
+   * @param workoutId ID черновика тренировки
+   * @returns Удаленная тренировка
    */
   async cancelDraft(workoutId: string): Promise<Workout> {
     return this.workoutRepository.deleteById(workoutId);
@@ -83,6 +96,8 @@ export class WorkoutService {
 
   /**
    * Возвращает текущий черновик пользователя
+   * @param userId ID пользователя
+   * @returns Черновик тренировки или null
    */
   async getDraftForUser(userId: string): Promise<Workout | null> {
     return this.workoutRepository.findDraftByUser(userId);
@@ -90,6 +105,9 @@ export class WorkoutService {
 
   /**
    * Находит завершенную/отменную тренировку по дате
+   * @param userId ID пользователя
+   * @param targetDate Целевая дата тренировки
+   * @returns Найденная тренировка или null
    */
   async findByDate(userId: string, targetDate: Date): Promise<Workout | null> {
     return this.workoutRepository.findByUserAndDate(userId, targetDate);
@@ -97,6 +115,9 @@ export class WorkoutService {
 
   /**
    * Применяет дельту правок (для шага 4.2)
+   * @param _workoutId ID тренировки
+   * @param _parsedDelta Объект дельты изменений
+   * @throws Различные виды ошибок, если пока не реализовано
    */
   async applyEdits(_workoutId: string, _parsedDelta: unknown): Promise<void> {
     // В рамках текущего этапа эта функция будет реализована позже (Шаг 4.2)

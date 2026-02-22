@@ -5,6 +5,12 @@ import { AppError } from '../../errors/app-errors.js';
 
 const errorLogger = logger.child({ module: 'ErrorMiddleware' });
 
+/**
+ * Middleware для перехвата и обработки ошибок в цепочке выполнения бота.
+ * Отправляет понятные сообщения об ошибках пользователю и логирует детали.
+ * @param ctx Контекст бота
+ * @param next Функция перехода к следующему middleware
+ */
 export async function errorMiddleware(ctx: CustomContext, next: NextFunction): Promise<void> {
   try {
     await next();

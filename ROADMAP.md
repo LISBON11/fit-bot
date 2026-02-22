@@ -5,8 +5,6 @@
 
 **Контекст проекта:** [SYSTEM_DESIGN.md](file:///Users/elizavetagolubenko/Projects/fit-tel-bot/SYSTEM_DESIGN.md)
 
-
-
 ---
 
 ## Этап 1: Инициализация проекта
@@ -559,7 +557,8 @@ Acceptance criteria:
    - Stage production: node:20-alpine, установить ffmpeg (apk add ffmpeg), копировать dist + node_modules + prisma, CMD node dist/index.js.
 2. **docker-compose.yml**: добавить сервис bot (build: ., env_file: .env, depends_on: postgres (healthy) + redis (healthy), restart: unless-stopped, volumes: ./src:/app/src для dev).
 3. **GitHub Actions CI** (.github/workflows/ci.yml): на push main и PR → lint → test → build (tsc) → docker build.
-4. **README.md**: описание проекта, prerequisites (Node 20, Docker, ffmpeg), установка (npm ci, docker compose up, prisma migrate, prisma seed), запуск (npm run dev), переменные окружения (таблица), команды бота (/start, /help, /cancel, /edit), стек.
+4. Документация: перенести/структурировать всю проектную документацию в папку docs/ (включая ADR в docs/adr/), сгенерировать TypeDoc.
+5. **README.md**: описание проекта, prerequisites (Node 20, Docker, ffmpeg), установка (npm ci, docker compose up, prisma migrate, prisma seed), запуск (npm run dev), переменные окружения (таблица), команды бота (/start, /help, /cancel, /edit), стек.
 
 Acceptance criteria:
 - [ ] `docker build -t fitbot .` — собирается без ошибок
@@ -680,4 +679,3 @@ Acceptance criteria:
 - [ ] /stats показывает корректную сводку
 - [ ] API-роуты возвращают данные в формате JSON
 ```
-

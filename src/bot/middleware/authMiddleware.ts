@@ -1,11 +1,12 @@
 import type { NextFunction } from 'grammy';
+import type { PrismaClient } from '@prisma/client';
 import type { CustomContext } from '../types.js';
 import { getPrismaClient } from '../../config/database.js';
 import { logger } from '../../logger/logger.js';
 
 const authLogger = logger.child({ module: 'AuthMiddleware' });
 
-export async function authMiddleware(ctx: CustomContext, next: NextFunction) {
+export async function authMiddleware(ctx: CustomContext, next: NextFunction): Promise<void> {
   if (!ctx.from || !ctx.from.id) {
     return next();
   }
@@ -37,26 +38,33 @@ export async function authMiddleware(ctx: CustomContext, next: NextFunction) {
     }
 
     // User not found, create new user + auth_provider inside a transaction
-    const newUser = await prisma.$transaction(async (tx: any) => {
-      const user = await tx.user.create({
-        data: {
-          telegramId: telegramId, // nullable, but we can set it
-          telegramUsername: username,
-          displayName: firstName || username || 'User',
-        },
-      });
+    const newUser = await prisma.$transaction(
+      async (
+        tx: Omit<
+          PrismaClient,
+          '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+        >,
+      ) => {
+        const user = await tx.user.create({
+          data: {
+            telegramId: telegramId, // nullable, but we can set it
+            telegramUsername: username,
+            displayName: firstName || username || 'User',
+          },
+        });
 
-      await tx.authProvider.create({
-        data: {
-          userId: user.id,
-          provider: 'telegram',
-          providerUserId: telegramId,
-          // Optionally, store the full ctx.from object as metadata
-        },
-      });
+        await tx.authProvider.create({
+          data: {
+            userId: user.id,
+            provider: 'telegram',
+            providerUserId: telegramId,
+            // Optionally, store the full ctx.from object as metadata
+          },
+        });
 
-      return user;
-    });
+        return user;
+      },
+    );
 
     authLogger.info({ userId: newUser.id, telegramId }, 'Created new user');
     ctx.user = newUser;

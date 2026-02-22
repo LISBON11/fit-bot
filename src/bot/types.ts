@@ -5,7 +5,7 @@ import type { User } from '@prisma/client';
 export interface SessionData {
   conversationState?: string;
   currentDraftId?: string;
-  disambiguation?: any;
+  disambiguation?: unknown;
 }
 
 export type CustomContext = Context &

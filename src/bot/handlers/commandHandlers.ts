@@ -3,7 +3,7 @@ import type { CustomContext } from '../types.js';
 /**
  * Обработчик команды /start
  */
-export async function handleStart(ctx: CustomContext) {
+export async function handleStart(ctx: CustomContext): Promise<void> {
   const name = ctx.user?.displayName || ctx.from?.first_name || 'Спортсмен';
   await ctx.reply(
     `Привет, ${name}! 👋\n\nЯ FitBot — твой персональный фитнес-ассистент.\nОтправь мне голосовое сообщение или текст с описанием твоей тренировки, и я сохраню её.\n\nИспользуй /help чтобы узнать, как правильно описывать тренировки.`,
@@ -13,7 +13,7 @@ export async function handleStart(ctx: CustomContext) {
 /**
  * Обработчик команды /help
  */
-export async function handleHelp(ctx: CustomContext) {
+export async function handleHelp(ctx: CustomContext): Promise<void> {
   const helpText = `
 🏋️‍♂️ **Как использовать FitBot:**
 
@@ -33,7 +33,7 @@ export async function handleHelp(ctx: CustomContext) {
 /**
  * Обработчик команды /cancel
  */
-export async function handleCancel(ctx: CustomContext) {
+export async function handleCancel(ctx: CustomContext): Promise<void> {
   // Очищаем активные conversation state
   // await ctx.conversation.exit('some_conversation_name'); // TODO: Pass conversation name
   ctx.session = {}; // Сбрасываем сессию для отмены

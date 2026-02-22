@@ -9,6 +9,7 @@ import { validateConfig } from './config/env.js';
 import { createLogger } from './logger/logger.js';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
+import type { UserFromGetMe } from 'grammy/types';
 import { bot, setupBot } from './bot/bot.js';
 
 const config = validateConfig();
@@ -35,12 +36,12 @@ async function main(): Promise<void> {
   // 4. Setup and start the bot
   setupBot();
   bot.start({
-    onStart: (botInfo: any) => {
+    onStart: (botInfo: UserFromGetMe): void => {
       mainLogger.info({ username: botInfo.username }, '✅ FitBot started successfully');
     },
   });
 
-  const gracefulShutdown = async (signal: string) => {
+  const gracefulShutdown = async (signal: string): Promise<void> => {
     mainLogger.info(`${signal} signal received: closing connections`);
     await bot.stop();
     await disconnectRedis();

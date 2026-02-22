@@ -4,7 +4,7 @@ import { logger } from '../../logger/logger.js';
 
 const updateLogger = logger.child({ module: 'BotUpdate' });
 
-export async function loggingMiddleware(ctx: CustomContext, next: NextFunction) {
+export async function loggingMiddleware(ctx: CustomContext, next: NextFunction): Promise<void> {
   const start = Date.now();
 
   // Identify the type of update

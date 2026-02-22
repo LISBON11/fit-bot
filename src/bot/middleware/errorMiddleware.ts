@@ -5,7 +5,7 @@ import { AppError } from '../../errors/app-errors.js';
 
 const errorLogger = logger.child({ module: 'ErrorMiddleware' });
 
-export async function errorMiddleware(ctx: CustomContext, next: NextFunction) {
+export async function errorMiddleware(ctx: CustomContext, next: NextFunction): Promise<void> {
   try {
     await next();
   } catch (error) {

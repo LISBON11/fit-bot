@@ -72,11 +72,13 @@ export class OpenAiWhisperStt implements SttService {
       logger.info({ durationMs: Date.now() - start }, 'Аудио успешно распознано');
 
       return response.text;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Ошибка при работе со Speech-to-Text API');
-      throw new SttError(
-        error.message || 'Произошла ошибка при распознавании голосового сообщения',
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Произошла ошибка при распознавании голосового сообщения';
+      throw new SttError(message);
     }
   }
 }

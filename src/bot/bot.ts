@@ -15,7 +15,7 @@ const botLogger = logger.child({ module: 'BotInit' });
 // Инициализация бота
 export const bot = new Bot<CustomContext>(getConfig().BOT_TOKEN);
 
-export function setupBot() {
+export function setupBot(): void {
   botLogger.info('Configuring bot plugins and middleware...');
 
   // Глобальный перехватчик ошибок

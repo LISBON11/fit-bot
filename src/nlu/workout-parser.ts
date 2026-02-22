@@ -68,7 +68,7 @@ export class WorkoutParser {
 
       // Возвращаем строго типизированный объект, прошедший валидацию Zod в SDK OpenAI
       return parsedData as ParsedWorkout;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error({ err: error }, 'Ошибка NLU парсера');
 
       // OpenAI-specific ошибки
@@ -76,7 +76,11 @@ export class WorkoutParser {
         throw new NluParseError(`Ошибка API OpenAI: ${error.message}`);
       }
 
-      throw new NluParseError(error.message || 'Произошла непредвиденная ошибка при распознавании');
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Произошла непредвиденная ошибка при распознавании';
+      throw new NluParseError(message);
     }
   }
 }

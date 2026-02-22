@@ -4,8 +4,8 @@ const config = {
   testEnvironment: 'node',
   roots: ['<rootDir>/tests/'],
   moduleNameMapper: {
-    '^(\\.{1,2}/(?:logger|config|errors|bot|services|stt|nlu|repositories)/.*)\\.js$': '$1.ts',
-    '^\\.\\./\\.\\./src/(.*)\\.js$': '<rootDir>/src/$1.ts',
+    '^\\.\\./\\.\\./src/(.*)\\.js$': '<rootDir>/src/$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {
     '^.+\\.tsx?$': [

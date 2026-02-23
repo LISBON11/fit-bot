@@ -1,11 +1,12 @@
-import { jest } from '@jest/globals';
+import type { DeepMockProxy } from 'jest-mock-extended';
+import { createMockExerciseRepository } from '../../__tests__/utils/mockRepositories.js';
 import { ExerciseService } from '../exercise.service.js';
 import type { ExerciseRepository } from '../../repositories/exercise.repository.js';
 import type { Exercise, UserExerciseMapping } from '@prisma/client';
 
 describe('ExerciseService', () => {
   let service: ExerciseService;
-  let repositoryMock: jest.Mocked<ExerciseRepository>;
+  let repositoryMock: DeepMockProxy<ExerciseRepository>;
 
   const mockExercise1: Exercise = {
     id: 'e1',
@@ -32,17 +33,8 @@ describe('ExerciseService', () => {
   };
 
   beforeEach(() => {
-    repositoryMock = {
-      findSynonyms: jest.fn(),
-      findUserMapping: jest.fn(),
-      upsertUserMapping: jest.fn(),
-      getAll: jest.fn(),
-      findById: jest.fn(),
-      create: jest.fn(),
-    } as unknown as jest.Mocked<ExerciseRepository>;
-
-    // Typecast to unknown then to ExerciseRepository to avoid constructor mismatch in test
-    service = new ExerciseService(repositoryMock as unknown as ExerciseRepository);
+    repositoryMock = createMockExerciseRepository();
+    service = new ExerciseService(repositoryMock);
   });
 
   describe('resolveExercise', () => {

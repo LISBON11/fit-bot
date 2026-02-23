@@ -1,4 +1,6 @@
 import { jest } from '@jest/globals';
+import type { DeepMockProxy } from 'jest-mock-extended';
+import { createMockUserRepository } from '../../__tests__/utils/mockRepositories.js';
 import { UserService } from '../user.service.js';
 import type { UserRepository } from '../../repositories/user.repository.js';
 import type { User } from '@prisma/client';
@@ -14,15 +16,10 @@ jest.mock('../../logger/logger.js', () => ({
 
 describe('UserService', () => {
   let service: UserService;
-  let repositoryMock: jest.Mocked<UserRepository>;
+  let repositoryMock: DeepMockProxy<UserRepository>;
 
   beforeEach(() => {
-    repositoryMock = {
-      findById: jest.fn(),
-      findByTelegramId: jest.fn(),
-      createWithTelegram: jest.fn(),
-    } as unknown as jest.Mocked<UserRepository>;
-
+    repositoryMock = createMockUserRepository();
     service = new UserService(repositoryMock);
   });
 

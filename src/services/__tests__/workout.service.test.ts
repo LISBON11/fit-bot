@@ -1,5 +1,7 @@
+import type { DeepMockProxy } from 'jest-mock-extended';
 import type { ParsedWorkout } from '../../nlu/nlu.types.js';
-import { jest } from '@jest/globals';
+import { createMockWorkoutRepository } from '../../__tests__/utils/mockRepositories.js';
+import { createMockExerciseService } from '../../__tests__/utils/mockServices.js';
 import { WorkoutService } from '../workout.service.js';
 import type { WorkoutRepository } from '../../repositories/workout.repository.js';
 import type { ExerciseService } from '../exercise.service.js';
@@ -9,31 +11,14 @@ import type { WorkoutWithRelations } from '../../bot/formatters/workoutFormatter
 
 describe('WorkoutService', () => {
   let service: WorkoutService;
-  let workoutRepoMock: jest.Mocked<WorkoutRepository>;
-  let exerciseServiceMock: jest.Mocked<ExerciseService>;
+  let workoutRepoMock: DeepMockProxy<WorkoutRepository>;
+  let exerciseServiceMock: DeepMockProxy<ExerciseService>;
 
   beforeEach(() => {
-    workoutRepoMock = {
-      createWithRelations: jest.fn(),
-      findById: jest.fn(),
-      findByUserAndDate: jest.fn(),
-      findDraftByUser: jest.fn(),
-      updateStatus: jest.fn(),
-      updateMessageIds: jest.fn(),
-      deleteById: jest.fn(),
-      replaceExercises: jest.fn(),
-    } as unknown as jest.Mocked<WorkoutRepository>;
+    workoutRepoMock = createMockWorkoutRepository();
+    exerciseServiceMock = createMockExerciseService();
 
-    exerciseServiceMock = {
-      resolveExercise: jest.fn(),
-      confirmMapping: jest.fn(),
-      getExerciseListForNlu: jest.fn(),
-    } as unknown as jest.Mocked<ExerciseService>;
-
-    service = new WorkoutService(
-      workoutRepoMock as unknown as WorkoutRepository,
-      exerciseServiceMock as unknown as ExerciseService,
-    );
+    service = new WorkoutService(workoutRepoMock, exerciseServiceMock);
   });
 
   describe('createDraft', () => {

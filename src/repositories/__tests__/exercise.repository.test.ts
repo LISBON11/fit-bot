@@ -1,4 +1,5 @@
-import { mockDeep, type DeepMockProxy } from 'jest-mock-extended';
+import type { DeepMockProxy } from 'jest-mock-extended';
+import { createMockPrismaClient } from '../../__tests__/utils/mockPrisma.js';
 import { ExerciseRepository } from '../exercise.repository.js';
 import type { PrismaClient } from '@prisma/client';
 
@@ -7,7 +8,7 @@ describe('ExerciseRepository', () => {
   let prismaMock: DeepMockProxy<PrismaClient>;
 
   beforeEach(() => {
-    prismaMock = mockDeep<PrismaClient>();
+    prismaMock = createMockPrismaClient();
     repository = new ExerciseRepository(prismaMock as unknown as PrismaClient);
   });
 

@@ -602,9 +602,31 @@ Acceptance criteria:
 
 ---
 
-## Этап 6: Подготовка к будущему (опционально)
+## Этап 6: Развертывание и тестирование в бою
 
-### 6.1 REST API для мобильного приложения
+### 6.1 Настройка VPS и Docker Production
+
+```prompt
+Подготовь Docker Compose для production-окружения FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
+
+Зависимости: этап 5 выполнен.
+Контекст: docs/infrastructure/DEPLOYMENT.md.
+
+Задачи:
+1. Создай файл `docker-compose.prod.yml` на основе `docker-compose.yml`, но оптимизированный для production (например, restart: always для сервисов, проброс портов только по необходимости, healthchecks).
+2. Создай базовый `deploy.sh` скрипт, который пуллит изменения, собирает образы и делает `docker compose up -d`.
+3. Убедись, что .env.example отражает все production переменные.
+
+Acceptance criteria:
+- [ ] `docker-compose.prod.yml` существует и содержит 3 сервиса: bot, postgres, redis.
+- [ ] `deploy.sh` существует и имеет права на выполнение.
+```
+
+---
+
+## Этап 7: Подготовка к будущему (опционально)
+
+### 7.1 REST API для мобильного приложения
 
 ```prompt
 Создай REST API на Fastify для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
@@ -631,7 +653,7 @@ Acceptance criteria:
 
 ---
 
-### 6.2 JWT-авторизация
+### 7.2 JWT-авторизация
 
 ```prompt
 Добавь JWT-авторизацию для REST API в FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
@@ -655,7 +677,7 @@ Acceptance criteria:
 
 ---
 
-### 6.3 Аналитика
+### 7.3 Аналитика
 
 ```prompt
 Создай базовый модуль аналитики для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.

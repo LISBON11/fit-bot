@@ -1,128 +1,160 @@
-import type { WorkoutParser } from '../workout-parser.js';
-import type { ParsedWorkout } from '../nlu.types.js';
 import { jest } from '@jest/globals';
+import type {
+  WorkoutParser as WorkoutParserClass,
+  NluParseError as NluParseErrorClass,
+} from '../workout-parser.js';
 
-/** Интерфейс мока конструктора OpenAI для подмены в тестах */
-interface MockOpenAIConstructor {
-  new (): {
-    chat: {
-      completions: {
-        parse: jest.Mock<(...args: unknown[]) => Promise<unknown>>;
-      };
-    };
-  };
-  APIError: new (message?: string) => Error;
+const mockParse = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+
+class APIError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'APIError';
+  }
 }
 
-// Мокаем получение конфигурации
-jest.unstable_mockModule('../../config/env.js', () => ({
-  getConfig: jest.fn().mockReturnValue({
-    OPENAI_API_KEY: 'test-api-key',
-    LOG_LEVEL: 'info',
-    NODE_ENV: 'test',
+jest.unstable_mockModule('openai', () => ({
+  OpenAI: class {
+    chat = {
+      completions: {
+        parse: mockParse,
+      },
+    };
+    static APIError = APIError;
+  },
+}));
+
+jest.unstable_mockModule('../../logger/logger.js', () => ({
+  createLogger: () => ({
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
   }),
 }));
 
-/** Создаёт мок конструктора OpenAI, возвращающий успешный ответ парсинга */
-const mockParseSuccess = (mockResponse: ParsedWorkout): MockOpenAIConstructor => {
-  const parseMock = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue({
-    choices: [
-      {
-        message: {
-          parsed: mockResponse,
-        },
-      },
-    ],
-  });
+jest.unstable_mockModule('../../config/env.js', () => ({
+  getConfig: () => ({ OPENAI_API_KEY: 'test_key' }),
+}));
 
-  const MockOpenAI = jest.fn().mockImplementation(() => ({
-    chat: {
-      completions: {
-        parse: parseMock,
-      },
-    },
-  })) as unknown as MockOpenAIConstructor;
-
-  MockOpenAI.APIError = Error;
-
-  return MockOpenAI;
-};
-
-/** Создаёт мок конструктора OpenAI, возвращающий отказ (refusal) */
-const mockParseFailure = (refusalMessage: string): MockOpenAIConstructor => {
-  const parseMock = jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue({
-    choices: [
-      {
-        message: {
-          parsed: null,
-          refusal: refusalMessage,
-        },
-      },
-    ],
-  });
-
-  const MockOpenAI = jest.fn().mockImplementation(() => ({
-    chat: {
-      completions: {
-        parse: parseMock,
-      },
-    },
-  })) as unknown as MockOpenAIConstructor;
-
-  // Добавляем статический APIError для корректной работы instanceof OpenAI.APIError
-  MockOpenAI.APIError = class APIError extends Error {};
-
-  return MockOpenAI;
-};
+jest.unstable_mockModule('../../utils/retry.js', () => ({
+  withRetry: jest.fn(async (operation: () => unknown) => await operation()),
+}));
 
 describe('WorkoutParser', () => {
-  let ParserClass: typeof WorkoutParser;
+  let WorkoutParser: typeof WorkoutParserClass;
+  let NluParseError: typeof NluParseErrorClass;
 
-  beforeEach(async () => {
-    jest.resetModules();
+  beforeAll(async () => {
+    const module = await import('../workout-parser.js');
+    WorkoutParser = module.WorkoutParser;
+    NluParseError = module.NluParseError;
   });
 
-  it('успешно парсит валидную тренировку', async () => {
-    const validWorkout: ParsedWorkout = {
-      date: '2023-10-27',
-      focus: 'legs',
-      exercises: [
-        {
-          originalName: 'Присед',
-          isAmbiguous: false,
-          mappedExerciseId: null,
-          sets: [{ weight: 50, reps: 10, duration: null, distance: null, rpe: null }],
-          comments: [],
-        },
-      ],
-      generalComments: [],
-    };
-
-    jest.unstable_mockModule('openai', () => ({
-      OpenAI: mockParseSuccess(validWorkout),
-    }));
-
-    const imported = await import('../workout-parser.js');
-    ParserClass = imported.WorkoutParser;
-
-    const parser = new ParserClass();
-    const result = await parser.parse('Сегодня качал ноги, присед 50 на 10', '2023-10-27');
-
-    expect(result).toEqual(validWorkout);
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('выбрасывает NluParseError, когда модель отказывается отвечать (refusal)', async () => {
-    jest.unstable_mockModule('openai', () => ({
-      OpenAI: mockParseFailure('Я не могу обработать этот запрос.'),
-    }));
+  describe('parse', () => {
+    it('should parse raw text successfully', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockResolvedValue({
+        choices: [{ message: { parsed: { date: '2023-10-01', focus: 'legs' } } }],
+      });
 
-    const imported = await import('../workout-parser.js');
-    ParserClass = imported.WorkoutParser;
+      const result = await parser.parse('Вчера дома', '2023-10-02');
+      expect(result).toEqual({ date: '2023-10-01', focus: 'legs' });
+      expect(mockParse).toHaveBeenCalled();
+    });
 
-    const parser = new ParserClass();
+    it('should throw NluParseError if LLM refuses', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockResolvedValue({
+        choices: [{ message: { refusal: 'Refused to parse' } }],
+      });
 
-    await expect(parser.parse('Какой-то странный текст', '2023-10-27')).rejects.toThrow(
-      'Я не могу обработать этот запрос.',
-    );
+      await expect(parser.parse('Вчера', '2023-10-02')).rejects.toThrow(NluParseError);
+    });
+
+    it('should wrap OpenAI.APIError in NluParseError', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockRejectedValue(new APIError('Rate limit exceeded'));
+
+      await expect(parser.parse('Вчера', '2023-10-02')).rejects.toThrow(
+        'Ошибка API OpenAI: Rate limit exceeded',
+      );
+    });
+
+    it('should throw NluParseError for other errors', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockRejectedValue(new Error('Unknown generic error'));
+
+      await expect(parser.parse('Вчера', '2023-10-02')).rejects.toThrow('Unknown generic error');
+    });
+  });
+
+  describe('parseEdit', () => {
+    it('should parse edit delta successfully', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockResolvedValue({
+        choices: [{ message: { parsed: { date: '2023-10-01', focus: 'fullbody' } } }],
+      });
+
+      const result = await parser.parseEdit('в зале', '2023-10-02', '{}');
+      expect((result as { focus: string }).focus).toBe('fullbody');
+    });
+
+    it('should throw NluParseError if LLM refuses during edit', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockResolvedValue({
+        choices: [{ message: { refusal: 'Cannot apply edit' } }],
+      });
+
+      await expect(parser.parseEdit('в зале', '2023-10-02', '{}')).rejects.toThrow(NluParseError);
+    });
+
+    it('should format wrap APIError during edit', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockRejectedValue(new APIError('API down'));
+
+      await expect(parser.parseEdit('в зале', '2023-10-02', '{}')).rejects.toThrow(
+        'Ошибка API OpenAI: API down',
+      );
+    });
+  });
+
+  describe('parseDate', () => {
+    it('should parse date successfully', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockResolvedValue({
+        choices: [{ message: { parsed: { date: '2023-10-01' } } }],
+      });
+
+      const date = await parser.parseDate('вчера', '2023-10-02');
+      expect(date).toBe('2023-10-01');
+    });
+
+    it('should throw NluParseError if parsed date is empty', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockResolvedValue({
+        choices: [{ message: { parsed: {} } }],
+      });
+
+      await expect(parser.parseDate('неясно когда', '2023-10-02')).rejects.toThrow(NluParseError);
+    });
+
+    it('should re-throw NluParseError on date parse failure', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockRejectedValue(new NluParseError('Direct Nlu error'));
+
+      await expect(parser.parseDate('давно', '2023-10-02')).rejects.toThrow('Direct Nlu error');
+    });
+
+    it('should wrap other errors with generic OpenAI Error message', async () => {
+      const parser = new WorkoutParser();
+      mockParse.mockRejectedValue(new Error('Random string error'));
+
+      await expect(parser.parseDate('завтра', '2023-10-02')).rejects.toThrow(/OpenAI API Error/);
+    });
   });
 });

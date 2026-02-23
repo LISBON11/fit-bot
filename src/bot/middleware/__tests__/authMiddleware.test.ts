@@ -1,5 +1,5 @@
-import type { CustomContext } from '../../types.js';
 import type { NextFunction } from 'grammy';
+import type { CustomContext } from '../../types.js';
 import { jest } from '@jest/globals';
 
 /** Интерфейс мока Prisma клиента для тестов auth middleware */

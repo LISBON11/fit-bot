@@ -44,7 +44,7 @@ jest.unstable_mockModule('openai', () => ({
 
 // Мокаем получение конфигурации
 jest.unstable_mockModule('../../config/env.js', () => ({
-  getConfig: jest.fn().mockReturnValue({
+  getConfig: jest.fn<(...args: unknown[]) => unknown>().mockReturnValue({
     OPENAI_API_KEY: 'test-api-key',
     LOG_LEVEL: 'info',
     NODE_ENV: 'test',

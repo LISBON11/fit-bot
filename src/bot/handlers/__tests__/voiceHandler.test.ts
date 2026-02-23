@@ -1,8 +1,7 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import type { CustomContext } from '../../types.js';
-import { AppError } from '../../../errors/app-errors.js';
 import { createMockCtx } from '../../__tests__/utils/mockCtx.js';
-
+import { AppError } from '../../../errors/app-errors.js';
+import type { CustomContext } from '../../types.js';
 // Мокаем зависимости (STT, NLU, env)
 jest.unstable_mockModule('../../../services/index.js', () => ({
   getSttService: jest.fn(),
@@ -10,7 +9,9 @@ jest.unstable_mockModule('../../../services/index.js', () => ({
 }));
 
 jest.unstable_mockModule('../../../config/env.js', () => ({
-  getConfig: jest.fn().mockReturnValue({ BOT_TOKEN: 'test-token' }),
+  getConfig: jest
+    .fn<(...args: unknown[]) => unknown>()
+    .mockReturnValue({ BOT_TOKEN: 'test-token' }),
 }));
 
 // Замокаем глобальный fetch
@@ -59,7 +60,9 @@ describe('Voice Handler', () => {
 
     mockFetch.mockResolvedValue({
       ok: true,
-      arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8) as never),
+      arrayBuffer: jest
+        .fn<(...args: unknown[]) => Promise<unknown>>()
+        .mockResolvedValue(new ArrayBuffer(8) as never),
       statusText: 'OK',
     } as never);
   });
@@ -90,14 +93,14 @@ describe('Voice Handler', () => {
   });
 
   it('игнорирует сообщение, если это не голос', async () => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    mockCtx.message = {
-      message_id: 1,
-      date: 123,
-      chat: { id: 1, type: 'private', first_name: 'Test' },
-      text: 'Привет',
-    };
+    Object.defineProperty(mockCtx, 'message', {
+      value: {
+        message_id: 1,
+        date: 123,
+        chat: { id: 1, type: 'private', first_name: 'Test' },
+        text: 'Привет',
+      },
+    });
 
     await handleVoiceMessage(mockCtx as CustomContext);
 
@@ -106,8 +109,9 @@ describe('Voice Handler', () => {
   });
 
   it('выбрасывает AppError, если не удалось получить путь к файлу', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockCtx.getFile = jest.fn<any>().mockResolvedValue({} as any) as any; // Нет file_path
+    mockCtx.getFile = jest
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockResolvedValue({} as never) as unknown as typeof mockCtx.getFile; // Нет file_path
 
     await expect(handleVoiceMessage(mockCtx as CustomContext)).rejects.toThrow(AppError);
     await expect(handleVoiceMessage(mockCtx as CustomContext)).rejects.toThrow(

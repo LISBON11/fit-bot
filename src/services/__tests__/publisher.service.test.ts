@@ -5,7 +5,7 @@ import { _resetConfigForTesting, validateConfig } from '../../config/env.js';
 
 jest.mock('../../logger/logger.js', () => ({
   logger: {
-    child: jest.fn().mockReturnValue({
+    child: jest.fn<(...args: unknown[]) => unknown>().mockReturnValue({
       info: jest.fn(),
       error: jest.fn(),
     }),

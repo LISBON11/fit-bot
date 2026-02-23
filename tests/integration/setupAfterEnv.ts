@@ -1,4 +1,8 @@
 import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '.env.test') });
 
 const prisma = new PrismaClient();
 
@@ -7,12 +11,14 @@ beforeEach(async () => {
   // CASCADE помогает очистить связанные таблицы безопасно
   const tablenames = await prisma.$queryRaw<
     Array<{ tablename: string }>
-  >`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename != '_prisma_migrations';`;
+  >`SELECT tablename FROM pg_tables WHERE schemaname='test' AND tablename != '_prisma_migrations';`;
 
-  const tables = tablenames.map(({ tablename }) => tablename).join('", "');
+  const tables = tablenames.map(({ tablename }) => `"test"."${tablename}"`).join(', ');
 
   try {
-    await prisma.$executeRawUnsafe(`TRUNCATE TABLE "${tables}" CASCADE;`);
+    if (tables.length > 0) {
+      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
+    }
   } catch (error) {
     console.log('Teardown database error', error);
   }

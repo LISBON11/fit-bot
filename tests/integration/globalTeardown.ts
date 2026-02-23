@@ -12,8 +12,8 @@ export default async function globalTeardown() {
     DO $$ DECLARE
       r RECORD;
     BEGIN
-      FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
+      FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'test' AND tablename != '_prisma_migrations') LOOP
+        EXECUTE 'TRUNCATE TABLE "test".' || quote_ident(r.tablename) || ' CASCADE';
       END LOOP;
     END $$;
   `);

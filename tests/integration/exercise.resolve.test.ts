@@ -4,7 +4,7 @@ import { exerciseService } from '../../src/services/index.js';
 const prisma = new PrismaClient();
 
 describe('Exercise Resolving Integration', () => {
-  const userId = 'user-uuid-1234';
+  const userId = '33333333-3333-3333-3333-333333333333';
 
   beforeEach(async () => {
     // 1. Создаем пользователя
@@ -23,14 +23,14 @@ describe('Exercise Resolving Integration', () => {
     await prisma.exercise.createMany({
       data: [
         {
-          id: 'ex-1',
+          id: '11111111-1111-1111-1111-111111111111',
           canonicalName: 'deadlift',
           displayNameRu: 'Становая тяга',
           isGlobal: true,
           muscleGroups: ['BACK'],
         },
         {
-          id: 'ex-2',
+          id: '22222222-2222-2222-2222-222222222222',
           canonicalName: 'romanian_deadlift',
           displayNameRu: 'Румынская тяга',
           isGlobal: true,
@@ -42,7 +42,7 @@ describe('Exercise Resolving Integration', () => {
     // 3. Создаем глобальные синонимы (только 1 для ex-1)
     await prisma.exerciseSynonym.create({
       data: {
-        exerciseId: 'ex-1',
+        exerciseId: '11111111-1111-1111-1111-111111111111',
         synonym: 'становая',
         language: 'ru',
         isGlobal: true,
@@ -52,8 +52,18 @@ describe('Exercise Resolving Integration', () => {
     // 4. Добавим неоднозначный синоним "тяга" к обоим
     await prisma.exerciseSynonym.createMany({
       data: [
-        { exerciseId: 'ex-1', synonym: 'тяга', language: 'ru', isGlobal: true },
-        { exerciseId: 'ex-2', synonym: 'тяга', language: 'ru', isGlobal: true },
+        {
+          exerciseId: '11111111-1111-1111-1111-111111111111',
+          synonym: 'тяга',
+          language: 'ru',
+          isGlobal: true,
+        },
+        {
+          exerciseId: '22222222-2222-2222-2222-222222222222',
+          synonym: 'тяга',
+          language: 'ru',
+          isGlobal: true,
+        },
       ],
     });
   });
@@ -63,7 +73,7 @@ describe('Exercise Resolving Integration', () => {
 
     expect(result.status).toBe('resolved');
     if (result.status === 'resolved') {
-      expect(result.exercise.id).toBe('ex-1');
+      expect(result.exercise.id).toBe('11111111-1111-1111-1111-111111111111');
       expect(result.exercise.canonicalName).toBe('deadlift');
     }
   });
@@ -75,21 +85,21 @@ describe('Exercise Resolving Integration', () => {
     if (result.status === 'ambiguous') {
       expect(result.options).toHaveLength(2);
       const ids = result.options.map((o) => o.id);
-      expect(ids).toContain('ex-1');
-      expect(ids).toContain('ex-2');
+      expect(ids).toContain('11111111-1111-1111-1111-111111111111');
+      expect(ids).toContain('22222222-2222-2222-2222-222222222222');
     }
   });
 
   test('should resolve by user mapping after confirmMapping', async () => {
     // Пользователь выбирает Румынскую тягу
-    await exerciseService.confirmMapping(userId, 'тяга', 'ex-2');
+    await exerciseService.confirmMapping(userId, 'тяга', '22222222-2222-2222-2222-222222222222');
 
     // Повторный резолв
     const result = await exerciseService.resolveExercise('тяга', userId);
 
     expect(result.status).toBe('resolved');
     if (result.status === 'resolved') {
-      expect(result.exercise.id).toBe('ex-2');
+      expect(result.exercise.id).toBe('22222222-2222-2222-2222-222222222222');
       expect(result.exercise.canonicalName).toBe('romanian_deadlift');
     }
   });

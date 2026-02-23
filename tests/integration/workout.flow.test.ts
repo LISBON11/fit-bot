@@ -20,7 +20,7 @@ describe('Workout Flow Integration', () => {
     // Сидируем одно упражнение для маппинга
     await prisma.exercise.create({
       data: {
-        id: 'test-exercise-id',
+        id: '11111111-1111-1111-1111-111111111111',
         canonicalName: 'squat',
         displayNameRu: 'Приседания со штангой',
         displayNameEn: 'Barbell Squat',
@@ -31,7 +31,7 @@ describe('Workout Flow Integration', () => {
 
     await prisma.exerciseSynonym.create({
       data: {
-        exerciseId: 'test-exercise-id',
+        exerciseId: '11111111-1111-1111-1111-111111111111',
         synonym: 'присед',
         language: 'ru',
         isGlobal: true,

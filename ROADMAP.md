@@ -3,7 +3,7 @@
 > **Как использовать:** каждый блок `prompt` — самостоятельная задача для AI-агента.
 > Копируй блок целиком и отправляй в агент. Каждый промпт содержит: контекст, зависимости, задачи, ограничения, acceptance criteria.
 
-**Контекст проекта:** [SYSTEM_DESIGN.md](file:///Users/elizavetagolubenko/Projects/fit-tel-bot/SYSTEM_DESIGN.md)
+**Контекст проекта:** [docs/architecture/design/SYSTEM_DESIGN.md](file:///Users/elizavetagolubenko/Projects/fit-tel-bot/docs/architecture/design/SYSTEM_DESIGN.md)
 
 ---
 
@@ -15,12 +15,12 @@
 Инициализируй Node.js + TypeScript проект в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: нет (первый шаг).
-Контекст: SYSTEM_DESIGN.md — раздел 11 «Технологический стек» (таблица стека) и «Структура проекта» (дерево директорий).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 11 «Технологический стек» (таблица стека) и «Структура проекта» (дерево директорий).
 
 Задачи:
 1. npm init, установить typescript, tsx, @types/node.
 2. tsconfig.json: strict: true, target: ES2022, module: NodeNext, outDir: dist, rootDir: src.
-3. Создать структуру директорий ТОЧНО по SYSTEM_DESIGN.md раздел 11 «Структура проекта»:
+3. Создать структуру директорий ТОЧНО по docs/architecture/design/SYSTEM_DESIGN.md раздел 11 «Структура проекта»:
    src/bot/{conversations, handlers, keyboards, formatters, middleware},
    src/services, src/stt, src/nlu/prompts, src/repositories,
    src/config, src/errors, src/logger, tests/{unit, integration, fixtures}.
@@ -38,7 +38,7 @@
 Acceptance criteria:
 - [ ] `npm run build` компилируется без ошибок
 - [ ] `npm run dev` запускается и выводит сообщение о старте
-- [ ] Все директории из SYSTEM_DESIGN.md существуют
+- [ ] Все директории из docs/architecture/design/SYSTEM_DESIGN.md существуют
 - [ ] .env.example содержит 7 переменных
 ```
 
@@ -50,7 +50,7 @@ Acceptance criteria:
 Настрой ESLint (flat config) и Prettier для TypeScript в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 1.1 выполнен.
-Контекст: SYSTEM_DESIGN.md — раздел 11 (ESLint + Prettier в таблице стека).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 11 (ESLint + Prettier в таблице стека).
 
 Задачи:
 1. Установить eslint, @typescript-eslint/parser, @typescript-eslint/eslint-plugin, eslint-config-prettier, eslint-plugin-prettier, prettier.
@@ -103,7 +103,7 @@ Acceptance criteria:
 Создай Docker Compose для локальной разработки в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 1.1 выполнен.
-Контекст: SYSTEM_DESIGN.md — раздел 11 «Docker Compose (dev)» — там есть пример конфигурации.
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 11 «Docker Compose (dev)» — там есть пример конфигурации.
 
 Задачи:
 1. docker-compose.yml с сервисами:
@@ -128,11 +128,11 @@ Acceptance criteria:
 Настрой Prisma ORM и создай полную схему БД для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 1.1, 1.4 выполнены (проект + PostgreSQL запущен).
-Контекст: SYSTEM_DESIGN.md — раздел 4 «Модель данных и схема БД» (ER-диаграмма, описания таблиц, индексы).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 4 «Модель данных и схема БД» (ER-диаграмма, описания таблиц, индексы).
 
 Задачи:
 1. Установить prisma, @prisma/client. Инициализировать: npx prisma init.
-2. schema.prisma — создать ВСЕ модели из ER-диаграммы SYSTEM_DESIGN.md раздел 4:
+2. schema.prisma — создать ВСЕ модели из ER-диаграммы docs/architecture/design/SYSTEM_DESIGN.md раздел 4:
    - User (id uuid, telegram_id, telegram_username, email, password_hash, display_name, timestamps)
    - AuthProvider (id, user_id FK, provider enum, provider_user_id, metadata Json, timestamps)
    - Workout (id, user_id FK, workout_date, status enum DRAFT/APPROVED/CANCELLED, focus String[], location, raw_transcript, source_message_id, preview_message_id, published_message_id, timestamps)
@@ -143,7 +143,7 @@ Acceptance criteria:
    - ExerciseSet (id, workout_exercise_id FK, set_number, reps, weight Decimal nullable, unit, timestamps)
    - WorkoutComment (id, workout_id FK, workout_exercise_id FK nullable, comment_type, body_part, side, sensation_type, raw_text, timestamps)
 3. Связи: каскадное удаление (workout → exercises → sets, workout → comments).
-4. Индексы — ТОЧНО по SYSTEM_DESIGN.md раздел 4 «Индексы» (5 индексов: workouts_user_date, synonyms_text, synonyms_user, mappings_user_text, sets_workout_exercise, auth_providers_provider).
+4. Индексы — ТОЧНО по docs/architecture/design/SYSTEM_DESIGN.md раздел 4 «Индексы» (5 индексов: workouts_user_date, synonyms_text, synonyms_user, mappings_user_text, sets_workout_exercise, auth_providers_provider).
 5. Seed-скрипт prisma/seed.ts: 20–30 упражнений (back_squat, front_squat, deadlift, romanian_deadlift, bench_press, overhead_press, hip_thrust, leg_press, lat_pulldown, barbell_row и т.д.) + по 2–4 синонима на русском и английском для каждого. Все is_global=true.
 6. npm-скрипты: db:migrate (prisma migrate dev), db:generate (prisma generate), db:seed (prisma db seed), db:studio (prisma studio).
 
@@ -167,7 +167,7 @@ Acceptance criteria:
 Создай модули инфраструктурного слоя для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 1.1–1.5 выполнены.
-Контекст: SYSTEM_DESIGN.md — раздел 9 «Безопасность» (хранение секретов), раздел 10 «Логирование, мониторинг, обработка ошибок» (таблица событий, код логгера, стратегия ошибок).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 9 «Безопасность» (хранение секретов), раздел 10 «Логирование, мониторинг, обработка ошибок» (таблица событий, код логгера, стратегия ошибок).
 
 Задачи:
 1. **Конфигурация** (src/config/env.ts):
@@ -177,7 +177,7 @@ Acceptance criteria:
 
 2. **Логирование** (src/logger/logger.ts):
    - Установить pino, pino-pretty.
-   - Конфигурация по SYSTEM_DESIGN.md раздел 10 «Логгер»: pino-pretty с colorize в dev, JSON в production.
+   - Конфигурация по docs/architecture/design/SYSTEM_DESIGN.md раздел 10 «Логгер»: pino-pretty с colorize в dev, JSON в production.
    - Экспортировать createLogger(name: string) — фабрика child-логгеров с контекстом {module: name}.
 
 3. **Подключение БД** (src/config/database.ts):
@@ -224,7 +224,7 @@ Acceptance criteria:
 Создай каркас Telegram-бота на grammY для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 1.1–1.6 выполнены (проект, линтер, тесты, БД, инфраструктурный слой).
-Контекст: SYSTEM_DESIGN.md — раздел 6 «Telegram-бот: паттерны, состояния, UX» (FSM, middleware, структура handlers), раздел 5 «Авторизация» (паттерн auto-register по telegram_id).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 6 «Telegram-бот: паттерны, состояния, UX» (FSM, middleware, структура handlers), раздел 5 «Авторизация» (паттерн auto-register по telegram_id).
 
 Задачи:
 1. Установить grammy, @grammyjs/conversations, @grammyjs/session.
@@ -245,7 +245,7 @@ Acceptance criteria:
 Acceptance criteria:
 - [ ] `npm run lint` без ошибок
 - [ ] `npm test` — тесты authMiddleware проходят
-- [ ] Все файлы из раздела 6 SYSTEM_DESIGN.md созданы (bot.ts, middleware/*, handlers/commandHandlers.ts)
+- [ ] Все файлы из раздела 6 docs/architecture/design/SYSTEM_DESIGN.md созданы (bot.ts, middleware/*, handlers/commandHandlers.ts)
 - [ ] TSDoc на русском к middleware и handler функциям
 ```
 
@@ -257,11 +257,11 @@ Acceptance criteria:
 Реализуй модуль распознавания речи (STT) для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 2.1 выполнен.
-Контекст: SYSTEM_DESIGN.md — раздел 3.1 «Speech-to-Text» (интерфейс SttService, реализация OpenAI Whisper), раздел 9 «Обработка голосовых» (безопасность: обработка в памяти, НЕ на диск).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 3.1 «Speech-to-Text» (интерфейс SttService, реализация OpenAI Whisper), раздел 9 «Обработка голосовых» (безопасность: обработка в памяти, НЕ на диск).
 
 Задачи:
 1. Установить openai, fluent-ffmpeg, @types/fluent-ffmpeg. На машине должен быть ffmpeg (добавить проверку при старте).
-2. **Интерфейс** (src/stt/stt.interface.ts): interface SttService { transcribe(audioBuffer: Buffer, language?: string): Promise<string> } — точно по SYSTEM_DESIGN.md раздел 3.1.
+2. **Интерфейс** (src/stt/stt.interface.ts): interface SttService { transcribe(audioBuffer: Buffer, language?: string): Promise<string> } — точно по docs/architecture/design/SYSTEM_DESIGN.md раздел 3.1.
 3. **Реализация** (src/stt/openai-whisper.stt.ts): class OpenAiWhisperService implements SttService.
    - Принимает Buffer (.oga от Telegram).
    - Конвертирует .oga → .wav через ffmpeg (pipe-based, БЕЗ temp-файлов — по SYSTEM_DESIGN раздел 9 «Обработка голосовых»).
@@ -296,10 +296,10 @@ Acceptance criteria:
 Реализуй NLU-парсер (извлечение структурированных данных из текста тренировки) для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 2.2 выполнен.
-Контекст: SYSTEM_DESIGN.md — раздел 3.2 «NLU / Парсинг тренировки» (подход LLM + structured output, типы ParsedWorkout/ParsedExercise/ParsedSet/ParsedComment, промпт, механика уточнений, JSON-схема).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 3.2 «NLU / Парсинг тренировки» (подход LLM + structured output, типы ParsedWorkout/ParsedExercise/ParsedSet/ParsedComment, промпт, механика уточнений, JSON-схема).
 
 Задачи:
-1. **Типы** (src/nlu/nlu.types.ts) — ТОЧНО по SYSTEM_DESIGN.md раздел 3.2:
+1. **Типы** (src/nlu/nlu.types.ts) — ТОЧНО по docs/architecture/design/SYSTEM_DESIGN.md раздел 3.2:
    - ParsedWorkout { date, focus: WorkoutFocus[], location: WorkoutLocation, exercises: ParsedExercise[], comments: ParsedComment[] }
    - ParsedExercise { name, canonical_name?, sets: ParsedSet[], is_ambiguous, possible_matches? }
    - ParsedSet { reps, weight?, unit?: 'kg'|'lb' }
@@ -338,7 +338,7 @@ Acceptance criteria:
 Реализуй сервис управления упражнениями, синонимами и уточнениями для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 1.5 (Prisma-схема с моделями Exercise, ExerciseSynonym, UserExerciseMapping), 1.6 (инфраструктурный слой).
-Контекст: SYSTEM_DESIGN.md — раздел 7 «Управление упражнениями и синонимами» (блок-схема алгоритма резолвинга, двухуровневый справочник, механика disambiguation).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 7 «Управление упражнениями и синонимами» (блок-схема алгоритма резолвинга, двухуровневый справочник, механика disambiguation).
 
 Задачи:
 1. **Repository** (src/repositories/exercise.repository.ts):
@@ -372,7 +372,7 @@ Acceptance criteria:
 Реализуй сервис тренировок (CRUD, draft-flow) для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 3.1 (ExerciseService для резолвинга упражнений).
-Контекст: SYSTEM_DESIGN.md — раздел 2 «Data Flow» (sequence diagram happy path), раздел 6 «Workflow Draft → Approve → Edit → Cancel» (хранение черновика, message IDs).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 2 «Data Flow» (sequence diagram happy path), раздел 6 «Workflow Draft → Approve → Edit → Cancel» (хранение черновика, message IDs).
 
 Задачи:
 1. **Repository** (src/repositories/workout.repository.ts):
@@ -410,7 +410,7 @@ Acceptance criteria:
 Реализуй сервис пользователей для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 1.5 (Prisma-схема), 2.1 (auth middleware использует Prisma напрямую — нужен рефакторинг).
-Контекст: SYSTEM_DESIGN.md — раздел 5 «Авторизация и модель пользователей» (паттерн auto-register, таблицы users + auth_providers).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 5 «Авторизация и модель пользователей» (паттерн auto-register, таблицы users + auth_providers).
 
 Задачи:
 1. **Repository** (src/repositories/user.repository.ts):
@@ -439,7 +439,7 @@ Acceptance criteria:
 Реализуй полный conversation flow «Новая тренировка» для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 2.1–2.3 (бот, STT, NLU), 3.1–3.3 (сервисы).
-Контекст: SYSTEM_DESIGN.md — раздел 2 «Data Flow» (sequence diagram), раздел 6 (FSM stateDiagram, workflow Draft → Approve → Edit → Cancel, пример превью тренировки, inline-кнопки).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 2 «Data Flow» (sequence diagram), раздел 6 (FSM stateDiagram, workflow Draft → Approve → Edit → Cancel, пример превью тренировки, inline-кнопки).
 
 Это главный и самый сложный модуль бота — он связывает ВСЕ предыдущие сервисы в единый flow.
 
@@ -483,7 +483,7 @@ Acceptance criteria:
 Реализуй редактирование существующей тренировки по дате для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 4.1 (основной flow, formatter, клавиатуры).
-Контекст: SYSTEM_DESIGN.md — раздел 6 «Редактирование тренировки по дате» (пример диалога), FSM stateDiagram (состояние EditingByDate).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 6 «Редактирование тренировки по дате» (пример диалога), FSM stateDiagram (состояние EditingByDate).
 
 Задачи:
 1. **Conversation** (src/bot/conversations/editWorkout.ts): flow:
@@ -518,7 +518,7 @@ Acceptance criteria:
 Обработай все edge cases и отшлифуй UX для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 4.1, 4.2 (полный flow).
-Контекст: SYSTEM_DESIGN.md — раздел 2 «Обработка ошибок в потоке» (mermaid-диаграмма: ошибки скачивания → STT → NLU → частичный результат), раздел 10 «Обработка ошибок» (стратегии: sttError, nluError, dbError).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 2 «Обработка ошибок в потоке» (mermaid-диаграмма: ошибки скачивания → STT → NLU → частичный результат), раздел 10 «Обработка ошибок» (стратегии: sttError, nluError, dbError).
 
 Задачи:
 1. **Edge cases** (по mermaid из SYSTEM_DESIGN раздел 2):
@@ -549,7 +549,7 @@ Acceptance criteria:
 Подготовь Docker-образ, CI/CD и документацию для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 5.1 выполнен.
-Контекст: SYSTEM_DESIGN.md — раздел 11 «Docker Compose (dev)», «CI/CD (базовый)», «Структура проекта».
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 11 «Docker Compose (dev)», «CI/CD (базовый)», «Структура проекта».
 
 Задачи:
 1. **Dockerfile** (multi-stage):
@@ -557,7 +557,7 @@ Acceptance criteria:
    - Stage production: node:20-alpine, установить ffmpeg (apk add ffmpeg), копировать dist + node_modules + prisma, CMD node dist/index.js.
 2. **docker-compose.yml**: добавить сервис bot (build: ., env_file: .env, depends_on: postgres (healthy) + redis (healthy), restart: unless-stopped, volumes: ./src:/app/src для dev).
 3. **GitHub Actions CI** (.github/workflows/ci.yml): на push main и PR → lint → test → build (tsc) → docker build.
-4. Документация: перенести/структурировать всю проектную документацию в папку docs/ (включая ADR в docs/adr/).
+4. Документация: перенести/структурировать всю проектную документацию в папку docs/ (включая ADR в docs/architecture/decisions/).
 5. **README.md**: описание проекта, prerequisites (Node 20, Docker, ffmpeg), установка (npm ci, docker compose up, prisma migrate, prisma seed), запуск (npm run dev), переменные окружения (таблица), команды бота (/start, /help, /cancel, /edit), стек.
 
 Acceptance criteria:
@@ -610,7 +610,7 @@ Acceptance criteria:
 Создай REST API на Fastify для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: этапы 1–5 выполнены (MVP бот работает).
-Контекст: SYSTEM_DESIGN.md — раздел 8 «Масштабирование» (как бот и приложение делят базу — вариант 1: общие сервисы).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 8 «Масштабирование» (как бот и приложение делят базу — вариант 1: общие сервисы).
 
 Задачи:
 1. Установить fastify, @fastify/cors, @fastify/helmet, @fastify/swagger.
@@ -637,7 +637,7 @@ Acceptance criteria:
 Добавь JWT-авторизацию для REST API в FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 6.1 (REST API).
-Контекст: SYSTEM_DESIGN.md — раздел 5 «JWT для приложения» (access/refresh tokens), «Привязка Telegram» (паттерн Link Account через одноразовый код).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 5 «JWT для приложения» (access/refresh tokens), «Привязка Telegram» (паттерн Link Account через одноразовый код).
 
 Задачи:
 1. Установить jsonwebtoken, bcrypt, @types/jsonwebtoken, @types/bcrypt.
@@ -661,7 +661,7 @@ Acceptance criteria:
 Создай базовый модуль аналитики для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 6.1–6.2 (REST API с авторизацией).
-Контекст: SYSTEM_DESIGN.md — раздел «Итого: дорожная карта» (v3: аналитика).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел «Итого: дорожная карта» (v3: аналитика).
 
 Задачи:
 1. **Analytics Service** (src/services/analytics.service.ts):

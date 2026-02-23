@@ -1147,7 +1147,7 @@ GitHub Actions:
 
 ### 12.1. Уровень архитектуры (ADR)
 
-- Архитектурные решения (Architecture Decision Records) фиксируются в папке `docs/adr/`.
+- Архитектурные решения (Architecture Decision Records) фиксируются в папке `docs/architecture/decisions/`.
 - Формат названия файлов: `XXXX-название-решения.md` (например, `0001-record-architecture-decisions.md`).
 - Это позволяет сохранять контекст «почему мы приняли это решение» (например, выбор Prisma, grammY, PostgreSQL) по мере развития проекта.
 

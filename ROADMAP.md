@@ -372,7 +372,7 @@ Acceptance criteria:
 Реализуй сервис тренировок (CRUD, draft-flow) для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 3.1 (ExerciseService для резолвинга упражнений).
-Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 2 «Data Flow» (sequence diagram happy path), раздел 6 «Workflow Draft → Approve → Edit → Cancel» (хранение черновика, message IDs).
+Контекст: docs/business/general.md — Сценарий 1. docs/architecture/design/SYSTEM_DESIGN.md — раздел 2 «Data Flow» (sequence diagram), раздел 6 «Workflow Draft -> Approve» (хранение черновика, message IDs).
 
 Задачи:
 1. **Repository** (src/repositories/workout.repository.ts):
@@ -439,7 +439,7 @@ Acceptance criteria:
 Реализуй полный conversation flow «Новая тренировка» для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаги 2.1–2.3 (бот, STT, NLU), 3.1–3.3 (сервисы).
-Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 2 «Data Flow» (sequence diagram), раздел 6 (FSM stateDiagram, workflow Draft → Approve → Edit → Cancel, пример превью тренировки, inline-кнопки).
+Контекст: docs/business/general.md — Сценарий 1 (превью, workflow). docs/architecture/design/SYSTEM_DESIGN.md — раздел 2 (sequence diagram), раздел 6 (FSM stateDiagram, inline-кнопки).
 
 Это главный и самый сложный модуль бота — он связывает ВСЕ предыдущие сервисы в единый flow.
 
@@ -483,7 +483,7 @@ Acceptance criteria:
 Реализуй редактирование существующей тренировки по дате для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 4.1 (основной flow, formatter, клавиатуры).
-Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 6 «Редактирование тренировки по дате» (пример диалога), FSM stateDiagram (состояние EditingByDate).
+Контекст: docs/business/general.md — Сценарий 3 «Редактирование тренировки по дате». docs/architecture/design/SYSTEM_DESIGN.md — раздел 6 (FSM stateDiagram, состояние EditingByDate).
 
 Задачи:
 1. **Conversation** (src/bot/conversations/editWorkout.ts): flow:
@@ -557,7 +557,7 @@ Acceptance criteria:
    - Stage production: node:20-alpine, установить ffmpeg (apk add ffmpeg), копировать dist + node_modules + prisma, CMD node dist/index.js.
 2. **docker-compose.yml**: добавить сервис bot (build: ., env_file: .env, depends_on: postgres (healthy) + redis (healthy), restart: unless-stopped, volumes: ./src:/app/src для dev).
 3. **GitHub Actions CI** (.github/workflows/ci.yml): на push main и PR → lint → test → build (tsc) → docker build.
-4. Документация: перенести/структурировать всю проектную документацию в папку docs/ (включая ADR в docs/architecture/decisions/).
+4. Документация: перенести/структурировать всю проектную документацию в папку docs/ (включая ADR в docs/architecture/decisions/ и BDR в docs/business/decisions/).
 5. **README.md**: описание проекта, prerequisites (Node 20, Docker, ffmpeg), установка (npm ci, docker compose up, prisma migrate, prisma seed), запуск (npm run dev), переменные окружения (таблица), команды бота (/start, /help, /cancel, /edit), стек.
 
 Acceptance criteria:
@@ -637,7 +637,7 @@ Acceptance criteria:
 Добавь JWT-авторизацию для REST API в FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 6.1 (REST API).
-Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 5 «JWT для приложения» (access/refresh tokens), «Привязка Telegram» (паттерн Link Account через одноразовый код).
+Контекст: docs/business/general.md — Сценарий 4 (Привязка Telegram). docs/architecture/design/SYSTEM_DESIGN.md — раздел 5 «JWT для приложения» (access/refresh tokens).
 
 Задачи:
 1. Установить jsonwebtoken, bcrypt, @types/jsonwebtoken, @types/bcrypt.

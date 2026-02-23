@@ -1,0 +1,17 @@
+# lefthook.yml
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      run: npm run format -- {staged_files}
+      glob: '*.{ts,js,json,md,yml,yaml}'
+      stage_fixed: true
+    - name: lint
+      run: npm run lint:fix -- {staged_files}
+      glob: '*.{ts,js}'
+      stage_fixed: true
+    - name: typecheck
+      run: npm run typecheck
+    - name: test
+      run: npm run test

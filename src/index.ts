@@ -35,6 +35,10 @@ async function gracefulShutdown(signal: string): Promise<void> {
   try {
     if (bot) {
       await bot.stop();
+      // Искусственная задержка, чтобы дать существующим асинхронным задачам
+      // (особенно conversations.external) время на завершение
+      mainLogger.info('Ожидание завершения активных тренировок (2 сек)...');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
     await disconnectRedis();
     await disconnectDatabase();

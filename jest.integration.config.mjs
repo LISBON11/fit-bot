@@ -2,8 +2,8 @@
 const config = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src/', '<rootDir>/tests/'],
-  testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts'],
+  roots: ['<rootDir>/tests/integration/'],
+  testMatch: ['**/*.test.ts'],
   moduleNameMapper: {
     '^\\.\\./\\.\\./src/(.*)\\.js$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
@@ -18,16 +18,9 @@ const config = {
     ],
   },
   extensionsToTreatAsEsm: ['.ts'],
-  coverageDirectory: 'coverage',
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
-    },
-  },
-  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/index.ts'],
+  globalSetup: '<rootDir>/tests/integration/globalSetup.ts',
+  globalTeardown: '<rootDir>/tests/integration/globalTeardown.ts',
+  setupFilesAfterEnv: ['<rootDir>/tests/integration/setupAfterEnv.ts'],
 };
 
 export default config;

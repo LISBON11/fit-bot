@@ -8,6 +8,7 @@ import { buildParsePrompt } from './prompts/workout-parse.prompt.js';
 import { buildEditPrompt } from './prompts/workout-edit.prompt.js';
 import { DateParseSchema, dateParseSystemPrompt } from './prompts/date-parse.prompt.js';
 import type { ParsedWorkout } from './nlu.types.js';
+import { withRetry } from '../utils/retry.js';
 
 const logger = createLogger('nlu');
 
@@ -52,13 +53,18 @@ export class WorkoutParser {
       // Формируем сообщения с инструкциями для модели
       const messages = buildParsePrompt(rawText, currentDate, knownExercises);
 
-      // Отправляем запрос с использованием механизма Structured Outputs
-      const completion = await this.openai.chat.completions.parse({
-        model: 'gpt-4o-mini',
-        messages,
-        response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),
-        temperature: 0.1, // Низкая температура для большей детерминированности
-      });
+      // Отправляем запрос с использованием механизма Structured Outputs (с авто-ретраем)
+      const completion = await withRetry(
+        () =>
+          this.openai.chat.completions.parse({
+            model: 'gpt-4o-mini',
+            messages,
+            response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),
+            temperature: 0.1, // Низкая температура для большей детерминированности
+          }),
+        'OpenAI NLU Parse',
+        { maxRetries: 2, baseDelayMs: 2000 },
+      );
 
       const parsedData = completion.choices[0]?.message?.parsed;
 
@@ -111,12 +117,17 @@ export class WorkoutParser {
 
       const messages = buildEditPrompt(currentWorkoutJson, rawText, currentDate);
 
-      const completion = await this.openai.chat.completions.parse({
-        model: 'gpt-4o-mini',
-        messages,
-        response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),
-        temperature: 0.1,
-      });
+      const completion = await withRetry(
+        () =>
+          this.openai.chat.completions.parse({
+            model: 'gpt-4o-mini',
+            messages,
+            response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),
+            temperature: 0.1,
+          }),
+        'OpenAI NLU Edit',
+        { maxRetries: 2, baseDelayMs: 2000 },
+      );
 
       const parsedData = completion.choices[0]?.message?.parsed;
 
@@ -161,12 +172,17 @@ export class WorkoutParser {
         { role: 'user', content: rawText },
       ];
 
-      const completion = await this.openai.chat.completions.parse({
-        model: 'gpt-4o-mini',
-        messages,
-        response_format: zodResponseFormat(DateParseSchema, 'date_data'),
-        temperature: 0,
-      });
+      const completion = await withRetry(
+        () =>
+          this.openai.chat.completions.parse({
+            model: 'gpt-4o-mini',
+            messages,
+            response_format: zodResponseFormat(DateParseSchema, 'date_data'),
+            temperature: 0,
+          }),
+        'OpenAI NLU Date Parse',
+        { maxRetries: 2, baseDelayMs: 2000 },
+      );
 
       const parsedData = completion.choices[0].message.parsed;
       if (!parsedData || !parsedData.date) {

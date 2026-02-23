@@ -6,8 +6,9 @@ import { formatPreview, formatWorkoutForNlu } from '../formatters/workoutFormatt
 import type { WorkoutWithRelations } from '../formatters/workoutFormatter.js';
 import { PublisherService } from '../../services/publisher.service.js';
 import type { CustomContext } from '../types.js';
-import { downloadAndTranscribeVoice } from '../utils/telegram.js';
-import { runDisambiguationLoop } from '../utils/disambiguation.js';
+import { downloadAndTranscribeVoice, withChatAction } from '../utils/telegram.js';
+import { parseAndDisambiguateUserInput } from '../utils/workoutFlow.js';
+import { getCurrentDateString } from '../../utils/date.js';
 
 export async function editWorkout(
   conversation: Conversation<CustomContext, CustomContext>,
@@ -33,13 +34,12 @@ export async function editWorkout(
     return;
   }
 
-  await ctx.replyWithChatAction('typing');
-
-  // Для поиска по дате используем NLU парсер, чтобы он перевёл текст в YYYY-MM-DD
   const nluParser = getNluParser();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getCurrentDateString();
 
-  const targetDateStr = await conversation.external(() => nluParser.parseDate(matchText, today));
+  const targetDateStr = await withChatAction(ctx, conversation, async () => {
+    return await conversation.external(() => nluParser.parseDate(matchText, today));
+  });
 
   if (!targetDateStr) {
     await ctx.reply('Не удалось определить дату. Попробуйте еще раз.');
@@ -107,7 +107,7 @@ export async function editWorkout(
       await ctx.reply('✏️ Что изменить? (текст или голос)');
 
       const editInputCtx = await conversation.waitFor(['message:text', 'message:voice']);
-      let editRawText = '';
+      let editRawText: string;
 
       if (editInputCtx.message?.voice) {
         editRawText = await downloadAndTranscribeVoice(editInputCtx, conversation);
@@ -124,12 +124,16 @@ export async function editWorkout(
 
       const nluDto = formatWorkoutForNlu(fullWorkoutForDto);
 
-      await ctx.replyWithChatAction('typing');
-      const parsedEditDelta = await conversation.external(() =>
-        nluParser.parseEdit(editRawText, today, JSON.stringify(nluDto)),
+      const editResult = await parseAndDisambiguateUserInput(
+        conversation,
+        ctx,
+        editRawText,
+        'edit',
+        JSON.stringify(nluDto),
+        workoutId,
       );
 
-      await runDisambiguationLoop(conversation, ctx, parsedEditDelta, workoutId, true);
+      if (!editResult) continue;
 
       await ctx.reply('🔄 Изменения применены!');
       await actionCtx.deleteMessage().catch(() => {});

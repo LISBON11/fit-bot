@@ -2,6 +2,7 @@ import type { CustomContext } from '../types.js';
 import { getSttService, getNluParser } from '../../services/index.js';
 import { createLogger } from '../../logger/logger.js';
 import { AppError } from '../../errors/app-errors.js';
+import { getCurrentDateString } from '../../utils/date.js';
 
 const handlerLogger = createLogger('voiceHandler');
 
@@ -57,7 +58,7 @@ export async function handleVoiceMessage(ctx: CustomContext): Promise<void> {
     handlerLogger.debug({ text }, 'Голосовое сообщение расшифровано');
 
     // Отправляем текст в парсер
-    const today = new Date().toISOString().split('T')[0];
+    const today = getCurrentDateString();
     const nluParser = getNluParser();
     const parsedWorkout = await nluParser.parse(text, today);
 

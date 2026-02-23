@@ -5,6 +5,7 @@ import type { SttService } from './stt.interface.js';
 import { AppError } from '../errors/app-errors.js';
 import { getConfig } from '../config/env.js';
 import { createLogger } from '../logger/logger.js';
+import { withRetry } from '../utils/retry.js';
 
 const logger = createLogger('stt');
 
@@ -89,11 +90,17 @@ export class OpenAiWhisperStt implements SttService {
       // Отправляем в OpenAI Whisper API, преобразуя буфер в File объект
       const file = await toFile(mp3Buffer, 'audio.mp3', { type: 'audio/mp3' });
 
-      const response = await this.openai.audio.transcriptions.create({
-        file,
-        model: 'whisper-1',
-        language: language,
-      });
+      // Обертка с Retry на случай нестабильного 502 Bad Gateway или 429
+      const response = await withRetry(
+        () =>
+          this.openai.audio.transcriptions.create({
+            file,
+            model: 'whisper-1',
+            language: language,
+          }),
+        'Whisper STT',
+        { maxRetries: 2, baseDelayMs: 2000 },
+      );
 
       logger.info({ durationMs: Date.now() - start }, 'Аудио успешно распознано');
 

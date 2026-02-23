@@ -18,7 +18,7 @@ import type { Exercise, Workout } from '@prisma/client';
 export async function runDisambiguationLoop(
   conversation: Conversation<CustomContext, CustomContext>,
   ctx: CustomContext,
-  parsedDelta: ParsedWorkout,
+  parsedDelta: ParsedWorkout | { add?: unknown[]; update?: unknown[]; remove?: string[] },
   workoutId: string,
   isEditMode: boolean = false,
 ): Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: Workout }> {
@@ -29,8 +29,8 @@ export async function runDisambiguationLoop(
 
   let result = await conversation.external(() => {
     const fn = isEditMode
-      ? workoutService.applyEdits(workoutId, userId, parsedDelta)
-      : workoutService.createDraft(userId, parsedDelta);
+      ? workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
+      : workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
     return fn as Promise<{
       status: string;
       ambiguousExercises?: ParsedExercise[];
@@ -85,8 +85,8 @@ export async function runDisambiguationLoop(
 
     result = await conversation.external(() => {
       const fn = isEditMode
-        ? workoutService.applyEdits(workoutId, userId, parsedDelta)
-        : workoutService.createDraft(userId, parsedDelta);
+        ? workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
+        : workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
       return fn as Promise<{
         status: string;
         ambiguousExercises?: ParsedExercise[];

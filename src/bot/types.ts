@@ -9,6 +9,7 @@ export interface SessionData {
   conversationState?: string;
   currentDraftId?: string;
   disambiguation?: unknown;
+  isProcessing?: boolean;
 }
 
 /**

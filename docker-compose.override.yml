@@ -1,0 +1,5 @@
+services:
+  bot:
+    volumes:
+      - ./src:/app/src
+    command: npm run dev

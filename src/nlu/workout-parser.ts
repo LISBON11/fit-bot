@@ -1,5 +1,4 @@
 import { OpenAI } from 'openai';
-import { zodResponseFormat } from 'openai/helpers/zod';
 import { getConfig } from '../config/env.js';
 import { createLogger } from '../logger/logger.js';
 import { AppError } from '../errors/app-errors.js';
@@ -12,6 +11,9 @@ import { withRetry } from '../utils/retry.js';
 
 const logger = createLogger('nlu');
 
+/** Имя модели DeepSeek V3 */
+const DEEPSEEK_MODEL = 'deepseek-chat';
+
 /**
  * Ошибка парсинга NLU
  */
@@ -23,13 +25,40 @@ export class NluParseError extends AppError {
 }
 
 /**
- * Сервис для парсинга текста в структурированные данные о тренировке с использованием LLM
+ * Разбирает JSON-строку из ответа LLM и валидирует её через переданную Zod-схему.
+ *
+ * @param content Строка с JSON от LLM
+ * @param schema Zod-схема для валидации
+ * @returns Валидированный объект
+ * @throws NluParseError если JSON невалиден или не соответствует схеме
+ */
+function parseAndValidate<T>(content: string, schema: { parse: (data: unknown) => T }): T {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(content);
+  } catch {
+    throw new NluParseError(`LLM вернул невалидный JSON: ${content.slice(0, 100)}`);
+  }
+  try {
+    return schema.parse(raw);
+  } catch {
+    throw new NluParseError(`Ответ LLM не соответствует ожидаемой схеме`);
+  }
+}
+
+/**
+ * Сервис для парсинга текста в структурированные данные о тренировке с использованием DeepSeek V3.
+ *
+ * Использует OpenAI-совместимый API DeepSeek с JSON mode.
  */
 export class WorkoutParser {
   private openai: OpenAI;
 
   constructor() {
-    this.openai = new OpenAI({ apiKey: getConfig().OPENAI_API_KEY });
+    this.openai = new OpenAI({
+      apiKey: getConfig().DEEPSEEK_API_KEY,
+      baseURL: 'https://api.deepseek.com/v1',
+    });
   }
 
   /**
@@ -48,46 +77,42 @@ export class WorkoutParser {
   ): Promise<ParsedWorkout> {
     try {
       const start = Date.now();
-      logger.debug('Запуск NLU парсера (OpenAI)...');
+      logger.debug('Запуск NLU парсера (DeepSeek V3)...');
 
-      // Формируем сообщения с инструкциями для модели
       const messages = buildParsePrompt(rawText, currentDate, knownExercises);
 
-      // Отправляем запрос с использованием механизма Structured Outputs (с авто-ретраем)
       const completion = await withRetry(
         () =>
-          this.openai.chat.completions.parse({
-            model: 'gpt-4o-mini',
+          this.openai.chat.completions.create({
+            model: DEEPSEEK_MODEL,
             messages,
-            response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),
-            temperature: 0.1, // Низкая температура для большей детерминированности
+            response_format: { type: 'json_object' },
+            temperature: 0.1,
           }),
-        'OpenAI NLU Parse',
+        'DeepSeek NLU Parse',
         { maxRetries: 2, baseDelayMs: 2000 },
       );
 
-      const parsedData = completion.choices[0]?.message?.parsed;
-
-      // Если модель отказалась отвечать по формату или произошла иная ошибка при парсинге
-      if (!parsedData) {
-        throw new NluParseError(
-          completion.choices[0]?.message?.refusal || 'Не удалось распознать тренировку из текста',
-        );
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new NluParseError('LLM вернул пустой ответ при парсинге тренировки');
       }
+
+      const parsedData = parseAndValidate<ParsedWorkout>(content, ParsedWorkoutSchema);
 
       logger.info(
         { durationMs: Date.now() - start },
         'Тренировка успешно распознана с помощью NLU',
       );
 
-      // Возвращаем строго типизированный объект, прошедший валидацию Zod в SDK OpenAI
-      return parsedData as ParsedWorkout;
+      return parsedData;
     } catch (error: unknown) {
       logger.error({ err: error }, 'Ошибка NLU парсера');
 
-      // OpenAI-specific ошибки
+      if (error instanceof NluParseError) throw error;
+
       if (error instanceof OpenAI.APIError) {
-        throw new NluParseError(`Ошибка API OpenAI: ${error.message}`);
+        throw new NluParseError(`Ошибка API DeepSeek: ${error.message}`);
       }
 
       const message =
@@ -113,38 +138,39 @@ export class WorkoutParser {
   ): Promise<ParsedWorkout> {
     try {
       const start = Date.now();
-      logger.debug('Запуск NLU парсера для редактирования (OpenAI)...');
+      logger.debug('Запуск NLU парсера для редактирования (DeepSeek V3)...');
 
       const messages = buildEditPrompt(currentWorkoutJson, rawText, currentDate);
 
       const completion = await withRetry(
         () =>
-          this.openai.chat.completions.parse({
-            model: 'gpt-4o-mini',
+          this.openai.chat.completions.create({
+            model: DEEPSEEK_MODEL,
             messages,
-            response_format: zodResponseFormat(ParsedWorkoutSchema, 'workout_data'),
+            response_format: { type: 'json_object' },
             temperature: 0.1,
           }),
-        'OpenAI NLU Edit',
+        'DeepSeek NLU Edit',
         { maxRetries: 2, baseDelayMs: 2000 },
       );
 
-      const parsedData = completion.choices[0]?.message?.parsed;
-
-      if (!parsedData) {
-        throw new NluParseError(
-          completion.choices[0]?.message?.refusal || 'Не удалось применить изменения к тренировке',
-        );
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new NluParseError('LLM вернул пустой ответ при редактировании тренировки');
       }
+
+      const parsedData = parseAndValidate<ParsedWorkout>(content, ParsedWorkoutSchema);
 
       logger.info({ durationMs: Date.now() - start }, 'Изменения успешно применены с помощью NLU');
 
-      return parsedData as ParsedWorkout;
+      return parsedData;
     } catch (error: unknown) {
       logger.error({ err: error }, 'Ошибка NLU парсера при редактировании');
 
+      if (error instanceof NluParseError) throw error;
+
       if (error instanceof OpenAI.APIError) {
-        throw new NluParseError(`Ошибка API OpenAI: ${error.message}`);
+        throw new NluParseError(`Ошибка API DeepSeek: ${error.message}`);
       }
 
       const message =
@@ -174,28 +200,34 @@ export class WorkoutParser {
 
       const completion = await withRetry(
         () =>
-          this.openai.chat.completions.parse({
-            model: 'gpt-4o-mini',
+          this.openai.chat.completions.create({
+            model: DEEPSEEK_MODEL,
             messages,
-            response_format: zodResponseFormat(DateParseSchema, 'date_data'),
+            response_format: { type: 'json_object' },
             temperature: 0,
           }),
-        'OpenAI NLU Date Parse',
+        'DeepSeek NLU Date Parse',
         { maxRetries: 2, baseDelayMs: 2000 },
       );
 
-      const parsedData = completion.choices[0].message.parsed;
-      if (!parsedData || !parsedData.date) {
-        throw new NluParseError('Не удалось извлечь дату (OpenAI вернул пустоту)');
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new NluParseError('LLM вернул пустой ответ при парсинге даты');
+      }
+
+      const parsedData = parseAndValidate(content, DateParseSchema);
+
+      if (!parsedData.date) {
+        throw new NluParseError('Не удалось извлечь дату из ответа LLM');
       }
 
       logger.info({ parsedDate: parsedData.date }, 'Дата успешно извлечена');
       return parsedData.date;
     } catch (error) {
-      logger.error({ err: error, text: rawText }, 'Ошибка при работе NLU парсера даты (OpenAI)');
+      logger.error({ err: error, text: rawText }, 'Ошибка при работе NLU парсера даты (DeepSeek)');
       if (error instanceof NluParseError) throw error;
       throw new NluParseError(
-        `OpenAI API Error: ${error instanceof Error ? error.message : 'Unknown'}`,
+        `DeepSeek API Error: ${error instanceof Error ? error.message : 'Unknown'}`,
       );
     }
   }

@@ -76,9 +76,9 @@ describe('SttError', () => {
   });
 
   it('должен принимать кастомное сообщение', () => {
-    const error = new SttError('Whisper API timeout');
+    const error = new SttError('Deepgram API timeout');
 
-    expect(error.message).toBe('Whisper API timeout');
+    expect(error.message).toBe('Deepgram API timeout');
   });
 });
 

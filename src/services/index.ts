@@ -4,7 +4,7 @@ import { ExerciseRepository } from '../repositories/exercise.repository.js';
 import { ExerciseService } from './exercise.service.js';
 import { WorkoutRepository } from '../repositories/workout.repository.js';
 import { WorkoutService } from './workout.service.js';
-import { OpenAiWhisperStt } from '../stt/openai-whisper.stt.js';
+import { DeepgramStt } from '../stt/deepgram.stt.js';
 import { WorkoutParser } from '../nlu/workout-parser.js';
 import { getPrismaClient } from '../config/database.js';
 
@@ -21,10 +21,10 @@ export const workoutRepository = new WorkoutRepository(getPrismaClient());
 export const workoutService = new WorkoutService(workoutRepository, exerciseService);
 
 // STT module
-let sttServiceInstance: OpenAiWhisperStt | null = null;
-export function getSttService(): OpenAiWhisperStt {
+let sttServiceInstance: DeepgramStt | null = null;
+export function getSttService(): DeepgramStt {
   if (!sttServiceInstance) {
-    sttServiceInstance = new OpenAiWhisperStt();
+    sttServiceInstance = new DeepgramStt();
   }
   return sttServiceInstance;
 }

@@ -6,7 +6,10 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   BOT_TOKEN: z.string().min(1, 'BOT_TOKEN обязателен'),
-  OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY обязателен'),
+  /** Используется для NLU (парсинг тренировок через DeepSeek V3) */
+  DEEPSEEK_API_KEY: z.string().min(1, 'DEEPSEEK_API_KEY обязателен'),
+  /** Используется для STT (Deepgram Nova-3) */
+  DEEPGRAM_API_KEY: z.string().min(1, 'DEEPGRAM_API_KEY обязателен'),
   DATABASE_URL: z.string().url('DATABASE_URL должен быть валидным URL'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),

@@ -6,7 +6,8 @@ import { validateConfig, getConfig, _resetConfigForTesting } from '../env.js';
  */
 function setValidEnv(): void {
   process.env.BOT_TOKEN = 'test-bot-token';
-  process.env.OPENAI_API_KEY = 'test-openai-key';
+  process.env.DEEPSEEK_API_KEY = 'test-deepseek-key';
+  process.env.DEEPGRAM_API_KEY = 'test-deepgram-key';
   process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
   process.env.REDIS_URL = 'redis://localhost:6379';
   process.env.LOG_LEVEL = 'info';
@@ -19,7 +20,8 @@ function setValidEnv(): void {
  */
 function clearEnv(): void {
   delete process.env.BOT_TOKEN;
-  delete process.env.OPENAI_API_KEY;
+  delete process.env.DEEPSEEK_API_KEY;
+  delete process.env.DEEPGRAM_API_KEY;
   delete process.env.DATABASE_URL;
   delete process.env.REDIS_URL;
   delete process.env.LOG_LEVEL;
@@ -43,7 +45,8 @@ describe('Config / env.ts', () => {
     const config = validateConfig();
 
     expect(config.BOT_TOKEN).toBe('test-bot-token');
-    expect(config.OPENAI_API_KEY).toBe('test-openai-key');
+    expect(config.DEEPSEEK_API_KEY).toBe('test-deepseek-key');
+    expect(config.DEEPGRAM_API_KEY).toBe('test-deepgram-key');
     expect(config.DATABASE_URL).toBe('postgresql://user:pass@localhost:5432/testdb');
     expect(config.LOG_LEVEL).toBe('info');
     expect(config.NODE_ENV).toBe('test');
@@ -58,7 +61,8 @@ describe('Config / env.ts', () => {
 
   it('должен использовать значения по умолчанию для опциональных переменных', () => {
     process.env.BOT_TOKEN = 'test-token';
-    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.DEEPSEEK_API_KEY = 'test-deepseek-key';
+    process.env.DEEPGRAM_API_KEY = 'test-deepgram-key';
     process.env.DATABASE_URL = 'postgresql://localhost:5432/db';
     process.env.PUBLISH_CHAT_ID = 'test-id';
     // Не устанавливаем REDIS_URL, LOG_LEVEL, NODE_ENV — должны использовать defaults

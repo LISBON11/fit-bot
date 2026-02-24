@@ -1,0 +1,19 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    restart: always
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    image: ghcr.io/lisbon11/fit-tel-bot:latest
+    pull_policy: always
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always

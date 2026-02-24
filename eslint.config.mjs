@@ -16,7 +16,6 @@ export default defineConfig(
       'eslint.config.mjs',
       'jest.config.mjs',
       'jest.integration.config.mjs',
-      'test-openai.ts',
       'prisma/seed.ts',
     ],
   },

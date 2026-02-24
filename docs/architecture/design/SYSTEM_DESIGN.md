@@ -580,10 +580,12 @@ src/
 ```typescript
 // Черновик хранится В БД (таблица workouts, status = 'draft')
 // + message_id превью хранится в workout.preview_message_id
-// + Redis session может хранить текущий conversation state
+// + Redis session хранит conversation state (переживает перезапуск бота)
 
-// Ключи Redis session:
-// session:{chatId} → { conversationState, currentDraftId, disambiguation }
+// Реализация: @grammyjs/storage-redis (RedisAdapter), TTL 24 часа
+// Ключи Redis:
+//   session:{chatId}          → { conversationState, currentDraftId, disambiguation }
+//   processing_lock:{userId}  → "1" (mutex, TTL 60 сек)
 ```
 
 #### Inline-кнопки превью

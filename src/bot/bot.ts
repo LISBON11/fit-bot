@@ -1,5 +1,6 @@
 import type { BotError } from 'grammy';
 import { Bot, session } from 'grammy';
+import { RedisAdapter } from '@grammyjs/storage-redis';
 import { conversations, createConversation } from '@grammyjs/conversations';
 import type { CustomContext, SessionData } from './types.js';
 import { loggingMiddleware } from './middleware/loggingMiddleware.js';
@@ -9,6 +10,7 @@ import { handleStart, handleHelp, handleCancel } from './handlers/commandHandler
 import { newWorkout } from './conversations/newWorkout.js';
 import { editWorkout } from './conversations/editWorkout.js';
 import { logger } from '../logger/logger.js';
+import { getRedisClient } from '../config/redis.js';
 import { lockUser, unlockUser } from './utils/processingLock.js';
 
 const botLogger = logger.child({ module: 'BotInit' });
@@ -32,11 +34,19 @@ export function createBot(token: string): Bot<CustomContext> {
   bot.use(errorMiddleware);
   bot.use(authMiddleware);
 
+  // Сессии хранятся в Redis: переживают перезапуск бота, автоочистка через 24 часа.
+  const redisClient = getRedisClient();
+  const storage = new RedisAdapter<SessionData>({
+    instance: redisClient,
+    ttl: 86400, // 24 часа в секундах
+  });
+
   bot.use(
     session({
       initial(): SessionData {
         return {};
       },
+      storage,
     }),
   );
 

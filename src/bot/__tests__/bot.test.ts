@@ -22,6 +22,14 @@ jest.unstable_mockModule('@grammyjs/conversations', () => ({
   createConversation: jest.fn(),
 }));
 
+jest.unstable_mockModule('@grammyjs/storage-redis', () => ({
+  RedisAdapter: jest.fn().mockImplementation(() => ({})),
+}));
+
+jest.unstable_mockModule('../../config/redis.js', () => ({
+  getRedisClient: jest.fn().mockReturnValue({}),
+}));
+
 jest.unstable_mockModule('../utils/processingLock.js', () => ({
   lockUser: jest.fn(),
   unlockUser: jest.fn(),

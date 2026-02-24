@@ -28,7 +28,7 @@
 4. Entry point src/index.ts: async main() с try/catch, graceful shutdown (SIGINT, SIGTERM → process.exit(0)), логирование старта и остановки через console.log (pino добавим позже).
 5. npm-скрипты: dev (tsx watch src/index.ts), build (tsc), start (node dist/index.js).
 6. .gitignore: node_modules, dist, .env, *.js в корне.
-7. .env.example с ВСЕМИ переменными: BOT_TOKEN, OPENAI_API_KEY, DATABASE_URL, REDIS_URL, LOG_LEVEL, NODE_ENV, PUBLISH_CHAT_ID.
+7. .env.example с ВСЕМИ переменными: BOT_TOKEN, DEEPGRAM_API_KEY, DEEPSEEK_API_KEY, DATABASE_URL, REDIS_URL, LOG_LEVEL, NODE_ENV, PUBLISH_CHAT_ID.
 
 Ограничения:
 - НЕ устанавливать ESLint/Prettier/Jest — это шаги 1.2, 1.3.
@@ -172,7 +172,7 @@ Acceptance criteria:
 Задачи:
 1. **Конфигурация** (src/config/env.ts):
    - Установить zod.
-   - Zod-схема для ВСЕХ переменных: BOT_TOKEN (string), OPENAI_API_KEY (string), DATABASE_URL (string url), REDIS_URL (string, default redis://localhost:6379), LOG_LEVEL (enum: debug/info/warn/error, default info), NODE_ENV (enum: development/production/test, default development), PUBLISH_CHAT_ID (string).
+   - Zod-схема для ВСЕХ переменных: BOT_TOKEN (string), DEEPGRAM_API_KEY (string), DEEPSEEK_API_KEY (string), DATABASE_URL (string url), REDIS_URL (string, default redis://localhost:6379), LOG_LEVEL (enum: debug/info/warn/error, default info), NODE_ENV (enum: development/production/test, default development), PUBLISH_CHAT_ID (string).
    - Экспортировать типизированный объект config. При невалидном конфиге — понятная ошибка с указанием какие переменные не прошли валидацию.
 
 2. **Логирование** (src/logger/logger.ts):
@@ -257,15 +257,15 @@ Acceptance criteria:
 Реализуй модуль распознавания речи (STT) для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
 Зависимости: шаг 2.1 выполнен.
-Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 3.1 «Speech-to-Text» (интерфейс SttService, реализация OpenAI Whisper), раздел 9 «Обработка голосовых» (безопасность: обработка в памяти, НЕ на диск).
+Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 3.1 «Speech-to-Text» (интерфейс SttService, реализация Deepgram Nova-3), раздел 9 «Обработка голосовых» (безопасность: обработка в памяти, НЕ на диск).
 
 Задачи:
-1. Установить openai, fluent-ffmpeg, @types/fluent-ffmpeg. На машине должен быть ffmpeg (добавить проверку при старте).
+1. Установить @deepgram/sdk. Нативная поддержка формата OGG (без ffmpeg).
 2. **Интерфейс** (src/stt/stt.interface.ts): interface SttService { transcribe(audioBuffer: Buffer, language?: string): Promise<string> } — точно по docs/architecture/design/SYSTEM_DESIGN.md раздел 3.1.
-3. **Реализация** (src/stt/openai-whisper.stt.ts): class OpenAiWhisperService implements SttService.
+3. **Реализация** (src/stt/deepgram.stt.ts): class DeepgramStt implements SttService.
    - Принимает Buffer (.oga от Telegram).
    - Конвертирует .oga → .wav через ffmpeg (pipe-based, БЕЗ temp-файлов — по SYSTEM_DESIGN раздел 9 «Обработка голосовых»).
-   - Отправляет в OpenAI Whisper API (openai.audio.transcriptions.create), model: 'whisper-1', language: 'ru'.
+   - Отправляет в Deepgram Nova-3 API напрямую.
    - Логирует: время конвертации, время транскрипции, длину текста.
    - При ошибке — бросает SttError.
 4. **Voice handler** (src/bot/handlers/voiceHandler.ts):
@@ -274,7 +274,7 @@ Acceptance criteria:
    - Передать buffer в SttService.transcribe().
    - ПОКА просто отправить текст транскрипции обратно пользователю (NLU подключим в следующем шаге).
 5. Зарегистрировать voiceHandler в bot.ts (bot.on('message:voice', ...)).
-6. **Тесты** (src/**/__tests__/stt/): мок openai клиента, проверить: успешная транскрипция, SttError при ошибке API, пустой текст.
+6. **Тесты** (src/**/__tests__/stt/): мок @deepgram/sdk клиента, проверить: успешная транскрипция, SttError при ошибке API, пустой текст.
 
 Ограничения:
 - НЕ сохранять аудио на диск и НЕ хранить — только Buffer в памяти.
@@ -307,14 +307,14 @@ Acceptance criteria:
 2. **Zod-схема** (src/nlu/nlu.schema.ts): валидация JSON-ответа от GPT по этим типам. Строгая валидация: unknown fields strip, required fields check.
 3. **Промпт** (src/nlu/prompts/workout-parse.prompt.ts):
    - Системный промпт: формат JSON, допустимые значения focus (legs, glutes, back, chest, shoulders, arms, core, cardio), location, comment types.
-   - Функция buildParsePrompt(rawText, knownExercises) — принимает текст и список известных упражнений, возвращает messages[] для OpenAI.
+   - Функция buildParsePrompt(rawText, knownExercises) — принимает текст и список известных упражнений, возвращает messages[] для DeepSeek.
    - Инструкция: помечать is_ambiguous=true и possible_matches при неоднозначных упражнениях.
 4. **Парсер** (src/nlu/workout-parser.ts): class WorkoutParser.
-   - Метод parse(rawText, knownExercises): вызов OpenAI GPT (gpt-4o-mini), response_format: { type: 'json_object' }, temperature: 0.
+   - Метод parse(rawText, knownExercises): вызов DeepSeek V3 (deepseek-chat), response_format: { type: 'json_object' }, temperature: 0.
    - Валидация через Zod-схему.
    - При невалидном ответе — NluParseError.
    - Логирование: время парсинга, количество упражнений, есть ли неоднозначности.
-5. **Тесты** (src/**/__tests__/nlu/): мок OpenAI, 3 fixture-ответа: валидный (все упражнения распознаны), с неоднозначностями (is_ambiguous=true), невалидный JSON.
+5. **Тесты** (src/**/__tests__/nlu/): мок DeepSeek (через OpenAI совместимый клиент), 3 fixture-ответа: валидный (все упражнения распознаны), с неоднозначностями (is_ambiguous=true), невалидный JSON.
 
 Ограничения:
 - НЕ реализовывать disambiguation flow (inline-кнопки) — это шаг 4.1.
@@ -606,20 +606,26 @@ Acceptance criteria:
 
 ### 6.1 Настройка VPS и Docker Production
 
+> **Статус: ✅ Выполнено** — Supabase (PostgreSQL) + Яндекс Облако VM + GitHub Actions CI/CD
+
 ```prompt
-Подготовь Docker Compose для production-окружения FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
+[ВЫПОЛНЕНО] Настройка production-деплоя FitBot.
 
-Зависимости: этап 5 выполнен.
-Контекст: docs/infrastructure/DEPLOYMENT.md.
+Что сделано:
+- docker-compose.prod.yml: сервисы bot (образ из GHCR ghcr.io/lisbon11/fit-tel-bot:latest) и redis.
+  PostgreSQL НЕ в Docker — используется Supabase (managed, бесплатный tier, авто-бэкапы).
+  Решение задокументировано в ADR-0003.
+- deploy.sh: docker compose pull + up + prisma migrate deploy + image prune.
+- .github/workflows/ci.yml: lint → test → build → docker push GHCR → SSH deploy.
+- DATABASE_URL указывает на Supabase Transaction Pooler (порт 6543, ?pgbouncer=true).
 
-Задачи:
-1. Создай файл `docker-compose.prod.yml` на основе `docker-compose.yml`, но оптимизированный для production (например, restart: always для сервисов, проброс портов только по необходимости, healthchecks).
-2. Создай базовый `deploy.sh` скрипт, который пуллит изменения, собирает образы и делает `docker compose up -d`.
-3. Убедись, что .env.example отражает все production переменные.
+Контекст: docs/infrastructure/DEPLOYMENT.md — подробная пошаговая инструкция.
 
 Acceptance criteria:
-- [ ] `docker-compose.prod.yml` существует и содержит 3 сервиса: bot, postgres, redis.
-- [ ] `deploy.sh` существует и имеет права на выполнение.
+- [x] `docker-compose.prod.yml` содержит 2 сервиса: bot, redis (postgres → Supabase).
+- [x] `deploy.sh` существует и делает docker pull + up + migrate.
+- [x] CI/CD настроен: push main → образ в GHCR → деплой на VPS.
+- [x] Документация обновлена: ADR-0003, DEPLOYMENT.md, SYSTEM_DESIGN.md.
 ```
 
 ---
@@ -631,7 +637,7 @@ Acceptance criteria:
 ```prompt
 Создай REST API на Fastify для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
-Зависимости: этапы 1–5 выполнены (MVP бот работает).
+Зависимости: этапы 1–6 выполнены (MVP бот работает и развернут).
 Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел 8 «Масштабирование» (как бот и приложение делят базу — вариант 1: общие сервисы).
 
 Задачи:
@@ -658,7 +664,7 @@ Acceptance criteria:
 ```prompt
 Добавь JWT-авторизацию для REST API в FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
-Зависимости: шаг 6.1 (REST API).
+Зависимости: шаг 7.1 (REST API).
 Контекст: docs/business/general.md — Сценарий 4 (Привязка Telegram). docs/architecture/design/SYSTEM_DESIGN.md — раздел 5 «JWT для приложения» (access/refresh tokens).
 
 Задачи:
@@ -682,7 +688,7 @@ Acceptance criteria:
 ```prompt
 Создай базовый модуль аналитики для FitBot в /Users/elizavetagolubenko/Projects/fit-tel-bot.
 
-Зависимости: шаги 6.1–6.2 (REST API с авторизацией).
+Зависимости: шаги 7.1–7.2 (REST API с авторизацией).
 Контекст: docs/architecture/design/SYSTEM_DESIGN.md — раздел «Итого: дорожная карта» (v3: аналитика).
 
 Задачи:

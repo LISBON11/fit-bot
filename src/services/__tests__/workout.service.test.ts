@@ -185,5 +185,33 @@ describe('WorkoutService', () => {
       expect(result.status).toBe('updated');
       expect(workoutRepoMock.replaceExercises).toHaveBeenCalled();
     });
+
+    it('should return needs_disambiguation if exercise is ambiguous during edit', async () => {
+      workoutRepoMock.findById.mockResolvedValue({ userId: 'user1' } as unknown as Workout);
+      exerciseServiceMock.resolveExercise.mockResolvedValue({
+        status: 'ambiguous',
+        options: [],
+      });
+
+      const mockWithExercise: ParsedWorkout = {
+        date: '2026-02-22',
+        focus: 'legs',
+        exercises: [
+          {
+            originalName: 'тяга',
+            mappedExerciseId: null,
+            isAmbiguous: false,
+            sets: [],
+            comments: [],
+          },
+        ],
+        generalComments: [],
+      };
+
+      const result = await service.applyEdits('w1', 'user1', mockWithExercise);
+
+      expect(result.status).toBe('needs_disambiguation');
+      expect(workoutRepoMock.replaceExercises).not.toHaveBeenCalled();
+    });
   });
 });

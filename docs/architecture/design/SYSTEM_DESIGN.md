@@ -2,6 +2,7 @@
 
 > [!NOTE]
 > Поведенческие сценарии, глоссарий и общие бизнес-требования вынесены в [docs/business/general.md](../../business/general.md).
+> Системный дизайн мобильного приложения FitApp (iOS/Android): [FIT_APP_SYSTEM_DESIGN.md](./FIT_APP_SYSTEM_DESIGN.md).
 
 ## Оглавление
 

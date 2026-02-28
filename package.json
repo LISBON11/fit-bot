@@ -20,7 +20,7 @@
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "postinstall": "lefthook install"
+    "postinstall": "lefthook install || true"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

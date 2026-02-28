@@ -86,7 +86,7 @@ jobs:
 
       - name: Create deploy directory on VM
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "mkdir -p ~/fit-bot"
 
       - name: Copy deploy files to VM
@@ -94,13 +94,13 @@ jobs:
           scp -i ~/.ssh/deploy_key \
             docker-compose.prod.yml \
             deploy.sh \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fit-bot/
-          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fit-bot/
+          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "chmod +x ~/fit-bot/deploy.sh"
 
       - name: Write .env on VM
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ~/fit-bot/.env << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ~/fit-bot/.env << 'EOF'
           NODE_ENV=production
           BOT_TOKEN=${{ secrets.BOT_TOKEN }}
           DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}
@@ -109,11 +109,11 @@ jobs:
           DIRECT_URL=${{ secrets.DIRECT_URL }}
           REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           REDIS_URL=${{ secrets.REDIS_URL }}
-          LOG_LEVEL=info
+          LOG_LEVEL=${{ vars.LOG_LEVEL }}
           PUBLISH_CHAT_ID=${{ secrets.PUBLISH_CHAT_ID }}
           EOF"
 
       - name: Run deploy script on VM
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "cd ~/fit-bot && bash deploy.sh"

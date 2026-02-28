@@ -107,14 +107,17 @@ docker compose version
 
 ---
 
-## Шаг 4. Настроить GitHub Secrets
+## Шаг 4. Настроить GitHub Secrets и Variables
 
-GitHub → репозиторий → **Settings → Secrets and variables → Actions → New repository secret**
+GitHub → репозиторий → **Settings → Secrets and variables → Actions**
+
+### Secrets — секретные значения
+
+**New repository secret** — маскируются в логах пайплайна, доступ через `${{ secrets.NAME }}`
 
 | Имя                | Значение                                    |
 | ------------------ | ------------------------------------------- |
 | `SERVER_HOST`      | IP адрес Яндекс Облако VM                   |
-| `SERVER_USER`      | `ubuntu`                                    |
 | `SERVER_SSH_KEY`   | Приватный ключ: `cat ~/.ssh/id_ed25519`     |
 | `BOT_TOKEN`        | Токен от @BotFather                         |
 | `DEEPGRAM_API_KEY` | API-ключ Deepgram                           |
@@ -127,6 +130,15 @@ GitHub → репозиторий → **Settings → Secrets and variables → A
 
 > [!CAUTION]
 > `SERVER_SSH_KEY` — содержимое **приватного** ключа (начинается с `-----BEGIN OPENSSH PRIVATE KEY-----`).
+
+### Variables — несекретные значения
+
+**New repository variable** — видны в логах, доступ через `${{ vars.NAME }}`
+
+| Имя           | Значение |
+| ------------- | -------- |
+| `SERVER_USER` | `ubuntu` |
+| `LOG_LEVEL`   | `info`   |
 
 ---
 

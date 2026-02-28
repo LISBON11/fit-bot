@@ -25,75 +25,81 @@ export class WorkoutRepository {
     resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[],
     generalComments: ParsedComment[],
   ): Promise<Workout | null> {
-    return this.prisma.$transaction(async (tx) => {
-      const workout = await tx.workout.create({
-        data: {
-          user: { connect: { id: userId } },
-          workoutDate,
-          focus: focusArray,
-          status: WorkoutStatus.DRAFT,
-        },
-      });
-
-      for (let i = 0; i < resolvedExercises.length; i++) {
-        const resData = resolvedExercises[i];
-        const we = await tx.workoutExercise.create({
+    return this.prisma.$transaction(
+      async (tx) => {
+        const workout = await tx.workout.create({
           data: {
-            workoutId: workout.id,
-            exerciseId: resData.exerciseId,
-            sortOrder: i,
-            rawName: resData.parsed.originalName,
+            user: { connect: { id: userId } },
+            workoutDate,
+            focus: focusArray,
+            status: WorkoutStatus.DRAFT,
           },
         });
 
-        if (resData.parsed.sets.length > 0) {
-          await tx.exerciseSet.createMany({
-            data: resData.parsed.sets.map((set, setIndex) => ({
-              workoutExerciseId: we.id,
-              setNumber: setIndex + 1,
-              reps: set.reps || 0,
-              weight: set.weight || null,
-            })),
+        for (let i = 0; i < resolvedExercises.length; i++) {
+          const resData = resolvedExercises[i];
+          const we = await tx.workoutExercise.create({
+            data: {
+              workoutId: workout.id,
+              exerciseId: resData.exerciseId,
+              sortOrder: i,
+              rawName: resData.parsed.originalName,
+            },
           });
+
+          if (resData.parsed.sets.length > 0) {
+            await tx.exerciseSet.createMany({
+              data: resData.parsed.sets.map((set, setIndex) => ({
+                workoutExerciseId: we.id,
+                setNumber: setIndex + 1,
+                reps: set.reps || 0,
+                weight: set.weight || null,
+              })),
+            });
+          }
+
+          if (resData.parsed.comments.length > 0) {
+            await tx.workoutComment.createMany({
+              data: resData.parsed.comments.map((c) => ({
+                workoutId: workout.id,
+                workoutExerciseId: we.id,
+                commentType: CommentType.OTHER,
+                rawText: c.text,
+              })),
+            });
+          }
         }
 
-        if (resData.parsed.comments.length > 0) {
+        if (generalComments.length > 0) {
           await tx.workoutComment.createMany({
-            data: resData.parsed.comments.map((c) => ({
+            data: generalComments.map((c) => ({
               workoutId: workout.id,
-              workoutExerciseId: we.id,
               commentType: CommentType.OTHER,
               rawText: c.text,
             })),
           });
         }
-      }
 
-      if (generalComments.length > 0) {
-        await tx.workoutComment.createMany({
-          data: generalComments.map((c) => ({
-            workoutId: workout.id,
-            commentType: CommentType.OTHER,
-            rawText: c.text,
-          })),
-        });
-      }
-
-      return tx.workout.findUnique({
-        where: { id: workout.id },
-        include: {
-          workoutExercises: {
-            include: {
-              exercise: true,
-              sets: { orderBy: { setNumber: 'asc' } },
-              comments: true,
+        return tx.workout.findUnique({
+          where: { id: workout.id },
+          include: {
+            workoutExercises: {
+              include: {
+                exercise: true,
+                sets: { orderBy: { setNumber: 'asc' } },
+                comments: true,
+              },
+              orderBy: { sortOrder: 'asc' },
             },
-            orderBy: { sortOrder: 'asc' },
+            comments: true,
           },
-          comments: true,
-        },
-      });
-    });
+        });
+      },
+      {
+        maxWait: 5000,
+        timeout: 15000,
+      },
+    );
   }
 
   /**
@@ -240,81 +246,87 @@ export class WorkoutRepository {
     resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[],
     generalComments: ParsedComment[],
   ): Promise<Workout> {
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Удаляем все старые упражнения и их комментарии
-      await tx.workoutExercise.deleteMany({
-        where: { workoutId },
-      });
-      // 2. Удаляем старые общие комментарии к тренировке
-      await tx.workoutComment.deleteMany({
-        where: { workoutId, workoutExerciseId: null },
-      });
-
-      // 3. Обновляем базовые поля тренировки
-      await tx.workout.update({
-        where: { id: workoutId },
-        data: workoutUpdateData,
-      });
-
-      // 4. Воссоздаем упражнения, подходы и комментарии
-      for (let i = 0; i < resolvedExercises.length; i++) {
-        const resData = resolvedExercises[i];
-        const we = await tx.workoutExercise.create({
-          data: {
-            workoutId,
-            exerciseId: resData.exerciseId,
-            sortOrder: i,
-            rawName: resData.parsed.originalName,
-          },
+    return this.prisma.$transaction(
+      async (tx) => {
+        // 1. Удаляем все старые упражнения и их комментарии
+        await tx.workoutExercise.deleteMany({
+          where: { workoutId },
+        });
+        // 2. Удаляем старые общие комментарии к тренировке
+        await tx.workoutComment.deleteMany({
+          where: { workoutId, workoutExerciseId: null },
         });
 
-        if (resData.parsed.sets.length > 0) {
-          await tx.exerciseSet.createMany({
-            data: resData.parsed.sets.map((set, setIndex) => ({
-              workoutExerciseId: we.id,
-              setNumber: setIndex + 1,
-              reps: set.reps || 0,
-              weight: set.weight || null,
-            })),
+        // 3. Обновляем базовые поля тренировки
+        await tx.workout.update({
+          where: { id: workoutId },
+          data: workoutUpdateData,
+        });
+
+        // 4. Воссоздаем упражнения, подходы и комментарии
+        for (let i = 0; i < resolvedExercises.length; i++) {
+          const resData = resolvedExercises[i];
+          const we = await tx.workoutExercise.create({
+            data: {
+              workoutId,
+              exerciseId: resData.exerciseId,
+              sortOrder: i,
+              rawName: resData.parsed.originalName,
+            },
           });
+
+          if (resData.parsed.sets.length > 0) {
+            await tx.exerciseSet.createMany({
+              data: resData.parsed.sets.map((set, setIndex) => ({
+                workoutExerciseId: we.id,
+                setNumber: setIndex + 1,
+                reps: set.reps || 0,
+                weight: set.weight || null,
+              })),
+            });
+          }
+
+          if (resData.parsed.comments.length > 0) {
+            await tx.workoutComment.createMany({
+              data: resData.parsed.comments.map((c) => ({
+                workoutId,
+                workoutExerciseId: we.id,
+                commentType: CommentType.OTHER,
+                rawText: c.text,
+              })),
+            });
+          }
         }
 
-        if (resData.parsed.comments.length > 0) {
+        if (generalComments.length > 0) {
           await tx.workoutComment.createMany({
-            data: resData.parsed.comments.map((c) => ({
+            data: generalComments.map((c) => ({
               workoutId,
-              workoutExerciseId: we.id,
               commentType: CommentType.OTHER,
               rawText: c.text,
             })),
           });
         }
-      }
 
-      if (generalComments.length > 0) {
-        await tx.workoutComment.createMany({
-          data: generalComments.map((c) => ({
-            workoutId,
-            commentType: CommentType.OTHER,
-            rawText: c.text,
-          })),
-        });
-      }
-
-      return tx.workout.findUniqueOrThrow({
-        where: { id: workoutId },
-        include: {
-          workoutExercises: {
-            include: {
-              exercise: true,
-              sets: { orderBy: { setNumber: 'asc' } },
-              comments: true,
+        return tx.workout.findUniqueOrThrow({
+          where: { id: workoutId },
+          include: {
+            workoutExercises: {
+              include: {
+                exercise: true,
+                sets: { orderBy: { setNumber: 'asc' } },
+                comments: true,
+              },
+              orderBy: { sortOrder: 'asc' },
             },
-            orderBy: { sortOrder: 'asc' },
+            comments: true,
           },
-          comments: true,
-        },
-      });
-    });
+        });
+      },
+      {
+        maxWait: 5000,
+        timeout: 15000,
+      },
+    );
   }
 }

@@ -19,8 +19,15 @@ const mockPublisher = {
   publish: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
 };
 
+const mockUserService = {
+  getOrCreateByTelegram: jest
+    .fn<(...args: unknown[]) => Promise<unknown>>()
+    .mockResolvedValue({ id: 'u1' }),
+};
+
 jest.unstable_mockModule('../../../services/index.js', () => ({
   workoutService: mockWorkoutService,
+  userService: mockUserService,
 }));
 
 jest.unstable_mockModule('../../../services/publisher.service.js', () => ({
@@ -65,18 +72,21 @@ describe('newWorkout conversation', () => {
 
   it('should throw if no user', async () => {
     const ctx = createMockCtx();
-    ctx.user = undefined;
+    Object.defineProperty(ctx, 'from', { value: undefined });
 
     const conversation = mockDeep<Conversation<CustomContext, CustomContext>>();
-    await expect(newWorkout(conversation, ctx)).rejects.toThrow('Пользователь не авторизован');
+    await expect(newWorkout(conversation, ctx)).rejects.toThrow('Пользователь не идентифицирован');
   });
 
   it('should ask for text if no text and no voice', async () => {
     const ctx = createMockCtx();
-    ctx.user = { id: 'u1' } as never;
+    Object.defineProperty(ctx, 'from', { value: { id: 12345 } });
     Object.defineProperty(ctx, 'message', { value: { message_id: 111 } });
 
     const conversation = mockDeep<Conversation<CustomContext, CustomContext>>();
+    conversation.external.mockImplementation((async <R>(fn: unknown) => {
+      return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
+    }) as never);
     await newWorkout(conversation, ctx as never);
 
     expect(ctx.reply).toHaveBeenCalledWith(
@@ -86,7 +96,7 @@ describe('newWorkout conversation', () => {
 
   it('should handle text input, create draft, and publish', async () => {
     const ctx = createMockCtx();
-    ctx.user = { id: 'u1' } as never;
+    Object.defineProperty(ctx, 'from', { value: { id: 12345 } });
     Object.defineProperty(ctx, 'message', { value: { text: 'test workout', message_id: 111 } });
     Object.defineProperty(ctx, 'chat', { value: { id: 100 } });
 
@@ -121,6 +131,7 @@ describe('newWorkout conversation', () => {
       ctx,
       'test workout',
       'new',
+      'u1',
     );
     expect(mockWorkoutService.updateMessageIds).toHaveBeenCalledWith('w1', {
       sourceMessageId: 111,
@@ -133,7 +144,7 @@ describe('newWorkout conversation', () => {
 
   it('should handle voice input and cancel', async () => {
     const ctx = createMockCtx();
-    ctx.user = { id: 'u1' } as never;
+    Object.defineProperty(ctx, 'from', { value: { id: 12345 } });
     Object.defineProperty(ctx, 'message', { value: { voice: {}, message_id: 111 } });
     Object.defineProperty(ctx, 'chat', { value: { id: 100 } });
 
@@ -167,6 +178,7 @@ describe('newWorkout conversation', () => {
       ctx,
       'test voice',
       'new',
+      'u1',
     );
     expect(mockWorkoutService.cancelDraft).toHaveBeenCalledWith('w1');
     expect(ctx.reply).toHaveBeenCalledWith('❌ Тренировка отменена.');

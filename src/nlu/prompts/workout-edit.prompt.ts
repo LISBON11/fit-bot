@@ -1,4 +1,6 @@
 import type { ChatCompletionMessageParam } from 'openai/resources/index.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { ParsedWorkoutSchema } from '../nlu.schema.js';
 
 export function buildEditPrompt(
   currentWorkoutJson: string,
@@ -20,7 +22,9 @@ export function buildEditPrompt(
 Текущая тренировка в формате JSON (до правок):
 ${currentWorkoutJson}
 
-Ожидаемая JSON схема: возвращайте структуру, полностью описывающую финальную тренировку (схема предоставляется через Structured Output). В случае неопределенности названия упражнения, как и раньше, ставьте isAmbiguous: true.`;
+Ожидаемая JSON схема (ВНИМАНИЕ: возвращайте структуру, полностью описывающую финальную тренировку. В случае неопределенности названия упражнения ставьте isAmbiguous: true):
+${JSON.stringify(zodToJsonSchema(ParsedWorkoutSchema, 'ParsedWorkout'), null, 2)}
+`;
 
   return [
     { role: 'system', content: systemMessage },

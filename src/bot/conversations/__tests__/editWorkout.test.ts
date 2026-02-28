@@ -18,9 +18,16 @@ const mockPublisher = {
   publish: jest.fn(),
 };
 
+const mockUserService = {
+  getOrCreateByTelegram: jest
+    .fn<(...args: unknown[]) => Promise<unknown>>()
+    .mockResolvedValue({ id: 'u1' }),
+};
+
 jest.unstable_mockModule('../../../services/index.js', () => ({
   workoutService: mockWorkoutService,
   getNluParser: jest.fn(() => mockNluParser),
+  userService: mockUserService,
 }));
 
 jest.unstable_mockModule('../../../services/publisher.service.js', () => ({
@@ -54,18 +61,18 @@ describe('editWorkout conversation', () => {
   });
 
   it('should throw if no user', async () => {
-    const ctx = { user: undefined };
+    const ctx = { from: undefined };
     await expect(
       editWorkout(
         {} as unknown as Parameters<typeof editWorkoutFn>[0],
         ctx as unknown as Parameters<typeof editWorkoutFn>[1],
       ),
-    ).rejects.toThrow('Пользователь не авторизован');
+    ).rejects.toThrow('Пользователь не идентифицирован');
   });
 
   it('should ask for date if no match text and resolve', async () => {
     const ctx = {
-      user: { id: 'u1' },
+      from: { id: 12345 },
       message: { text: '/edit' },
       reply: jest
         .fn<(...args: unknown[]) => Promise<unknown>>()
@@ -77,7 +84,7 @@ describe('editWorkout conversation', () => {
 
     const actionCtxCancel = {
       callbackQuery: { data: 'canc:w1' },
-      answerCallbackQuery: jest.fn(),
+      answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
       deleteMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(true),
     };
 
@@ -104,7 +111,7 @@ describe('editWorkout conversation', () => {
 
   it('should handle direct edit command with target and approve', async () => {
     const ctx = {
-      user: { id: 'u1' },
+      from: { id: 12345 },
       message: { text: '/edit вчера', message_id: 111 },
       reply: jest
         .fn<(...args: unknown[]) => Promise<unknown>>()
@@ -116,7 +123,7 @@ describe('editWorkout conversation', () => {
 
     const actionCtxApprove = {
       callbackQuery: { data: 'appr:w1' },
-      answerCallbackQuery: jest.fn(),
+      answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
       deleteMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(true),
     };
 

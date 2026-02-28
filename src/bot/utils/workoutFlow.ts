@@ -1,6 +1,6 @@
 import type { Conversation } from '@grammyjs/conversations';
 import type { CustomContext } from '../types.js';
-import type { Workout } from '@prisma/client';
+
 import { getNluParser } from '../../services/index.js';
 import { withChatAction } from './telegram.js';
 import { runDisambiguationLoop } from './disambiguation.js';
@@ -18,9 +18,14 @@ export async function parseAndDisambiguateUserInput(
   ctx: CustomContext,
   rawText: string,
   mode: WorkoutFlowMode,
+  userId: string,
   existingWorkoutContext?: string,
   workoutIdForDelta?: string,
-): Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: Workout } | null> {
+): Promise<{
+  status: string;
+  ambiguousExercises?: ParsedExercise[];
+  workout?: { id: string };
+} | null> {
   let parsedWorkoutOrDelta:
     | ParsedWorkout
     | { add?: unknown[]; update?: unknown[]; remove?: string[] };
@@ -28,7 +33,9 @@ export async function parseAndDisambiguateUserInput(
   const today = getCurrentDateString();
 
   try {
+    logger.info('parseAndDisambiguateUserInput: starting withChatAction');
     parsedWorkoutOrDelta = await withChatAction(ctx, conversation, async () => {
+      logger.info('parseAndDisambiguateUserInput: inside withChatAction work()');
       if (mode === 'new') {
         return await conversation.external(() => nluParser.parse(rawText, today));
       } else {
@@ -40,6 +47,7 @@ export async function parseAndDisambiguateUserInput(
       }
     });
   } catch (err: unknown) {
+    console.log(err);
     logger.error({ err }, 'Ошибка при парсинге NLU');
 
     const escapedText = rawText
@@ -56,11 +64,13 @@ export async function parseAndDisambiguateUserInput(
   }
 
   // Запуск цикла уточнения (Disambiguation)
+  logger.info('parseAndDisambiguateUserInput: calling runDisambiguationLoop');
   return await runDisambiguationLoop(
     conversation,
     ctx,
     parsedWorkoutOrDelta,
     mode === 'new' ? 'draft' : (workoutIdForDelta as string),
+    userId,
     mode === 'edit',
   );
 }

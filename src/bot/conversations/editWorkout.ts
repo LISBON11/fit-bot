@@ -1,6 +1,6 @@
 import type { Conversation } from '@grammyjs/conversations';
 import { AppError } from '../../errors/app-errors.js';
-import { getNluParser, workoutService } from '../../services/index.js';
+import { getNluParser, workoutService, userService } from '../../services/index.js';
 import { createWorkoutPreviewKeyboard } from '../keyboards/workoutPreview.js';
 import { formatPreview, formatWorkoutForNlu } from '../formatters/workoutFormatter.js';
 import type { WorkoutWithRelations } from '../formatters/workoutFormatter.js';
@@ -9,15 +9,22 @@ import type { CustomContext } from '../types.js';
 import { downloadAndTranscribeVoice, withChatAction } from '../utils/telegram.js';
 import { parseAndDisambiguateUserInput } from '../utils/workoutFlow.js';
 import { getCurrentDateString } from '../../utils/date.js';
+import { cloneWithoutClasses } from '../utils/serialization.js';
 
 export async function editWorkout(
   conversation: Conversation<CustomContext, CustomContext>,
   ctx: CustomContext,
 ): Promise<void> {
-  const userId = ctx.user?.id;
-  if (!userId) {
-    throw new AppError('Пользователь не авторизован', 401);
+  const telegramId = ctx.from?.id.toString();
+  if (!telegramId) {
+    throw new AppError('Пользователь не идентифицирован', 401);
   }
+
+  const user = await conversation.external(() =>
+    userService.getOrCreateByTelegram(telegramId, ctx.from?.username || null, ctx.from?.first_name),
+  );
+
+  const userId = user.id;
 
   // Получаем аргумент (дату) после команды /edit
   // Команда может быть запущена так: /edit вчера, или просто /edit
@@ -46,9 +53,10 @@ export async function editWorkout(
     return;
   }
 
-  const workout = await conversation.external(() =>
-    workoutService.findByDate(userId, new Date(targetDateStr)),
-  );
+  const workout = await conversation.external(async () => {
+    const data = await workoutService.findByDate(userId, new Date(targetDateStr));
+    return cloneWithoutClasses(data);
+  });
 
   if (!workout) {
     await ctx.reply(`Не найдена тренировка за дату: ${targetDateStr}.`);
@@ -61,7 +69,10 @@ export async function editWorkout(
 
   // Тот же цикл редактирования
   while (true) {
-    const currentWorkout = await conversation.external(() => workoutService.findById(workoutId));
+    const currentWorkout = await conversation.external(async () => {
+      const data = await workoutService.findById(workoutId);
+      return cloneWithoutClasses(data);
+    });
 
     if (!currentWorkout) {
       throw new AppError('Не удалось загрузить тренировку', 404);
@@ -90,12 +101,12 @@ export async function editWorkout(
 
     const actionData = actionCtx.callbackQuery.data;
     const action = actionData.split(':')[0];
-    await actionCtx.answerCallbackQuery();
+    await actionCtx.answerCallbackQuery().catch(() => {});
 
     if (action === 'appr') {
       await conversation.external(() => workoutService.approveDraft(workoutId));
       const publisher = new PublisherService(ctx.api);
-      await conversation.external(() => publisher.publish(previewHtml));
+      await publisher.publish(previewHtml);
       await actionCtx.deleteMessage().catch(() => {});
       await ctx.reply('✅ Тренировка обновлена и опубликована!');
       return;
@@ -117,9 +128,10 @@ export async function editWorkout(
 
       if (!editRawText.trim()) continue;
 
-      const fullWorkoutForDto = await conversation.external(
-        () => workoutService.getDraftForUser(userId), // or getById with relations
-      );
+      const fullWorkoutForDto = await conversation.external(async () => {
+        const data = await workoutService.getDraftForUser(userId); // or getById with relations
+        return cloneWithoutClasses(data);
+      });
       if (!fullWorkoutForDto) throw new AppError('Workout not found');
 
       const nluDto = formatWorkoutForNlu(fullWorkoutForDto);
@@ -129,6 +141,7 @@ export async function editWorkout(
         ctx,
         editRawText,
         'edit',
+        userId,
         JSON.stringify(nluDto),
         workoutId,
       );

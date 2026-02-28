@@ -107,10 +107,12 @@ export function createBot(token: string): Bot<CustomContext> {
       { data: ctx.callbackQuery.data },
       'Получен неизвестный или устаревший callback_query',
     );
-    await ctx.answerCallbackQuery({
-      text: '⚠️ Действие устарело или сессия завершена.',
-      show_alert: true,
-    });
+    await ctx
+      .answerCallbackQuery({
+        text: '⚠️ Действие устарело или сессия завершена.',
+        show_alert: true,
+      })
+      .catch(() => {});
     if (ctx.callbackQuery.message) {
       // Удаляем кнопки у старого сообщения
       await ctx.editMessageReplyMarkup({ reply_markup: { inline_keyboard: [] } }).catch(() => {});

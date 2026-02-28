@@ -36,6 +36,8 @@ describe('WorkoutRepository', () => {
             originalName: 'Pull ups',
             sets: [{ reps: 10, weight: null }],
             comments: [{ text: 'Hard' }],
+            isAmbiguous: false,
+            mappedExerciseId: 'e1',
           } as ParsedExercise,
         },
       ];
@@ -49,7 +51,10 @@ describe('WorkoutRepository', () => {
         generalComments,
       );
 
-      expect(prismaMock.$transaction).toHaveBeenCalled();
+      expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        maxWait: 5000,
+        timeout: 15000,
+      });
       expect(txMock.workout.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -63,7 +68,46 @@ describe('WorkoutRepository', () => {
       expect(txMock.workoutExercise.create).toHaveBeenCalled();
       expect(txMock.exerciseSet.createMany).toHaveBeenCalled();
       expect(txMock.workoutComment.createMany).toHaveBeenCalledTimes(2); // Local and global comments
+      expect(txMock.workoutComment.createMany).toHaveBeenCalledWith({
+        data: [
+          { workoutId: 'w1', workoutExerciseId: 'we1', commentType: 'OTHER', rawText: 'Hard' },
+        ],
+      });
+      expect(txMock.workoutComment.createMany).toHaveBeenCalledWith({
+        data: [{ workoutId: 'w1', commentType: 'OTHER', rawText: 'Good workout' }],
+      });
       expect(result?.id).toBe('w1');
+    });
+
+    it('should not call createMany if sets and comments are empty', async () => {
+      const date = new Date();
+      txMock.workout.create.mockResolvedValue({ id: 'w1' } as never);
+      txMock.workoutExercise.create.mockResolvedValue({ id: 'we1' } as never);
+      txMock.workout.findUnique.mockResolvedValue({ id: 'w1', workoutExercises: [] } as never);
+      prismaMock.$transaction.mockImplementation(async (cb: unknown) => {
+        if (typeof cb === 'function') {
+          return cb(txMock);
+        }
+        return Promise.resolve();
+      });
+
+      const exercises = [
+        {
+          exerciseId: 'e1',
+          parsed: {
+            originalName: 'Pull ups',
+            sets: [],
+            comments: [],
+            isAmbiguous: false,
+            mappedExerciseId: 'e1',
+          } as ParsedExercise,
+        },
+      ];
+
+      await repository.createWithRelations('u1', date, ['Back'], exercises, []);
+
+      expect(txMock.exerciseSet.createMany).not.toHaveBeenCalled();
+      expect(txMock.workoutComment.createMany).not.toHaveBeenCalled();
     });
   });
 
@@ -151,7 +195,70 @@ describe('WorkoutRepository', () => {
   });
 
   describe('replaceExercises', () => {
-    it('should clear old exercises and replace with new ones', async () => {
+    it('should clear old exercises and replace with new ones with all relations', async () => {
+      txMock.workout.update.mockResolvedValue({ id: 'w1' } as never);
+      txMock.workoutExercise.create.mockResolvedValue({ id: 'we1' } as never);
+      txMock.workout.findUniqueOrThrow.mockResolvedValue({ id: 'w1' } as never);
+      prismaMock.$transaction.mockImplementation(async (cb: unknown) => {
+        if (typeof cb === 'function') {
+          return cb(txMock);
+        }
+        return Promise.resolve();
+      });
+
+      const exercises = [
+        {
+          exerciseId: 'e2',
+          parsed: {
+            originalName: 'Push ups',
+            sets: [{ reps: 15, weight: 20 }],
+            comments: [{ text: 'Easy' }],
+            isAmbiguous: false,
+            mappedExerciseId: 'e2',
+          } as ParsedExercise,
+        },
+      ];
+      const generalComments: ParsedComment[] = [{ text: 'Replaced well' }];
+
+      const result = await repository.replaceExercises(
+        'w1',
+        { focus: ['Chest'] },
+        exercises,
+        generalComments,
+      );
+
+      expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        maxWait: 5000,
+        timeout: 15000,
+      });
+      expect(txMock.workoutExercise.deleteMany).toHaveBeenCalledWith({
+        where: { workoutId: 'w1' },
+      });
+      expect(txMock.workoutComment.deleteMany).toHaveBeenCalledWith({
+        where: { workoutId: 'w1', workoutExerciseId: null },
+      });
+      expect(txMock.workout.update).toHaveBeenCalledWith({
+        where: { id: 'w1' },
+        data: { focus: ['Chest'] },
+      });
+      expect(txMock.workoutExercise.create).toHaveBeenCalled();
+      expect(txMock.exerciseSet.createMany).toHaveBeenCalled();
+      expect(txMock.workoutComment.createMany).toHaveBeenCalledTimes(2);
+      expect(txMock.workoutComment.createMany).toHaveBeenCalledWith({
+        data: [
+          { workoutId: 'w1', workoutExerciseId: 'we1', commentType: 'OTHER', rawText: 'Easy' },
+        ],
+      });
+      expect(txMock.workoutComment.createMany).toHaveBeenCalledWith({
+        data: [{ workoutId: 'w1', commentType: 'OTHER', rawText: 'Replaced well' }],
+      });
+      expect(txMock.workout.findUniqueOrThrow).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'w1' } }),
+      );
+      expect(result.id).toBe('w1');
+    });
+
+    it('should not call createMany if sets and comments are empty', async () => {
       txMock.workout.update.mockResolvedValue({ id: 'w1' } as never);
       txMock.workoutExercise.create.mockResolvedValue({ id: 'we1' } as never);
       txMock.workout.findUniqueOrThrow.mockResolvedValue({ id: 'w1' } as never);
@@ -175,24 +282,10 @@ describe('WorkoutRepository', () => {
         },
       ];
 
-      const result = await repository.replaceExercises('w1', { focus: ['Chest'] }, exercises, []);
+      await repository.replaceExercises('w1', { focus: ['Chest'] }, exercises, []);
 
-      expect(prismaMock.$transaction).toHaveBeenCalled();
-      expect(txMock.workoutExercise.deleteMany).toHaveBeenCalledWith({
-        where: { workoutId: 'w1' },
-      });
-      expect(txMock.workoutComment.deleteMany).toHaveBeenCalledWith({
-        where: { workoutId: 'w1', workoutExerciseId: null },
-      });
-      expect(txMock.workout.update).toHaveBeenCalledWith({
-        where: { id: 'w1' },
-        data: { focus: ['Chest'] },
-      });
-      expect(txMock.workoutExercise.create).toHaveBeenCalled();
-      expect(txMock.workout.findUniqueOrThrow).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'w1' } }),
-      );
-      expect(result.id).toBe('w1');
+      expect(txMock.exerciseSet.createMany).not.toHaveBeenCalled();
+      expect(txMock.workoutComment.createMany).not.toHaveBeenCalled();
     });
   });
 });

@@ -28,7 +28,9 @@ export async function errorMiddleware(ctx: CustomContext, next: NextFunction): P
 
     try {
       if (ctx.callbackQuery) {
-        await ctx.answerCallbackQuery({ text: userFriendlyMessage, show_alert: true });
+        await ctx
+          .answerCallbackQuery({ text: userFriendlyMessage, show_alert: true })
+          .catch(() => {});
       } else if (ctx.chat) {
         await ctx.reply(userFriendlyMessage);
       }

@@ -24,8 +24,12 @@ export type WorkoutWithRelations = Prisma.WorkoutGetPayload<{
  * @returns Отформатированная HTML строка
  */
 export function formatPreview(workout: WorkoutWithRelations): string {
+  // Обеспечиваем, что workoutDate - это объект Date (при replay сессия из Redis возвращает строку)
+  const workoutDateObj =
+    typeof workout.workoutDate === 'string' ? new Date(workout.workoutDate) : workout.workoutDate;
+
   // Форматируем дату в DD.MM.YYYY
-  const dateStr = workout.workoutDate.toLocaleDateString('ru-RU', {
+  const dateStr = workoutDateObj.toLocaleDateString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -106,8 +110,11 @@ export function formatPublish(workout: WorkoutWithRelations): string {
  * @returns Очищенный объект для JSON.stringify
  */
 export function formatWorkoutForNlu(workout: WorkoutWithRelations): Record<string, unknown> {
+  const workoutDateObj =
+    typeof workout.workoutDate === 'string' ? new Date(workout.workoutDate) : workout.workoutDate;
+
   return {
-    date: workout.workoutDate.toISOString().split('T')[0],
+    date: workoutDateObj.toISOString().split('T')[0],
     focus: workout.focus,
     location: workout.location,
     comments: workout.comments.map((c) => c.rawText),

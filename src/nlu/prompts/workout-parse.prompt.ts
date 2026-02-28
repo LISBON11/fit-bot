@@ -1,7 +1,6 @@
 import type { ChatCompletionMessageParam } from 'openai/resources/index.js';
-
-// Используем нативный формат JSON Schema для OpenAI (Structured Outputs API)
-// В последних версиях OpenAI API можно использовать response_format: { type: "json_schema", json_schema: { name: "...", schema: ... } }
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { ParsedWorkoutSchema } from '../nlu.schema.js';
 
 export function buildParsePrompt(
   rawText: string,
@@ -25,7 +24,9 @@ export function buildParsePrompt(
 
 ${knownExercisesText}
 
-Ожидаемая JSON схема: (вас вызовут с Structured Output форматом, верните данные строго по нему).`;
+Ожидаемая JSON схема:
+${JSON.stringify(zodToJsonSchema(ParsedWorkoutSchema, 'ParsedWorkout'), null, 2)}
+`;
 
   return [
     { role: 'system', content: systemMessage },

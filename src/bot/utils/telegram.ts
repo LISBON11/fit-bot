@@ -2,6 +2,7 @@ import type { Conversation } from '@grammyjs/conversations';
 import type { CustomContext } from '../types.js';
 import { getSttService } from '../../services/index.js';
 import { AppError } from '../../errors/app-errors.js';
+import { getConfig } from '../../config/env.js';
 
 /**
  * Безопасная обертка для выполнения долгих операций с показом индикатора набора текста.
@@ -11,39 +12,16 @@ export async function withChatAction<T>(
   ctx: CustomContext,
   conversation: Conversation<CustomContext, CustomContext>,
   work: () => Promise<T>,
-  timeoutMs: number = 2 * 60 * 1000,
 ): Promise<T> {
-  let isFinished = false;
+  const chatId = ctx.chat?.id;
 
-  await conversation.external(async () => {
-    // Запускаем асинхронный цикл в фоне, чтобы не блокировать основной поток
-    const loop = async (): Promise<void> => {
-      while (!isFinished) {
-        await ctx.replyWithChatAction('typing').catch(() => {});
-        // Ждем 4.5 секунды частями, чтобы быстро прервать цикл
-        for (let i = 0; i < 45 && !isFinished; i++) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-      }
-    };
-    // Fire and forget, чтобы цикл начался параллельно
-    void loop();
-  });
-
-  try {
-    // Оборачиваем работу тайм-аутом
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(
-        () => reject(new AppError('⚠️ Превышено максимальное время обработки (тайм-аут)', 504)),
-        timeoutMs,
-      );
-    });
-
-    return await Promise.race([work(), timeoutPromise]);
-  } finally {
-    // Флаг остановит цикл
-    isFinished = true;
+  if (chatId) {
+    // GrammY automatically intercepts API calls like sendChatAction inside conversations.
+    // They must NOT be wrapped in conversation.external().
+    await ctx.api.sendChatAction(chatId, 'typing').catch(() => {});
   }
+
+  return await work();
 }
 
 /**
@@ -62,29 +40,29 @@ export async function downloadAndTranscribeVoice(
   }
 
   return withChatAction(ctx, conversation, async () => {
-    const file = await conversation.external(() => ctx.getFile());
+    // API calls inside conversations are intercepted natively.
+    const file = await ctx.getFile();
 
     if (!file.file_path) {
       throw new AppError('⚠️ Не удалось получить путь к голосовому файлу', 400);
     }
 
-    const { getConfig } = await conversation.external(() => import('../../config/env.js'));
     const config = getConfig();
 
-    const response = await conversation.external(() =>
-      fetch(`https://api.telegram.org/file/bot${config.BOT_TOKEN}/${file.file_path}`),
-    );
+    // Group non-api async operations into a single conversation.external call
+    // so we don't save huge ArrayBuffers to the Redis session storage!
+    const text = await conversation.external(async () => {
+      const response = await fetch(
+        `https://api.telegram.org/file/bot${config.BOT_TOKEN}/${file.file_path}`,
+      );
+      if (!response.ok) {
+        throw new AppError('⚠️ Не смог скачать файл, попробуй ещё раз', 500);
+      }
+      const arrayBuffer = await response.arrayBuffer();
 
-    if (!response.ok) {
-      throw new AppError('⚠️ Не смог скачать файл, попробуй ещё раз', 500);
-    }
-
-    const arrayBuffer = await conversation.external(() => response.arrayBuffer());
-    const sttService = getSttService();
-
-    const text = await conversation.external(() =>
-      sttService.transcribe(Buffer.from(arrayBuffer), 'ru'),
-    );
+      const sttService = getSttService();
+      return sttService.transcribe(Buffer.from(arrayBuffer), 'ru');
+    });
 
     if (!text || !text.trim()) {
       throw new AppError('⚠️ Не удалось распознать слова, попробуй снова', 422);

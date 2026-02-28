@@ -37,6 +37,7 @@ describe('workoutFlow', () => {
     ctx: CustomContext,
     inputText: string,
     mode: 'new' | 'edit',
+    userId: string,
     workoutContext?: string,
     draftId?: string,
   ) => Promise<
@@ -68,7 +69,13 @@ describe('workoutFlow', () => {
         external: jest.fn(async (fn: () => unknown) => fn()),
       } as unknown as Conversation<CustomContext, CustomContext>;
 
-      const result = await parseAndDisambiguateUserInput(conversation, ctx, '10 pull ups', 'new');
+      const result = await parseAndDisambiguateUserInput(
+        conversation,
+        ctx,
+        '10 pull ups',
+        'new',
+        'u1',
+      );
 
       expect(mockNluParser.parse).toHaveBeenCalledWith('10 pull ups', '2023-01-01');
       expect(runDisambiguationLoop).toHaveBeenCalledWith(
@@ -76,6 +83,7 @@ describe('workoutFlow', () => {
         ctx,
         expect.any(Object),
         'draft',
+        'u1',
         false,
       );
       expect(result?.status).toBe('created');
@@ -95,6 +103,7 @@ describe('workoutFlow', () => {
         ctx,
         'change pull ups to 12',
         'edit',
+        'u1',
         'current context',
         'w1',
       );
@@ -109,6 +118,7 @@ describe('workoutFlow', () => {
         ctx,
         expect.any(Object),
         'w1',
+        'u1',
         true,
       );
       expect(result?.status).toBe('updated');
@@ -120,7 +130,7 @@ describe('workoutFlow', () => {
         external: jest.fn(async (fn: () => unknown) => fn()),
       } as unknown as Conversation<CustomContext, CustomContext>;
 
-      await parseAndDisambiguateUserInput(conversation, ctx, 'text', 'edit', '', 'w1');
+      await parseAndDisambiguateUserInput(conversation, ctx, 'text', 'edit', 'u1', '', 'w1');
       // Throws AppError which triggers catch block and returns null
       expect(ctx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Не удалось автоматически разобрать'),
@@ -141,6 +151,7 @@ describe('workoutFlow', () => {
         ctx,
         'bad input',
         'new',
+        'u1',
       );
 
       expect(ctx.reply).toHaveBeenCalledWith(

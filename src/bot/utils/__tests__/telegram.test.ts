@@ -20,7 +20,6 @@ describe('telegram utils', () => {
     ctx: CustomContext,
     conversation: Conversation<CustomContext, CustomContext>,
     work: () => Promise<unknown>,
-    timeoutMs?: number,
   ) => Promise<unknown>;
   let downloadAndTranscribeVoice: (
     ctx: CustomContext,
@@ -49,21 +48,6 @@ describe('telegram utils', () => {
 
       expect(result).toBe('success');
       expect(work).toHaveBeenCalled();
-      expect(conversation.external).toHaveBeenCalled();
-    });
-
-    it('should throw on timeout', async () => {
-      const work = jest.fn<() => Promise<unknown>>(
-        () => new Promise((resolve) => setTimeout(resolve, 100)),
-      );
-      const ctx = createMockCtx();
-      const conversation = {
-        external: jest.fn(async (fn: () => unknown) => fn()),
-      } as unknown as Conversation<CustomContext, CustomContext>;
-
-      await expect(withChatAction(ctx, conversation, work, 10)).rejects.toThrow(
-        '⚠️ Превышено максимальное время обработки (тайм-аут)',
-      );
     });
   });
 
@@ -75,6 +59,9 @@ describe('telegram utils', () => {
       ctxMock = createMockCtx();
       Object.assign(ctxMock, {
         message: { voice: { file_id: 'mock_file_id' } },
+        api: {
+          sendChatAction: jest.fn().mockResolvedValue(true as never),
+        },
       });
       ctxMock.getFile.mockResolvedValue({
         file_path: 'mock/path',

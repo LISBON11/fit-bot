@@ -27,6 +27,7 @@ export function createMockCtx(
   mockCtx.reply.mockResolvedValue({} as never);
   mockCtx.answerCallbackQuery.mockResolvedValue(true as never);
   mockCtx.replyWithChatAction.mockResolvedValue(true as never);
+  mockCtx.api.sendChatAction.mockResolvedValue(true as never);
   mockCtx.getFile.mockResolvedValue({ file_path: 'test.ogg' } as never);
   // Применяем переопределения
   Object.assign(mockCtx, overrides);

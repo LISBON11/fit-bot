@@ -72,6 +72,8 @@ jobs:
     needs: docker-publish
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      DEPLOY_USER: ${{ vars.SERVER_USER || secrets.SERVER_USER || 'ubuntu' }}
 
     steps:
       - name: Checkout repository
@@ -86,7 +88,7 @@ jobs:
 
       - name: Create deploy directory on VM
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          ssh -i ~/.ssh/deploy_key ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} \
             "mkdir -p ~/fit-bot"
 
       - name: Copy deploy files to VM
@@ -94,13 +96,13 @@ jobs:
           scp -i ~/.ssh/deploy_key \
             docker-compose.prod.yml \
             deploy.sh \
-            ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/fit-bot/
-          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }}:~/fit-bot/
+          ssh -i ~/.ssh/deploy_key ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} \
             "chmod +x ~/fit-bot/deploy.sh"
 
       - name: Write .env on VM
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ~/fit-bot/.env << 'EOF'
+          ssh -i ~/.ssh/deploy_key ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} "cat > ~/fit-bot/.env << 'EOF'
           NODE_ENV=production
           BOT_TOKEN=${{ secrets.BOT_TOKEN }}
           DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}
@@ -115,5 +117,5 @@ jobs:
 
       - name: Run deploy script on VM
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ vars.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+          ssh -i ~/.ssh/deploy_key ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} \
             "cd ~/fit-bot && bash deploy.sh"

@@ -3,7 +3,7 @@ import type { CustomContext } from '../types.js';
 import type { ParsedWorkout, ParsedExercise } from '../../nlu/nlu.types.js';
 import { exerciseService, workoutService } from '../../services/index.js';
 import { createExercisePickerKeyboard } from '../keyboards/exercisePicker.js';
-import type { Exercise, Workout } from '@prisma/client';
+import type { Exercise } from '@prisma/client';
 
 /**
  * Запускает цикл разрешения неоднозначностей упражнений (Disambiguation FSM).
@@ -20,22 +20,22 @@ export async function runDisambiguationLoop(
   ctx: CustomContext,
   parsedDelta: ParsedWorkout | { add?: unknown[]; update?: unknown[]; remove?: string[] },
   workoutId: string,
+  userId: string,
   isEditMode: boolean = false,
-): Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: Workout }> {
-  const userId = ctx.user?.id;
-  if (!userId) {
-    throw new Error('User is not authorized');
-  }
-
-  let result = await conversation.external(() => {
+): Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: { id: string } }> {
+  let result = await conversation.external(async () => {
     const fn = isEditMode
-      ? workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
-      : workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
-    return fn as Promise<{
+      ? await workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
+      : await workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
+    return {
+      status: fn.status,
+      ambiguousExercises: 'ambiguousExercises' in fn ? fn.ambiguousExercises : undefined,
+      workout: 'workout' in fn && fn.workout ? { id: fn.workout.id } : undefined,
+    } as {
       status: string;
       ambiguousExercises?: ParsedExercise[];
-      workout?: Workout;
-    }>;
+      workout?: { id: string };
+    };
   });
 
   while (result.status === 'needs_disambiguation') {
@@ -65,7 +65,7 @@ export async function runDisambiguationLoop(
       });
       const data = responseCtx.callbackQuery.data;
 
-      await responseCtx.answerCallbackQuery();
+      await responseCtx.answerCallbackQuery().catch(() => {});
       if (responseCtx.callbackQuery.message && responseCtx.chat?.id) {
         await responseCtx.api
           .deleteMessage(responseCtx.chat.id, responseCtx.callbackQuery.message.message_id)
@@ -83,15 +83,19 @@ export async function runDisambiguationLoop(
       }
     }
 
-    result = await conversation.external(() => {
+    result = await conversation.external(async () => {
       const fn = isEditMode
-        ? workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
-        : workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
-      return fn as Promise<{
+        ? await workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
+        : await workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
+      return {
+        status: fn.status,
+        ambiguousExercises: 'ambiguousExercises' in fn ? fn.ambiguousExercises : undefined,
+        workout: 'workout' in fn && fn.workout ? { id: fn.workout.id } : undefined,
+      } as {
         status: string;
         ambiguousExercises?: ParsedExercise[];
-        workout?: Workout;
-      }>;
+        workout?: { id: string };
+      };
     });
   }
 

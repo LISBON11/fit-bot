@@ -209,4 +209,4 @@ cd ~/fit-bot
 | Ошибка БД           | Проверь `DATABASE_URL` в `.env` на VM, порт 6543              |
 | Telegram не доходит | Возможна блокировка Яндекс IP — попробуй webhook через прокси |
 | CI не пушит образ   | GitHub → Settings → Actions → Read and write permissions      |
-| Deploy не работает  | Проверь Secrets: `SERVER_USER=yc-user` (не root!)             |
+| Deploy не работает  | Проверь Variables: `SERVER_USER=ubuntu`                       |

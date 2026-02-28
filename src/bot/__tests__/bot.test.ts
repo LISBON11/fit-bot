@@ -223,7 +223,7 @@ describe('bot.ts', () => {
     it('callback handler should answer and edit message', async () => {
       const ctx = {
         callbackQuery: { data: 'old_data', message: {} },
-        answerCallbackQuery: jest.fn(),
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         editMessageReplyMarkup: jest
           .fn<(...args: unknown[]) => Promise<unknown>>()
           .mockResolvedValue(true),

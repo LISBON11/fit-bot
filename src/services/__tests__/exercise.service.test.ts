@@ -121,13 +121,29 @@ describe('ExerciseService', () => {
       });
     });
 
-    it('4. should return not_found if no matches', async () => {
+    it('4. should return ambiguous with options if no matches but searchSimilar finds exercises', async () => {
       repositoryMock.findUserMapping.mockResolvedValue(null);
       repositoryMock.findSynonyms.mockResolvedValue([]);
+      repositoryMock.searchSimilar.mockResolvedValue([mockExercise1]);
+
+      const result = await service.resolveExercise('что_то_похожее', 'user1');
+
+      expect(result).toEqual({
+        status: 'ambiguous',
+        options: [mockExercise1],
+      });
+      expect(repositoryMock.searchSimilar).toHaveBeenCalledWith('что_то_похожее', 5);
+    });
+
+    it('5. should return not_found if no matches and searchSimilar returns empty', async () => {
+      repositoryMock.findUserMapping.mockResolvedValue(null);
+      repositoryMock.findSynonyms.mockResolvedValue([]);
+      repositoryMock.searchSimilar.mockResolvedValue([]);
 
       const result = await service.resolveExercise('неизвестное_упражнение', 'user1');
 
       expect(result).toEqual({ status: 'not_found' });
+      expect(repositoryMock.searchSimilar).toHaveBeenCalledWith('неизвестное_упражнение', 5);
     });
   });
 

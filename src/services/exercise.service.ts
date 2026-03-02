@@ -31,6 +31,11 @@ export class ExerciseService {
     const synonyms = await this.exerciseRepository.findSynonyms(inputText, userId);
 
     if (synonyms.length === 0) {
+      // 3. Fallback: поиск похожих через частичное совпадение
+      const similarExercises = await this.exerciseRepository.searchSimilar(inputText, 5);
+      if (similarExercises.length > 0) {
+        return { status: 'ambiguous', options: similarExercises };
+      }
       return { status: 'not_found' };
     }
 

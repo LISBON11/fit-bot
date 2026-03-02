@@ -126,4 +126,49 @@ export class ExerciseRepository {
       data,
     });
   }
+
+  /**
+   * Находит похожие упражнения по заданному запросу.
+   * Разбивает запрос на слова и ищет частичные совпадения в названиях и синонимах.
+   * Если слов нет, возвращает несколько глобальных упражнений.
+   * @param query Поисковый запрос
+   * @param limit Ограничение количества результатов (по умолчанию 5)
+   */
+  async searchSimilar(query: string, limit: number = 5): Promise<Exercise[]> {
+    const words = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
+
+    if (words.length === 0) {
+      // Fallback: просто вернем несколько популярных/глобальных упражнений
+      return this.prisma.exercise.findMany({
+        where: { isGlobal: true },
+        take: limit,
+      });
+    }
+
+    const orConditions: Prisma.ExerciseWhereInput[] = words.map((word) => ({
+      OR: [
+        { canonicalName: { contains: word, mode: 'insensitive' } },
+        { displayNameRu: { contains: word, mode: 'insensitive' } },
+        { displayNameEn: { contains: word, mode: 'insensitive' } },
+        {
+          synonyms: {
+            some: {
+              synonym: { contains: word, mode: 'insensitive' },
+            },
+          },
+        },
+      ],
+    }));
+
+    // Ищем упражнения, где хотя бы одно слово совпадает
+    return this.prisma.exercise.findMany({
+      where: {
+        OR: orConditions,
+      },
+      take: limit,
+    });
+  }
 }

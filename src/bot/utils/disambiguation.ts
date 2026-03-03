@@ -111,10 +111,24 @@ export async function runDisambiguationLoop(
 
       // answerCallbackQuery убирает spinner у кнопки — делаем первым, не ждём
       responseCtx.answerCallbackQuery().catch(() => {});
-      // deleteMessage пускаем параллельно с дальнейшей обработкой
+
+      let choiceText = '⏳ Обработка...';
+      if (data.startsWith('map:')) {
+        choiceText = `✅ Упражнение «${ambig.originalName}» сопоставлено.`;
+      } else if (data === 'new_exercise') {
+        choiceText = `✅ Упражнение «${ambig.originalName}» будет создано.`;
+      } else if (data === 'voice_list') {
+        choiceText = `🔍 Поиск по категориям для «${ambig.originalName}»...`;
+      }
+
+      // Вместо удаления сообщения меняем его текст, оставляя историю выбора
       if (responseCtx.callbackQuery.message && responseCtx.chat?.id) {
         responseCtx.api
-          .deleteMessage(responseCtx.chat.id, responseCtx.callbackQuery.message.message_id)
+          .editMessageText(
+            responseCtx.chat.id,
+            responseCtx.callbackQuery.message.message_id,
+            choiceText,
+          )
           .catch(() => {});
       }
 
@@ -334,9 +348,14 @@ async function handleFlatList(
         }),
     });
     pickCtx.answerCallbackQuery().catch(() => {});
+
+    const pickText = pickCtx.callbackQuery.data.startsWith('map:')
+      ? `✅ Выбран вариант для «${inputText}».`
+      : `✅ Будет создано новое упражнение для «${inputText}».`;
+
     if (pickCtx.callbackQuery.message && pickCtx.chat?.id) {
       pickCtx.api
-        .deleteMessage(pickCtx.chat.id, pickCtx.callbackQuery.message.message_id)
+        .editMessageText(pickCtx.chat.id, pickCtx.callbackQuery.message.message_id, pickText)
         .catch(() => {});
     }
 

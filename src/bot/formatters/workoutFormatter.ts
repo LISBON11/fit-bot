@@ -113,10 +113,10 @@ export function formatPreview(workout: WorkoutWithRelations): string {
   const headerLines: string[] = [`🗓 <b>${dateStr}, ${dayOfWeek}</b>`];
 
   if (workout.focus && workout.focus.length > 0) {
-    headerLines.push(`💪 ${escapeHtml(workout.focus.join(', '))}`);
+    headerLines.push(`🏋 <b>${escapeHtml(workout.focus.join(', '))}</b>`);
   }
   if (workout.location) {
-    headerLines.push(`🏠 ${escapeHtml(workout.location)}`);
+    headerLines.push(`🏠 <b>${escapeHtml(workout.location)}</b>`);
   }
 
   let text = headerLines.join('\n') + '\n\n';

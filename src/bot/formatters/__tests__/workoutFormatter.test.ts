@@ -111,8 +111,8 @@ describe('workoutFormatter', () => {
       // Заголовок: дата + день недели
       expect(html).toContain('25.10.2023, среда');
       // Мышечные группы и локация на отдельных строках
-      expect(html).toContain('💪 Legs, Back');
-      expect(html).toContain('🏠 Gym');
+      expect(html).toContain('🏋 <b>Legs, Back</b>');
+      expect(html).toContain('🏠 <b>Gym</b>');
 
       // Упражнение 1 с компактными подходами (разные веса — не группируются)
       expect(html).toContain('1. Приседания — 50×10, 55×8');
@@ -170,7 +170,7 @@ describe('workoutFormatter', () => {
 
       const html = formatPreview(workout);
       expect(html).not.toContain('🏠');
-      expect(html).not.toContain('💪');
+      expect(html).not.toContain('🏋');
     });
 
     it('должен использовать дефолтное название упражнения если имена отсутствуют', () => {

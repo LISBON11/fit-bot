@@ -114,6 +114,7 @@ describe('WorkoutService', () => {
         'user1',
         expect.any(Date),
         ['legs'],
+        null,
         [{ parsed: mockWithMapped.exercises[0], exerciseId: 'mapped1' }],
         [],
       );

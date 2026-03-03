@@ -47,6 +47,7 @@ describe('WorkoutRepository', () => {
         'u1',
         date,
         ['Back'],
+        null,
         exercises,
         generalComments,
       );
@@ -104,7 +105,7 @@ describe('WorkoutRepository', () => {
         },
       ];
 
-      await repository.createWithRelations('u1', date, ['Back'], exercises, []);
+      await repository.createWithRelations('u1', date, ['Back'], null, exercises, []);
 
       expect(txMock.exerciseSet.createMany).not.toHaveBeenCalled();
       expect(txMock.workoutComment.createMany).not.toHaveBeenCalled();

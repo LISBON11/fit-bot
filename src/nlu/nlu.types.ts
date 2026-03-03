@@ -32,6 +32,7 @@ export interface ParsedExercise {
  */
 export interface ParsedWorkout {
   date: string; // YYYY-MM-DD
+  location?: string | null;
   focus:
     | 'legs'
     | 'glutes'

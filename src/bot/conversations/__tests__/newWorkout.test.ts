@@ -101,11 +101,19 @@ describe('newWorkout conversation', () => {
     Object.defineProperty(ctx, 'chat', { value: { id: 100 } });
 
     ctx.reply.mockResolvedValue({ message_id: 222 } as never);
-    ctx.api.deleteMessage.mockResolvedValue(true as never);
+    ctx.api.deleteMessage = jest.fn().mockResolvedValue(true as never) as never;
+    ctx.api.editMessageText = jest.fn().mockResolvedValue(true as never) as never;
 
     const actionCtxCancelOrApprove =
       createMockCtx() as unknown as CallbackQueryContext<CustomContext>;
     actionCtxCancelOrApprove.deleteMessage = jest.fn().mockResolvedValue(true as never) as never;
+    Object.defineProperty(actionCtxCancelOrApprove, 'api', {
+      value: {
+        deleteMessage: jest.fn().mockResolvedValue(true as never),
+        editMessageText: jest.fn().mockResolvedValue(true as never),
+      },
+      writable: true,
+    });
     Object.defineProperty(actionCtxCancelOrApprove, 'callbackQuery', {
       value: { data: 'appr:w1' },
     });
@@ -139,7 +147,12 @@ describe('newWorkout conversation', () => {
     });
     expect(mockWorkoutService.approveDraft).toHaveBeenCalledWith('w1');
     expect(mockPublisher.publish).toHaveBeenCalledWith('preview_html');
-    expect(ctx.reply).toHaveBeenCalledWith('✅ Тренировка успешно опубликована!');
+    expect(ctx.api.editMessageText).toHaveBeenCalledWith(
+      100,
+      222,
+      expect.stringContaining('✅'),
+      expect.objectContaining({ reply_markup: { inline_keyboard: [] } }),
+    );
   });
 
   it('should handle voice input and cancel', async () => {
@@ -149,10 +162,18 @@ describe('newWorkout conversation', () => {
     Object.defineProperty(ctx, 'chat', { value: { id: 100 } });
 
     ctx.reply.mockResolvedValue({ message_id: 222 } as never);
-    ctx.api.deleteMessage.mockResolvedValue(true as never);
+    ctx.api.deleteMessage = jest.fn().mockResolvedValue(true as never) as never;
+    ctx.api.editMessageText = jest.fn().mockResolvedValue(true as never) as never;
 
     const actionCtxCancel = createMockCtx() as unknown as CallbackQueryContext<CustomContext>;
     actionCtxCancel.deleteMessage = jest.fn().mockResolvedValue(true as never) as never;
+    Object.defineProperty(actionCtxCancel, 'api', {
+      value: {
+        deleteMessage: jest.fn().mockResolvedValue(true as never),
+        editMessageText: jest.fn().mockResolvedValue(true as never),
+      },
+      writable: true,
+    });
     Object.defineProperty(actionCtxCancel, 'callbackQuery', { value: { data: 'canc:w1' } });
     Object.defineProperty(actionCtxCancel, 'match', { value: 'canc:w1' });
 
@@ -181,6 +202,11 @@ describe('newWorkout conversation', () => {
       'u1',
     );
     expect(mockWorkoutService.cancelDraft).toHaveBeenCalledWith('w1');
-    expect(ctx.reply).toHaveBeenCalledWith('❌ Тренировка отменена.');
+    expect(ctx.api.editMessageText).toHaveBeenCalledWith(
+      100,
+      222,
+      expect.stringContaining('❌'),
+      expect.objectContaining({ reply_markup: { inline_keyboard: [] } }),
+    );
   });
 });

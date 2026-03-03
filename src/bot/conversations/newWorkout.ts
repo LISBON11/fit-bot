@@ -83,6 +83,8 @@ export async function newWorkout(
     throw new AppError('Не удалось загрузить созданный черновик', 500);
   }
 
+  let previewMsgId: number | undefined;
+
   // 4. Показ итеративного превью и выбор действия
   while (true) {
     convLogger.info('Loop: entering visualization loop');
@@ -99,18 +101,28 @@ export async function newWorkout(
     const previewHtml = formatPreview(loopWorkout as WorkoutWithRelations);
     const previewKb = createWorkoutPreviewKeyboard(workoutId);
 
-    const previewMsg = await ctx.reply(previewHtml, {
-      parse_mode: 'HTML',
-      reply_markup: previewKb,
-    });
+    if (previewMsgId && ctx.chat?.id) {
+      await ctx.api
+        .editMessageText(ctx.chat.id, previewMsgId, previewHtml, {
+          parse_mode: 'HTML',
+          reply_markup: previewKb,
+        })
+        .catch(() => {});
+    } else {
+      const previewMsg = await ctx.reply(previewHtml, {
+        parse_mode: 'HTML',
+        reply_markup: previewKb,
+      });
+      previewMsgId = previewMsg.message_id;
 
-    // Сохраняем связки сообщений
-    await conversation.external(() =>
-      workoutService.updateMessageIds(workoutId, {
-        sourceMessageId: ctx.message?.message_id,
-        previewMessageId: previewMsg.message_id,
-      }),
-    );
+      // Сохраняем связки сообщений
+      await conversation.external(() =>
+        workoutService.updateMessageIds(workoutId, {
+          sourceMessageId: ctx.message?.message_id,
+          previewMessageId: previewMsgId,
+        }),
+      );
+    }
 
     // 5. Ожидание действия (Approve, Edit, Cancel)
     convLogger.info('Loop: Waiting for callback query (appr, edit, canc)');
@@ -149,9 +161,20 @@ export async function newWorkout(
       if (ctx.message?.message_id && ctx.chat?.id) {
         ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
       }
-      actionCtx.deleteMessage().catch(() => {});
 
-      await ctx.reply('✅ Тренировка успешно опубликована!');
+      if (previewMsgId && ctx.chat?.id) {
+        await ctx.api
+          .editMessageText(
+            ctx.chat.id,
+            previewMsgId,
+            previewHtml + '\n\n✅ <i>Тренировка успешно опубликована!</i>',
+            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } },
+          )
+          .catch(() => {});
+      } else {
+        await ctx.reply('✅ Тренировка успешно опубликована!');
+      }
+
       convLogger.info('Action: approve (finish)');
       return;
     } else if (action === 'canc') {
@@ -160,13 +183,25 @@ export async function newWorkout(
       if (ctx.message?.message_id && ctx.chat?.id) {
         ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
       }
-      actionCtx.deleteMessage().catch(() => {});
 
-      await ctx.reply('❌ Тренировка отменена.');
+      if (previewMsgId && ctx.chat?.id) {
+        await ctx.api
+          .editMessageText(
+            ctx.chat.id,
+            previewMsgId,
+            previewHtml + '\n\n❌ <i>Тренировка отменена</i>',
+            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } },
+          )
+          .catch(() => {});
+      } else {
+        await ctx.reply('❌ Тренировка отменена.');
+      }
       return;
     } else if (action === 'edit') {
       // Редактируем: запрашиваем дельту изменений
-      await ctx.reply('✏️ Что вы хотите изменить? (напишите текстом или запишите голосовое)');
+      const promptMsg = await ctx.reply(
+        '✏️ Что вы хотите изменить? (напишите текстом или запишите голосовое)',
+      );
 
       const editInputCtx = await conversation.waitFor(['message:text', 'message:voice']);
       let editRawText: string;
@@ -202,11 +237,17 @@ export async function newWorkout(
         workoutId,
       );
 
-      if (!editResult) continue;
+      // Чистим историю сообщений редактирования, чтобы превью обновилось на месте
+      if (ctx.chat?.id) {
+        if (promptMsg.message_id) {
+          ctx.api.deleteMessage(ctx.chat.id, promptMsg.message_id).catch(() => {});
+        }
+        if (editInputCtx.message?.message_id) {
+          ctx.api.deleteMessage(ctx.chat.id, editInputCtx.message.message_id).catch(() => {});
+        }
+      }
 
-      await ctx.reply('🔄 Изменения применены!');
-      // Удаляем старое превью и идем на новый круг while(true)
-      actionCtx.deleteMessage().catch(() => {});
+      if (!editResult) continue;
     }
   }
 }

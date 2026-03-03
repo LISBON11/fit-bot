@@ -138,6 +138,9 @@ describe('disambiguation loop', () => {
       chat: { id: 456 },
       answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
       api: {
+        editMessageText: jest
+          .fn<(...args: unknown[]) => Promise<unknown>>()
+          .mockResolvedValue(true),
         deleteMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(true),
       },
     } as never);
@@ -193,6 +196,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -203,6 +209,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -260,6 +269,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -270,6 +282,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -321,6 +336,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -331,6 +349,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -341,6 +362,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -352,6 +376,9 @@ describe('disambiguation loop', () => {
       chat: { id: 456 },
       answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
       api: {
+        editMessageText: jest
+          .fn<(...args: unknown[]) => Promise<unknown>>()
+          .mockResolvedValue(true),
         deleteMessage: jest.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValue(true),
       },
     } as never);
@@ -395,6 +422,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),
@@ -405,6 +435,9 @@ describe('disambiguation loop', () => {
         chat: { id: 456 },
         answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
         api: {
+          editMessageText: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
           deleteMessage: jest
             .fn<(...args: unknown[]) => Promise<unknown>>()
             .mockResolvedValue(true),

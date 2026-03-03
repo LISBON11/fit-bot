@@ -22,6 +22,7 @@ export class WorkoutRepository {
     userId: string,
     workoutDate: Date,
     focusArray: string[],
+    location: string | null,
     resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[],
     generalComments: ParsedComment[],
   ): Promise<Workout | null> {
@@ -32,6 +33,7 @@ export class WorkoutRepository {
             user: { connect: { id: userId } },
             workoutDate,
             focus: focusArray,
+            location,
             status: WorkoutStatus.DRAFT,
           },
         });

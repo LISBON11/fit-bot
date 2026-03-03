@@ -71,6 +71,7 @@ export class WorkoutService {
       userId,
       workoutDate,
       focusArray,
+      parsedWorkout.location ?? null,
       resolvedExercises,
       parsedWorkout.generalComments,
     )) as Workout;
@@ -195,6 +196,7 @@ export class WorkoutService {
     const workoutUpdateData = {
       workoutDate,
       focus: focusArray,
+      location: parsedWorkout.location ?? null,
     };
 
     const updatedWorkout = await this.workoutRepository.replaceExercises(

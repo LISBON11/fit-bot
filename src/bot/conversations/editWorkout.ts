@@ -67,6 +67,8 @@ export async function editWorkout(
 
   const workoutId = workout.id;
 
+  let previewMsgId: number | undefined;
+
   // Тот же цикл редактирования
   while (true) {
     const currentWorkout = await conversation.external(async () => {
@@ -81,16 +83,26 @@ export async function editWorkout(
     const previewHtml = formatPreview(currentWorkout as WorkoutWithRelations);
     const previewKb = createWorkoutPreviewKeyboard(workoutId);
 
-    const previewMsg = await ctx.reply(previewHtml, {
-      parse_mode: 'HTML',
-      reply_markup: previewKb,
-    });
+    if (previewMsgId && ctx.chat?.id) {
+      await ctx.api
+        .editMessageText(ctx.chat.id, previewMsgId, previewHtml, {
+          parse_mode: 'HTML',
+          reply_markup: previewKb,
+        })
+        .catch(() => {});
+    } else {
+      const previewMsg = await ctx.reply(previewHtml, {
+        parse_mode: 'HTML',
+        reply_markup: previewKb,
+      });
+      previewMsgId = previewMsg.message_id;
 
-    await conversation.external(() =>
-      workoutService.updateMessageIds(workoutId, {
-        previewMessageId: previewMsg.message_id,
-      }),
-    );
+      await conversation.external(() =>
+        workoutService.updateMessageIds(workoutId, {
+          previewMessageId: previewMsgId,
+        }),
+      );
+    }
 
     const actionCtx = await conversation.waitForCallbackQuery([/^appr:/, /^edit:/, /^canc:/], {
       otherwise: (otherCtx) =>
@@ -107,15 +119,36 @@ export async function editWorkout(
       await conversation.external(() => workoutService.approveDraft(workoutId));
       const publisher = new PublisherService(ctx.api);
       await publisher.publish(previewHtml);
-      actionCtx.deleteMessage().catch(() => {});
-      await ctx.reply('✅ Тренировка обновлена и опубликована!');
+
+      if (previewMsgId && ctx.chat?.id) {
+        await ctx.api
+          .editMessageText(
+            ctx.chat.id,
+            previewMsgId,
+            previewHtml + '\n\n✅ <i>Тренировка обновлена и опубликована!</i>',
+            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } },
+          )
+          .catch(() => {});
+      } else {
+        await ctx.reply('✅ Тренировка обновлена и опубликована!');
+      }
       return;
     } else if (action === 'canc') {
-      actionCtx.deleteMessage().catch(() => {});
-      await ctx.reply('❌ Редактирование закрыто.');
+      if (previewMsgId && ctx.chat?.id) {
+        await ctx.api
+          .editMessageText(
+            ctx.chat.id,
+            previewMsgId,
+            previewHtml + '\n\n❌ <i>Редактирование закрыто.</i>',
+            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } },
+          )
+          .catch(() => {});
+      } else {
+        await ctx.reply('❌ Редактирование закрыто.');
+      }
       return;
     } else if (action === 'edit') {
-      await ctx.reply('✏️ Что изменить? (текст или голос)');
+      const promptMsg = await ctx.reply('✏️ Что изменить? (текст или голос)');
 
       const editInputCtx = await conversation.waitFor(['message:text', 'message:voice']);
       let editRawText: string;
@@ -146,10 +179,17 @@ export async function editWorkout(
         workoutId,
       );
 
-      if (!editResult) continue;
+      // Чистим историю сообщений редактирования, чтобы превью обновилось на месте
+      if (ctx.chat?.id) {
+        if (promptMsg.message_id) {
+          ctx.api.deleteMessage(ctx.chat.id, promptMsg.message_id).catch(() => {});
+        }
+        if (editInputCtx.message?.message_id) {
+          ctx.api.deleteMessage(ctx.chat.id, editInputCtx.message.message_id).catch(() => {});
+        }
+      }
 
-      await ctx.reply('🔄 Изменения применены!');
-      actionCtx.deleteMessage().catch(() => {});
+      if (!editResult) continue;
     }
   }
 }

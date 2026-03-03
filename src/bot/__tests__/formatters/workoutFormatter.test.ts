@@ -1,7 +1,6 @@
 import { formatPreview } from '../../formatters/workoutFormatter.js';
 import type { WorkoutWithRelations } from '../../formatters/workoutFormatter.js';
-import { WorkoutStatus, CommentType, Prisma } from '@prisma/client';
-import { WeightUnit } from '@prisma/client';
+import { WorkoutStatus, CommentType, Prisma, WeightUnit } from '@prisma/client';
 
 describe('workoutFormatter', () => {
   it('должен корректно форматировать тренировку со всеми связями', () => {
@@ -89,14 +88,16 @@ describe('workoutFormatter', () => {
 
     const result = formatPreview(mockWorkout);
 
-    expect(result).toContain('📅 21.02.2026');
+    // Заголовок: дата + день недели
+    expect(result).toContain('21.02.2026, суббота');
+    // Локация и фокус на отдельных строках
     expect(result).toContain('🏠 Alushta Home');
-    expect(result).toContain('🎯 Legs, Glutes');
-    expect(result).toContain('1️⃣ <b>Приседания со штангой</b> • 2 подходов');
-    expect(result).toContain('└ Подход 1: 12 повт. @ 40 кг');
-    expect(result).toContain('└ Подход 2: 10 повт. @ 45 кг');
-    expect(result).toContain('<i>💬 Тяжело пошло</i>');
-    expect(result).toContain('📝 Комментарии');
-    expect(result).toContain('• <i>Отличная тренировка</i>');
+    expect(result).toContain('💪 Legs, Glutes');
+    // Упражнение с разными подходами (не группируются)
+    expect(result).toContain('1. Приседания со штангой — 40×12, 45×10');
+    // Комментарий к упражнению как blockquote
+    expect(result).toContain('<blockquote>Тяжело пошло</blockquote>');
+    // Общий комментарий к тренировке как blockquote
+    expect(result).toContain('<blockquote>Отличная тренировка</blockquote>');
   });
 });

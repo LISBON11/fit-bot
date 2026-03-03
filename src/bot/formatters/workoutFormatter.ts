@@ -15,76 +15,136 @@ export type WorkoutWithRelations = Prisma.WorkoutGetPayload<{
   };
 }>;
 
+/** Дни недели на русском (0 = воскресенье) */
+const WEEK_DAYS_RU = [
+  'воскресенье',
+  'понедельник',
+  'вторник',
+  'среда',
+  'четверг',
+  'пятница',
+  'суббота',
+] as const;
+
+/**
+ * Экранирует HTML-спецсимволы в тексте для безопасной вставки в HTML-сообщение Telegram.
+ *
+ * @param text Исходный текст
+ * @returns Экранированная строка
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Форматирует список подходов в компактную строку вида:
+ * `20×10, 40×8×2, 60×8×3`
+ *
+ * Подходы с одинаковым весом и репами группируются.
+ * Формат одного элемента:
+ * - с весом, 1 подход: `40×10`
+ * - с весом, N подходов: `40×10×3`
+ * - без веса, 1 подход: `10`
+ * - без веса, N подходов: `10×3`
+ *
+ * @param sets Список подходов
+ * @param unit Единица веса
+ * @returns Строка с компактным описанием подходов
+ */
+function formatSetsCompact(sets: WorkoutWithRelations['workoutExercises'][0]['sets']): string {
+  if (sets.length === 0) return '';
+
+  // Группируем последовательные подходы с одинаковыми параметрами
+  const groups: { reps: number; weight: number | null; count: number }[] = [];
+
+  for (const set of sets) {
+    const w = set.weight ? Number(set.weight) : null;
+    const last = groups[groups.length - 1];
+    if (last && last.reps === set.reps && last.weight === w) {
+      last.count += 1;
+    } else {
+      groups.push({ reps: set.reps, weight: w, count: 1 });
+    }
+  }
+
+  return groups
+    .map(({ reps, weight, count }) => {
+      if (weight !== null) {
+        const base = `${weight}×${reps}`;
+        return count > 1 ? `${base}×${count}` : base;
+      }
+      return count > 1 ? `${reps}×${count}` : `${reps}`;
+    })
+    .join(', ');
+}
+
 /**
  * Преобразует тренировку в HTML-строку для предварительного просмотра.
- * Формат: `📅 21.02.2026 | 🏠 Alushta Home / 🎯 Legs, Glutes`
- * Упражнения: `1️⃣ Back Squat • 4 × 12 @ 40 кг`
+ *
+ * Формат:
+ * ```
+ * 🗓 12.02.2026, четверг
+ * 💪 Ноги
+ * 🏠 Севастополь, Триумф
+ *
+ * 1. Становая — 20кг×10, 40кг×8×2, 60кг×8×3
+ * <blockquote>Комментарий к упражнению</blockquote>
+ * ```
  *
  * @param workout Тренировка со всеми вложенными связями
  * @returns Отформатированная HTML строка
  */
 export function formatPreview(workout: WorkoutWithRelations): string {
-  // Обеспечиваем, что workoutDate - это объект Date (при replay сессия из Redis возвращает строку)
+  // Обеспечиваем, что workoutDate — объект Date (при replay сессия из Redis возвращает строку)
   const workoutDateObj =
     typeof workout.workoutDate === 'string' ? new Date(workout.workoutDate) : workout.workoutDate;
 
-  // Форматируем дату в DD.MM.YYYY
+  // Форматируем дату в DD.MM.YYYY + день недели
   const dateStr = workoutDateObj.toLocaleDateString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
+  const dayOfWeek = WEEK_DAYS_RU[workoutDateObj.getDay()];
+  const headerLines: string[] = [`🗓 <b>${dateStr}, ${dayOfWeek}</b>`];
 
-  let header = `<b>📅 ${dateStr}</b>`;
-
-  const additionalHeaderInfo: string[] = [];
-  if (workout.location) {
-    additionalHeaderInfo.push(`🏠 ${workout.location}`);
-  }
   if (workout.focus && workout.focus.length > 0) {
-    additionalHeaderInfo.push(`🎯 ${workout.focus.join(', ')}`);
+    headerLines.push(`💪 ${escapeHtml(workout.focus.join(', '))}`);
+  }
+  if (workout.location) {
+    headerLines.push(`🏠 ${escapeHtml(workout.location)}`);
   }
 
-  if (additionalHeaderInfo.length > 0) {
-    header += ` | ${additionalHeaderInfo.join(' / ')}`;
-  }
-
-  let text = header + '\n\n';
+  let text = headerLines.join('\n') + '\n\n';
 
   // Упражнения
   workout.workoutExercises.forEach((we, index) => {
-    // Используем displayNameRu, или canonicalName, или rawName, или дефолтное
-    const name =
-      we.exercise?.displayNameRu || we.exercise?.canonicalName || we.rawName || 'Упражнение';
+    const name = escapeHtml(
+      we.exercise?.displayNameRu || we.exercise?.canonicalName || we.rawName || 'Упражнение',
+    );
 
-    // Эмодзи цифры для списка (до 10, иначе просто число)
-    const numberEmoji =
-      ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'][index] || `${index + 1}.`;
+    const setsStr = formatSetsCompact(we.sets);
+    const exerciseLine = setsStr ? `${name} — ${setsStr}` : name;
 
-    const setsDescription = we.sets.length > 0 ? ` • ${we.sets.length} подходов` : '';
-    text += `${numberEmoji} <b>${name}</b>${setsDescription}\n`;
+    text += `${index + 1}. ${exerciseLine}\n`;
 
-    // Подходы
-    we.sets.forEach((set) => {
-      const weightStr = set.weight
-        ? ` @ ${Number(set.weight)} ${set.unit === 'LB' ? 'lb' : 'кг'}`
-        : '';
-      text += `    └ Подход ${set.setNumber}: ${set.reps} повт.${weightStr}\n`;
-    });
-
-    // Комментарии к упражнению
+    // Комментарии к упражнению — blockquote
     if (we.comments && we.comments.length > 0) {
       we.comments.forEach((c) => {
-        text += `    <i>💬 ${c.rawText}</i>\n`;
+        text += `<blockquote>${escapeHtml(c.rawText)}</blockquote>\n`;
       });
     }
   });
 
-  // Общие комментарии
+  // Общие комментарии к тренировке — blockquote
   if (workout.comments && workout.comments.length > 0) {
-    text += `\n<b>📝 Комментарии:</b>\n`;
+    text += '\n';
     workout.comments.forEach((c) => {
-      text += `• <i>${c.rawText}</i>\n`;
+      text += `<blockquote>${escapeHtml(c.rawText)}</blockquote>\n`;
     });
   }
 

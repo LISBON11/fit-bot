@@ -200,20 +200,27 @@ async function handleVoiceListSelection(
 
   // Цикл навигации: выбор группы → список → [Назад] → возврат к выбору группы
   while (true) {
-    const groupKb = createMuscleGroupPickerKeyboard([...MUSCLE_GROUPS]);
+    const groupKb = createMuscleGroupPickerKeyboard([...MUSCLE_GROUPS], originalName);
     await ctx.reply('💪 Выберите группу мышц:', { reply_markup: groupKb });
 
-    const groupCtx = await conversation.waitForCallbackQuery(MUSCLE_GROUP_CALLBACK_REGEX, {
-      otherwise: (otherCtx) =>
-        otherCtx.reply('Выберите группу мышц из кнопок выше 👆', {
-          reply_to_message_id: otherCtx.message?.message_id,
-        }),
-    });
+    const groupCtx = await conversation.waitForCallbackQuery(
+      [MUSCLE_GROUP_CALLBACK_REGEX, 'new_exercise'],
+      {
+        otherwise: (otherCtx) =>
+          otherCtx.reply('Выберите группу мышц или вариант из кнопок выше 👆', {
+            reply_to_message_id: otherCtx.message?.message_id,
+          }),
+      },
+    );
     groupCtx.answerCallbackQuery().catch(() => {});
     if (groupCtx.callbackQuery.message && groupCtx.chat?.id) {
       groupCtx.api
         .deleteMessage(groupCtx.chat.id, groupCtx.callbackQuery.message.message_id)
         .catch(() => {});
+    }
+
+    if (groupCtx.callbackQuery.data === 'new_exercise') {
+      return 'raw';
     }
 
     const raw = groupCtx.callbackQuery.data.slice('mg:'.length);

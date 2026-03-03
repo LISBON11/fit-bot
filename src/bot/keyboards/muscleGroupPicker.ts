@@ -44,6 +44,7 @@ const MUSCLE_GROUP_CALLBACK_PREFIX = 'mg:';
  */
 export function createMuscleGroupPickerKeyboard(
   groups: ReadonlyArray<MuscleGroupEntry>,
+  originalName?: string,
 ): InlineKeyboard {
   const keyboard = new InlineKeyboard();
 
@@ -53,6 +54,12 @@ export function createMuscleGroupPickerKeyboard(
 
   // Кнопка показа всех упражнений без фильтра
   keyboard.text('📋 Все упражнения', 'mg:all').row();
+
+  // Кнопка для создания нового упражнения с именем пользователя (опционально)
+  if (originalName) {
+    const displayName = originalName.length > 20 ? `${originalName.slice(0, 20)}…` : originalName;
+    keyboard.text(`➕ Создать «${displayName}»`, 'new_exercise').row();
+  }
 
   return keyboard;
 }

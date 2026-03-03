@@ -8,8 +8,9 @@ import { mockDeep } from 'jest-mock-extended';
 const mockExerciseService = {
   resolveExercise: jest.fn(),
   confirmMapping: jest.fn(),
-  createUserExercise: jest.fn<() => Promise<unknown>>().mockResolvedValue({ id: 'new-ex-id' }),
-  getAllExercises: jest.fn<() => Promise<unknown>>().mockResolvedValue([]),
+  createUserExercise: jest.fn().mockResolvedValue({ id: 'new-ex-id' } as never),
+  getAllExercises: jest.fn().mockResolvedValue([] as never),
+  getByMuscleGroup: jest.fn().mockResolvedValue([] as never),
 };
 
 const mockWorkoutService = {
@@ -156,7 +157,85 @@ describe('disambiguation loop', () => {
     expect(mockExerciseService.confirmMapping).toHaveBeenCalledWith('u1', 'Pull up', 'e1');
   });
 
-  it('should handle new_exercise choice in loop', async () => {
+  it('should handle voice_list choice and select exercise from flat list', async () => {
+    const ctx = createMockCtx({ user: { id: 'u1' } as never });
+
+    mockWorkoutService.createDraft
+      .mockResolvedValueOnce({
+        status: 'needs_disambiguation',
+        ambiguousExercises: [{ originalName: 'Unknown exercise' } as ParsedExercise],
+      } as never)
+      .mockResolvedValueOnce({ status: 'created' } as never);
+
+    mockExerciseService.resolveExercise.mockResolvedValue({
+      status: 'not_found',
+    } as never);
+
+    // Mock exercise list for handleFlatList
+    mockExerciseService.getByMuscleGroup.mockResolvedValue([
+      { id: 'ex1', canonicalName: 'test', displayNameRu: 'Тестовое' },
+    ] as never);
+    mockExerciseService.confirmMapping.mockResolvedValue(true as never);
+
+    const conversation = mockDeep<Conversation<CustomContext, CustomContext>>();
+    conversation.external.mockImplementation((async <R>(fn: unknown) => {
+      return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
+    }) as never);
+
+    // Mock chain of events:
+    // 1. waitForCallbackQuery -> 'voice_list'
+    // 2. waitForCallbackQuery -> 'mg:0' (выбор группы мышц)
+    // 3. wait() -> ввод текста пользователем ('Тестовое')
+    // 4. resolveExercise для введенного текста -> 'resolved'
+    conversation.waitForCallbackQuery
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'voice_list', message: { message_id: 123 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'mg:0', message: { message_id: 124 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never);
+
+    conversation.wait.mockResolvedValueOnce({
+      message: { text: 'Тестовое' },
+    } as never);
+
+    mockExerciseService.resolveExercise
+      .mockResolvedValueOnce({ status: 'not_found' } as never) // Первый вызов из внешнего цикла (для Unknown exercise)
+      .mockResolvedValueOnce({ status: 'resolved', exercise: { id: 'ex1' } } as never); // Вызов из handleFlatList (для 'Тестовое')
+
+    const result = await runDisambiguationLoop(
+      conversation,
+      ctx,
+      {} as ParsedWorkout,
+      'draft',
+      'u1',
+      false,
+    );
+
+    expect(result.status).toBe('created');
+    expect(mockExerciseService.getByMuscleGroup).toHaveBeenCalled();
+    expect(mockExerciseService.confirmMapping).toHaveBeenCalledWith(
+      'u1',
+      'Unknown exercise',
+      'ex1',
+    );
+  });
+
+  it('should handle voice_list choice and fallback to raw for new_exercise', async () => {
     const ctx = createMockCtx({ user: { id: 'u1' } as never });
 
     mockWorkoutService.createDraft
@@ -174,8 +253,102 @@ describe('disambiguation loop', () => {
     conversation.external.mockImplementation((async <R>(fn: unknown) => {
       return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
     }) as never);
-    conversation.waitForCallbackQuery.mockResolvedValue({
-      callbackQuery: { data: 'new_exercise', message: { message_id: 123 } },
+
+    conversation.waitForCallbackQuery
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'voice_list', message: { message_id: 123 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'new_exercise', message: { message_id: 124 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never);
+
+    const result = await runDisambiguationLoop(
+      conversation,
+      ctx,
+      {} as ParsedWorkout,
+      'draft',
+      'u1',
+      false,
+    );
+
+    expect(result.status).toBe('created');
+    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith('u1', 'Unknown exercise');
+  });
+
+  it('should handle back button and return to muscle groups', async () => {
+    const ctx = createMockCtx({ user: { id: 'u1' } as never });
+
+    mockWorkoutService.createDraft
+      .mockResolvedValueOnce({
+        status: 'needs_disambiguation',
+        ambiguousExercises: [{ originalName: 'Unknown exercise' } as ParsedExercise],
+      } as never)
+      .mockResolvedValueOnce({ status: 'created' } as never);
+
+    mockExerciseService.resolveExercise.mockResolvedValue({
+      status: 'not_found',
+    } as never);
+
+    mockExerciseService.getByMuscleGroup.mockResolvedValue([] as never);
+
+    const conversation = mockDeep<Conversation<CustomContext, CustomContext>>();
+    conversation.external.mockImplementation((async <R>(fn: unknown) => {
+      return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
+    }) as never);
+
+    // Mock chain:
+    // 1. 'voice_list'
+    // 2. 'mg:all' (все группы)
+    // 3. 'back_to_groups' (назад)
+    // 4. 'new_exercise' (назад привело к списку групп, там выбираем создать)
+    conversation.waitForCallbackQuery
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'voice_list', message: { message_id: 1 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'mg:all', message: { message_id: 2 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'new_exercise', message: { message_id: 3 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never);
+
+    conversation.wait.mockResolvedValueOnce({
+      callbackQuery: { data: 'back_to_groups', message: { message_id: 4 } },
       chat: { id: 456 },
       answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
       api: {
@@ -193,9 +366,65 @@ describe('disambiguation loop', () => {
     );
 
     expect(result.status).toBe('created');
-    expect(conversation.waitForCallbackQuery).toHaveBeenCalledWith(
-      [/^map:/, 'new_exercise', 'voice_list'],
-      expect.any(Object),
+    expect(mockExerciseService.getAllExercises).toHaveBeenCalled();
+    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith('u1', 'Unknown exercise');
+  });
+
+  it('should handle explicitly declined list input (e.g. "нет такого")', async () => {
+    const ctx = createMockCtx({ user: { id: 'u1' } as never });
+
+    mockWorkoutService.createDraft
+      .mockResolvedValueOnce({
+        status: 'needs_disambiguation',
+        ambiguousExercises: [{ originalName: 'Unknown exercise' } as ParsedExercise],
+      } as never)
+      .mockResolvedValueOnce({ status: 'created' } as never);
+
+    mockExerciseService.resolveExercise.mockResolvedValue({
+      status: 'not_found',
+    } as never);
+
+    const conversation = mockDeep<Conversation<CustomContext, CustomContext>>();
+    conversation.external.mockImplementation((async <R>(fn: unknown) => {
+      return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
+    }) as never);
+
+    conversation.waitForCallbackQuery
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'voice_list', message: { message_id: 1 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never)
+      .mockResolvedValueOnce({
+        callbackQuery: { data: 'mg:all', message: { message_id: 2 } },
+        chat: { id: 456 },
+        answerCallbackQuery: jest.fn().mockResolvedValue(true as never),
+        api: {
+          deleteMessage: jest
+            .fn<(...args: unknown[]) => Promise<unknown>>()
+            .mockResolvedValue(true),
+        },
+      } as never);
+
+    conversation.wait.mockResolvedValueOnce({
+      message: { text: 'нет такого' },
+    } as never);
+
+    const result = await runDisambiguationLoop(
+      conversation,
+      ctx,
+      {} as ParsedWorkout,
+      'draft',
+      'u1',
+      false,
     );
+
+    expect(result.status).toBe('created');
+    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith('u1', 'Unknown exercise');
   });
 });

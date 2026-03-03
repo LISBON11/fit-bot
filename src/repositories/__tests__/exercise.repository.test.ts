@@ -164,4 +164,65 @@ describe('ExerciseRepository', () => {
       expect(result.id).toBe('e1');
     });
   });
+
+  describe('getAllWithSynonyms', () => {
+    it('should return global exercises with their global synonyms', async () => {
+      const mockData = [
+        {
+          id: 'e1',
+          isGlobal: true,
+          synonyms: [{ id: 's1', synonym: 'жим', isGlobal: true }],
+        },
+      ];
+      prismaMock.exercise.findMany.mockResolvedValue(mockData as never);
+
+      const result = await repository.getAllWithSynonyms();
+
+      expect(prismaMock.exercise.findMany).toHaveBeenCalledWith({
+        where: { isGlobal: true },
+        include: { synonyms: { where: { isGlobal: true } } },
+      });
+      expect(result).toEqual(mockData);
+    });
+  });
+
+  describe('getMuscleGroups', () => {
+    it('should return unique muscle groups via $queryRaw', async () => {
+      prismaMock.$queryRaw.mockResolvedValue([
+        { muscle_group: 'грудь' },
+        { muscle_group: 'спина' },
+      ] as never);
+
+      const result = await repository.getMuscleGroups();
+
+      expect(result).toEqual(['грудь', 'спина']);
+      expect(prismaMock.$queryRaw).toHaveBeenCalled();
+    });
+
+    it('should return empty array if no muscle groups', async () => {
+      prismaMock.$queryRaw.mockResolvedValue([] as never);
+
+      const result = await repository.getMuscleGroups();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getByMuscleGroup', () => {
+    it('should filter exercises by muscleGroups has', async () => {
+      const mockExercises = [{ id: 'e1', muscleGroups: ['грудь'] }];
+      prismaMock.exercise.findMany.mockResolvedValue(mockExercises as never);
+
+      const result = await repository.getByMuscleGroup(['грудь']);
+
+      expect(prismaMock.exercise.findMany).toHaveBeenCalledWith({
+        where: {
+          isGlobal: true,
+          muscleGroups: { hasSome: ['грудь'] },
+        },
+        orderBy: { displayNameRu: 'asc' },
+      });
+      expect(result).toEqual(mockExercises);
+    });
+  });
 });

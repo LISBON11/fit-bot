@@ -156,15 +156,82 @@ describe('ExerciseService', () => {
   });
 
   describe('getExerciseListForNlu', () => {
-    it('should map exercises to simplified list for NLU', async () => {
-      repositoryMock.getAll.mockResolvedValue([mockExercise1, mockExercise2]);
+    it('should map exercises with id and aliases from synonyms', async () => {
+      const mockExercisesWithSynonyms = [
+        {
+          ...mockExercise1,
+          synonyms: [
+            { id: 's1', synonym: 'жим', isGlobal: true },
+            { id: 's2', synonym: 'bench', isGlobal: true },
+          ],
+        },
+        {
+          ...mockExercise2,
+          synonyms: [],
+        },
+      ];
+      repositoryMock.getAllWithSynonyms.mockResolvedValue(mockExercisesWithSynonyms as never);
 
       const result = await service.getExerciseListForNlu();
 
+      expect(repositoryMock.getAllWithSynonyms).toHaveBeenCalled();
       expect(result).toEqual([
-        { canonicalName: 'squat', displayNameRu: 'Присед' },
-        { canonicalName: 'front_squat', displayNameRu: 'Фронтальный присед' },
+        {
+          id: 'e1',
+          canonicalName: 'squat',
+          displayNameRu: 'Присед',
+          aliases: ['жим', 'bench'],
+        },
+        {
+          id: 'e2',
+          canonicalName: 'front_squat',
+          displayNameRu: 'Фронтальный присед',
+          aliases: [],
+        },
       ]);
+    });
+  });
+
+  describe('createUserExercise', () => {
+    it('should create exercise and save mapping', async () => {
+      const createdExercise: Exercise = {
+        id: 'new-ex',
+        canonicalName: 'тяга',
+        displayNameRu: 'Тяга',
+        displayNameEn: null,
+        muscleGroups: [],
+        category: null,
+        isGlobal: false,
+        createdBy: 'user1',
+        createdAt: new Date(),
+      };
+      repositoryMock.create.mockResolvedValue(createdExercise);
+      repositoryMock.upsertUserMapping.mockResolvedValue({} as never);
+
+      const result = await service.createUserExercise('user1', 'Тяга');
+
+      expect(repositoryMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          canonicalName: 'тяга',
+          displayNameRu: 'Тяга',
+          isGlobal: false,
+          createdBy: 'user1',
+        }),
+      );
+      // Маппинг должен быть сохранён сразу
+      expect(repositoryMock.upsertUserMapping).toHaveBeenCalledWith('user1', 'Тяга', 'new-ex');
+      expect(result).toEqual(createdExercise);
+    });
+  });
+
+  describe('getAllExercises', () => {
+    it('should return all global exercises via repository', async () => {
+      repositoryMock.getAll.mockResolvedValue([mockExercise1, mockExercise2]);
+
+      const result = await service.getAllExercises();
+
+      expect(repositoryMock.getAll).toHaveBeenCalled();
+      expect(result).toEqual([mockExercise1, mockExercise2]);
     });
   });
 });

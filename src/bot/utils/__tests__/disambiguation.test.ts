@@ -8,6 +8,8 @@ import { mockDeep } from 'jest-mock-extended';
 const mockExerciseService = {
   resolveExercise: jest.fn(),
   confirmMapping: jest.fn(),
+  createUserExercise: jest.fn<() => Promise<unknown>>().mockResolvedValue({ id: 'new-ex-id' }),
+  getAllExercises: jest.fn<() => Promise<unknown>>().mockResolvedValue([]),
 };
 
 const mockWorkoutService = {
@@ -22,6 +24,14 @@ jest.unstable_mockModule('../../../services/index.js', () => ({
 
 jest.unstable_mockModule('../../keyboards/exercisePicker.js', () => ({
   createExercisePickerKeyboard: jest.fn(() => ({ reply_markup: 'mocked' })),
+}));
+
+jest.unstable_mockModule('../telegram.js', () => ({
+  downloadAndTranscribeVoice: jest.fn(),
+}));
+
+jest.unstable_mockModule('../../../logger/logger.js', () => ({
+  createLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
 
 describe('disambiguation loop', () => {
@@ -184,7 +194,7 @@ describe('disambiguation loop', () => {
 
     expect(result.status).toBe('created');
     expect(conversation.waitForCallbackQuery).toHaveBeenCalledWith(
-      [/^map:/, 'new_exercise'],
+      [/^map:/, 'new_exercise', 'voice_list'],
       expect.any(Object),
     );
   });

@@ -8,8 +8,13 @@ const mockNluParser = {
   parseEdit: jest.fn<() => Promise<unknown>>(),
 };
 
+const mockExerciseService = {
+  getExerciseListForNlu: jest.fn<() => Promise<unknown>>().mockResolvedValue([]),
+};
+
 jest.unstable_mockModule('../../../services/index.js', () => ({
   getNluParser: jest.fn(() => mockNluParser),
+  exerciseService: mockExerciseService,
   services: {
     nluParser: mockNluParser,
   },
@@ -77,7 +82,7 @@ describe('workoutFlow', () => {
         'u1',
       );
 
-      expect(mockNluParser.parse).toHaveBeenCalledWith('10 pull ups', '2023-01-01');
+      expect(mockNluParser.parse).toHaveBeenCalledWith('10 pull ups', '2023-01-01', []);
       expect(runDisambiguationLoop).toHaveBeenCalledWith(
         conversation,
         ctx,

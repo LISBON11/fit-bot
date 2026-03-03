@@ -1,7 +1,7 @@
 import type { Conversation } from '@grammyjs/conversations';
 import type { CustomContext } from '../types.js';
 
-import { getNluParser } from '../../services/index.js';
+import { getNluParser, exerciseService } from '../../services/index.js';
 import { withChatAction } from './telegram.js';
 import { runDisambiguationLoop } from './disambiguation.js';
 import { AppError } from '../../errors/app-errors.js';
@@ -37,7 +37,26 @@ export async function parseAndDisambiguateUserInput(
     parsedWorkoutOrDelta = await withChatAction(ctx, conversation, async () => {
       logger.info('parseAndDisambiguateUserInput: inside withChatAction work()');
       if (mode === 'new') {
-        return await conversation.external(() => nluParser.parse(rawText, today));
+        // Загружаем список упражнений с синонимами — DeepSeek использует их
+        // для маппинга оригинального названия на mappedExerciseId (в т.ч. при опечатках)
+        const knownExercises = await conversation.external(() =>
+          exerciseService.getExerciseListForNlu(),
+        );
+        logger.info(
+          { exerciseCount: knownExercises.length },
+          'parseAndDisambiguateUserInput: knownExercises loaded for NLU',
+        );
+        return await conversation.external(() =>
+          nluParser.parse(
+            rawText,
+            today,
+            knownExercises.map((e) => ({
+              id: e.id,
+              name: e.displayNameRu ?? e.canonicalName,
+              aliases: e.aliases,
+            })),
+          ),
+        );
       } else {
         if (!existingWorkoutContext)
           throw new AppError('Требуется контекст для редактирования', 500);

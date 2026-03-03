@@ -107,11 +107,11 @@ export async function editWorkout(
       await conversation.external(() => workoutService.approveDraft(workoutId));
       const publisher = new PublisherService(ctx.api);
       await publisher.publish(previewHtml);
-      await actionCtx.deleteMessage().catch(() => {});
+      actionCtx.deleteMessage().catch(() => {});
       await ctx.reply('✅ Тренировка обновлена и опубликована!');
       return;
     } else if (action === 'canc') {
-      await actionCtx.deleteMessage().catch(() => {});
+      actionCtx.deleteMessage().catch(() => {});
       await ctx.reply('❌ Редактирование закрыто.');
       return;
     } else if (action === 'edit') {
@@ -149,7 +149,7 @@ export async function editWorkout(
       if (!editResult) continue;
 
       await ctx.reply('🔄 Изменения применены!');
-      await actionCtx.deleteMessage().catch(() => {});
+      actionCtx.deleteMessage().catch(() => {});
     }
   }
 }

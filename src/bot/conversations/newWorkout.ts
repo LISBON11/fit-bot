@@ -147,9 +147,9 @@ export async function newWorkout(
       convLogger.info('Action: publisher.publish completed');
 
       if (ctx.message?.message_id && ctx.chat?.id) {
-        await ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
+        ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
       }
-      await actionCtx.deleteMessage().catch(() => {});
+      actionCtx.deleteMessage().catch(() => {});
 
       await ctx.reply('✅ Тренировка успешно опубликована!');
       convLogger.info('Action: approve (finish)');
@@ -158,9 +158,9 @@ export async function newWorkout(
       // Отменяем
       await conversation.external(() => workoutService.cancelDraft(workoutId));
       if (ctx.message?.message_id && ctx.chat?.id) {
-        await ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
+        ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
       }
-      await actionCtx.deleteMessage().catch(() => {});
+      actionCtx.deleteMessage().catch(() => {});
 
       await ctx.reply('❌ Тренировка отменена.');
       return;
@@ -206,7 +206,7 @@ export async function newWorkout(
 
       await ctx.reply('🔄 Изменения применены!');
       // Удаляем старое превью и идем на новый круг while(true)
-      await actionCtx.deleteMessage().catch(() => {});
+      actionCtx.deleteMessage().catch(() => {});
     }
   }
 }

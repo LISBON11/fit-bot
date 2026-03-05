@@ -20,10 +20,6 @@ jest.unstable_mockModule('../../../services/index.js', () => ({
   },
 }));
 
-jest.unstable_mockModule('../telegram.js', () => ({
-  withChatAction: jest.fn(async ({ work }: { work: () => unknown }) => work()),
-}));
-
 jest.unstable_mockModule('../disambiguation.js', () => ({
   runDisambiguationLoop: jest.fn(),
 }));

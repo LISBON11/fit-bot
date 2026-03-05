@@ -2,7 +2,7 @@ import type { Conversation } from '@grammyjs/conversations';
 import type { CustomContext } from '../types.js';
 
 import { getNluParser, exerciseService } from '../../services/index.js';
-import { withChatAction } from './telegram.js';
+
 import { runDisambiguationLoop } from './disambiguation.js';
 import { AppError } from '../../errors/app-errors.js';
 import { createLogger } from '../../logger/logger.js';
@@ -45,46 +45,40 @@ export async function parseAndDisambiguateUserInput({
   const today = getCurrentDateString();
 
   try {
-    logger.info('parseAndDisambiguateUserInput: starting withChatAction');
+    logger.info('parseAndDisambiguateUserInput: starting parse');
     tracker?.setRunning({ step: WorkoutStep.NLU });
-    parsedWorkoutOrDelta = await withChatAction({
-      ctx: ctx,
-      work: async () => {
-        logger.info('parseAndDisambiguateUserInput: inside withChatAction work()');
-        if (mode === 'new') {
-          // Загружаем список упражнений с синонимами — DeepSeek использует их
-          // для маппинга оригинального названия на mappedExerciseId (в т.ч. при опечатках)
-          const knownExercises = await conversation.external(() =>
-            exerciseService.getExerciseListForNlu(),
-          );
-          logger.info(
-            { exerciseCount: knownExercises.length },
-            'parseAndDisambiguateUserInput: knownExercises loaded for NLU',
-          );
-          return await conversation.external(() =>
-            nluParser.parse({
-              rawText: rawText,
-              currentDate: today,
-              knownExercises: knownExercises.map((e) => ({
-                id: e.id,
-                name: e.displayNameRu ?? e.canonicalName,
-                aliases: e.aliases,
-              })),
-            }),
-          );
-        } else {
-          if (!existingWorkoutContext)
-            throw new AppError('Требуется контекст для редактирования', 500);
-          return await conversation.external(() =>
-            nluParser.parseEdit({
-              rawText: rawText,
-              currentDate: today,
-              currentWorkoutJson: existingWorkoutContext,
-            }),
-          );
-        }
-      },
-    });
+
+    if (mode === 'new') {
+      // Загружаем список упражнений с синонимами — DeepSeek использует их
+      // для маппинга оригинального названия на mappedExerciseId (в т.ч. при опечатках)
+      const knownExercises = await conversation.external(() =>
+        exerciseService.getExerciseListForNlu(),
+      );
+      logger.info(
+        { exerciseCount: knownExercises.length },
+        'parseAndDisambiguateUserInput: knownExercises loaded for NLU',
+      );
+      parsedWorkoutOrDelta = await conversation.external(() =>
+        nluParser.parse({
+          rawText: rawText,
+          currentDate: today,
+          knownExercises: knownExercises.map((e) => ({
+            id: e.id,
+            name: e.displayNameRu ?? e.canonicalName,
+            aliases: e.aliases,
+          })),
+        }),
+      );
+    } else {
+      if (!existingWorkoutContext) throw new AppError('Требуется контекст для редактирования', 500);
+      parsedWorkoutOrDelta = await conversation.external(() =>
+        nluParser.parseEdit({
+          rawText: rawText,
+          currentDate: today,
+          currentWorkoutJson: existingWorkoutContext,
+        }),
+      );
+    }
     tracker?.setDone({ step: WorkoutStep.NLU });
   } catch (err: unknown) {
     console.log(err);

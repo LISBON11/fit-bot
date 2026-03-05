@@ -6,7 +6,7 @@ import { formatPreview, formatWorkoutForNlu } from '../formatters/workoutFormatt
 import type { WorkoutWithRelations } from '../formatters/workoutFormatter.js';
 import { PublisherService } from '../../services/publisher.service.js';
 import type { CustomContext } from '../types.js';
-import { downloadAndTranscribeVoice, withChatAction } from '../utils/telegram.js';
+import { downloadAndTranscribeVoice } from '../utils/telegram.js';
 import { parseAndDisambiguateUserInput } from '../utils/workoutFlow.js';
 import { getCurrentDateString } from '../../utils/date.js';
 import { cloneWithoutClasses } from '../utils/serialization.js';
@@ -48,14 +48,9 @@ export async function editWorkout(
   const nluParser = getNluParser();
   const today = getCurrentDateString();
 
-  const targetDateStr = await withChatAction({
-    ctx: ctx,
-    work: async () => {
-      return await conversation.external(() =>
-        nluParser.parseDate({ rawText: matchText, currentDate: today }),
-      );
-    },
-  });
+  const targetDateStr = await conversation.external(() =>
+    nluParser.parseDate({ rawText: matchText, currentDate: today }),
+  );
 
   if (!targetDateStr) {
     await ctx.reply('Не удалось определить дату. Попробуйте еще раз.');

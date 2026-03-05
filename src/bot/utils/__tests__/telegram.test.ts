@@ -16,10 +16,6 @@ jest.unstable_mockModule('../../../config/env.js', () => ({
 }));
 
 describe('telegram utils', () => {
-  let withChatAction: (params: {
-    ctx: CustomContext;
-    work: () => Promise<unknown>;
-  }) => Promise<unknown>;
   let downloadAndTranscribeVoice: (params: {
     ctx: CustomContext;
     conversation: Conversation<CustomContext, CustomContext>;
@@ -27,24 +23,11 @@ describe('telegram utils', () => {
 
   beforeAll(async () => {
     const module = await import('../telegram.js');
-    withChatAction = module.withChatAction;
     downloadAndTranscribeVoice = module.downloadAndTranscribeVoice;
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('withChatAction', () => {
-    it('should resolve work successfully', async () => {
-      const work = jest.fn<() => Promise<unknown>>().mockResolvedValue('success');
-      const ctx = createMockCtx();
-
-      const result = await withChatAction({ ctx, work });
-
-      expect(result).toBe('success');
-      expect(work).toHaveBeenCalled();
-    });
   });
 
   describe('downloadAndTranscribeVoice', () => {

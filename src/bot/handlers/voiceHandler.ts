@@ -22,15 +22,6 @@ export async function handleVoiceMessage(ctx: CustomContext): Promise<void> {
     'Получено голосовое сообщение',
   );
 
-  // Уведомляем пользователя, что бот печатает или записывает видео/аудио
-  await ctx.replyWithChatAction('typing');
-
-  // Настроить отправку action в фоне каждые 5 сек, пока длится обработка,
-  // так как `replyWithChatAction` действует 5 секунд.
-  const actionInterval: NodeJS.Timeout | null = setInterval(() => {
-    ctx.replyWithChatAction('typing').catch(() => {});
-  }, 4500);
-
   try {
     // Получаем ссылку на файл от Telegram
     const file = await ctx.getFile();
@@ -74,9 +65,5 @@ export async function handleVoiceMessage(ctx: CustomContext): Promise<void> {
     handlerLogger.error({ err: error }, 'Ошибка обработки голосового сообщения');
     // Пробрасываем ошибку дальше в errorMiddleware для отправки user-friendly сообщения
     throw error;
-  } finally {
-    if (actionInterval) {
-      clearInterval(actionInterval);
-    }
   }
 }

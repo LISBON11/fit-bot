@@ -81,7 +81,6 @@ describe('Voice Handler', () => {
 
     await promise;
 
-    expect(mockCtx.replyWithChatAction).toHaveBeenCalledWith('typing');
     expect(mockCtx.getFile).toHaveBeenCalled();
     expect(mockFetch).toHaveBeenCalledWith('https://api.telegram.org/file/bottest-token/test.ogg');
     expect(mockSttService.transcribe).toHaveBeenCalled();

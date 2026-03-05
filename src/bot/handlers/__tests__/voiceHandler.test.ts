@@ -85,7 +85,10 @@ describe('Voice Handler', () => {
     expect(mockCtx.getFile).toHaveBeenCalled();
     expect(mockFetch).toHaveBeenCalledWith('https://api.telegram.org/file/bottest-token/test.ogg');
     expect(mockSttService.transcribe).toHaveBeenCalled();
-    expect(mockNluParser.parse).toHaveBeenCalledWith('Тестовая расшифровка', expect.any(String));
+    expect(mockNluParser.parse).toHaveBeenCalledWith({
+      rawText: 'Тестовая расшифровка',
+      currentDate: expect.any(String),
+    });
     expect(mockCtx.reply).toHaveBeenCalledWith(
       expect.stringContaining('Тренировка распознана'),
       expect.objectContaining({ parse_mode: 'Markdown' }),

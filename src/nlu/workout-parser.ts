@@ -32,7 +32,13 @@ export class NluParseError extends AppError {
  * @returns Валидированный объект
  * @throws NluParseError если JSON невалиден или не соответствует схеме
  */
-function parseAndValidate<T>(content: string, schema: { parse: (data: unknown) => T }): T {
+function parseAndValidate<T>({
+  content,
+  schema,
+}: {
+  content: string;
+  schema: { parse: (data: unknown) => T };
+}): T {
   let raw: unknown;
   try {
     raw = JSON.parse(content);
@@ -70,35 +76,46 @@ export class WorkoutParser {
    * @returns Валидированный объект ParsedWorkout
    * @throws NluParseError в случае ошибки парсинга или недоступности API
    */
-  async parse(
-    rawText: string,
-    currentDate: string,
-    knownExercises: { id: string; name: string; aliases: string[] }[] = [],
-  ): Promise<ParsedWorkout> {
+  async parse({
+    rawText,
+    currentDate,
+    knownExercises = [],
+  }: {
+    rawText: string;
+    currentDate: string;
+    knownExercises?: { id: string; name: string; aliases: string[] }[];
+  }): Promise<ParsedWorkout> {
     try {
       const start = Date.now();
       logger.debug('Запуск NLU парсера (DeepSeek V3)...');
 
-      const messages = buildParsePrompt(rawText, currentDate, knownExercises);
+      const messages = buildParsePrompt({
+        rawText: rawText,
+        currentDate: currentDate,
+        knownExercises: knownExercises,
+      });
 
-      const completion = await withRetry(
-        () =>
+      const completion = await withRetry({
+        operation: () =>
           this.openai.chat.completions.create({
             model: DEEPSEEK_MODEL,
             messages,
             response_format: { type: 'json_object' },
             temperature: 0.1,
           }),
-        'DeepSeek NLU Parse',
-        { maxRetries: 2, baseDelayMs: 2000 },
-      );
+        context: 'DeepSeek NLU Parse',
+        options: { maxRetries: 2, baseDelayMs: 2000 },
+      });
 
       const content = completion.choices[0]?.message?.content;
       if (!content) {
         throw new NluParseError('LLM вернул пустой ответ при парсинге тренировки');
       }
 
-      const parsedData = parseAndValidate<ParsedWorkout>(content, ParsedWorkoutSchema);
+      const parsedData = parseAndValidate<ParsedWorkout>({
+        content: content,
+        schema: ParsedWorkoutSchema,
+      });
 
       logger.info(
         { durationMs: Date.now() - start },
@@ -131,35 +148,46 @@ export class WorkoutParser {
    * @param currentWorkoutJson JSON строка текущей тренировки
    * @returns Валидированный обновленный объект ParsedWorkout
    */
-  async parseEdit(
-    rawText: string,
-    currentDate: string,
-    currentWorkoutJson: string,
-  ): Promise<ParsedWorkout> {
+  async parseEdit({
+    rawText,
+    currentDate,
+    currentWorkoutJson,
+  }: {
+    rawText: string;
+    currentDate: string;
+    currentWorkoutJson: string;
+  }): Promise<ParsedWorkout> {
     try {
       const start = Date.now();
       logger.debug('Запуск NLU парсера для редактирования (DeepSeek V3)...');
 
-      const messages = buildEditPrompt(currentWorkoutJson, rawText, currentDate);
+      const messages = buildEditPrompt({
+        currentWorkoutJson: currentWorkoutJson,
+        rawText: rawText,
+        currentDate: currentDate,
+      });
 
-      const completion = await withRetry(
-        () =>
+      const completion = await withRetry({
+        operation: () =>
           this.openai.chat.completions.create({
             model: DEEPSEEK_MODEL,
             messages,
             response_format: { type: 'json_object' },
             temperature: 0.1,
           }),
-        'DeepSeek NLU Edit',
-        { maxRetries: 2, baseDelayMs: 2000 },
-      );
+        context: 'DeepSeek NLU Edit',
+        options: { maxRetries: 2, baseDelayMs: 2000 },
+      });
 
       const content = completion.choices[0]?.message?.content;
       if (!content) {
         throw new NluParseError('LLM вернул пустой ответ при редактировании тренировки');
       }
 
-      const parsedData = parseAndValidate<ParsedWorkout>(content, ParsedWorkoutSchema);
+      const parsedData = parseAndValidate<ParsedWorkout>({
+        content: content,
+        schema: ParsedWorkoutSchema,
+      });
 
       logger.info({ durationMs: Date.now() - start }, 'Изменения успешно применены с помощью NLU');
 
@@ -187,7 +215,13 @@ export class WorkoutParser {
    * @param currentDate Сегодняшняя дата (YYYY-MM-DD) для точки отсчета
    * @returns Дата в формате YYYY-MM-DD
    */
-  async parseDate(rawText: string, currentDate: string): Promise<string> {
+  async parseDate({
+    rawText,
+    currentDate,
+  }: {
+    rawText: string;
+    currentDate: string;
+  }): Promise<string> {
     try {
       logger.debug('Запуск NLU парсера даты...');
 
@@ -198,24 +232,24 @@ export class WorkoutParser {
         { role: 'user', content: rawText },
       ];
 
-      const completion = await withRetry(
-        () =>
+      const completion = await withRetry({
+        operation: () =>
           this.openai.chat.completions.create({
             model: DEEPSEEK_MODEL,
             messages,
             response_format: { type: 'json_object' },
             temperature: 0,
           }),
-        'DeepSeek NLU Date Parse',
-        { maxRetries: 2, baseDelayMs: 2000 },
-      );
+        context: 'DeepSeek NLU Date Parse',
+        options: { maxRetries: 2, baseDelayMs: 2000 },
+      });
 
       const content = completion.choices[0]?.message?.content;
       if (!content) {
         throw new NluParseError('LLM вернул пустой ответ при парсинге даты');
       }
 
-      const parsedData = parseAndValidate(content, DateParseSchema);
+      const parsedData = parseAndValidate({ content: content, schema: DateParseSchema });
 
       if (!parsedData.date) {
         throw new NluParseError('Не удалось извлечь дату из ответа LLM');

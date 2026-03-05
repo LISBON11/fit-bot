@@ -30,7 +30,11 @@ export async function newWorkout(
   }
 
   const user = await conversation.external(() =>
-    userService.getOrCreateByTelegram(telegramId, ctx.from?.username || null, ctx.from?.first_name),
+    userService.getOrCreateByTelegram({
+      telegramId,
+      username: ctx.from?.username || null,
+      firstName: ctx.from?.first_name,
+    }),
   );
 
   const userId = user.id;
@@ -46,9 +50,9 @@ export async function newWorkout(
     tracker = new ProgressTracker(ctx);
     await tracker.send();
 
-    tracker.setRunning(WorkoutStep.STT);
-    rawText = await downloadAndTranscribeVoice(ctx, conversation);
-    tracker.setDone(WorkoutStep.STT);
+    tracker.setRunning({ step: WorkoutStep.STT });
+    rawText = await downloadAndTranscribeVoice({ ctx: ctx, conversation: conversation });
+    tracker.setDone({ step: WorkoutStep.STT });
 
     convLogger.info('Step 1: Voice transcription complete');
   } else if (ctx.message?.text) {
@@ -65,16 +69,16 @@ export async function newWorkout(
 
   // 2. NLU Parsing & Disambiguation Loop
   convLogger.info('Step 2: Starting parseAndDisambiguateUserInput');
-  const draftResult = await parseAndDisambiguateUserInput(
-    conversation,
-    ctx,
-    rawText,
-    'new',
-    userId,
-    undefined,
-    undefined,
-    tracker,
-  );
+  const draftResult = await parseAndDisambiguateUserInput({
+    conversation: conversation,
+    ctx: ctx,
+    rawText: rawText,
+    mode: 'new',
+    userId: userId,
+    existingWorkoutContext: undefined,
+    workoutIdForDelta: undefined,
+    tracker: tracker,
+  });
   convLogger.info(
     { draftResultStatus: draftResult?.status },
     'Step 2: parseAndDisambiguateUserInput output',
@@ -100,7 +104,7 @@ export async function newWorkout(
 
   // Процессинг завершён, показываем пользователю превью для подтверждения
   // CLARIFY = фаза ревью (пользователь проверяет тренировку, нажимает кнопку)
-  tracker?.setRunning(WorkoutStep.CLARIFY);
+  tracker?.setRunning({ step: WorkoutStep.CLARIFY });
 
   // 4. Показ итеративного превью и выбор действия
   while (true) {
@@ -134,9 +138,12 @@ export async function newWorkout(
 
       // Сохраняем связки сообщений
       await conversation.external(() =>
-        workoutService.updateMessageIds(workoutId, {
-          sourceMessageId: ctx.message?.message_id,
-          previewMessageId: previewMsgId,
+        workoutService.updateMessageIds({
+          id: workoutId,
+          data: {
+            sourceMessageId: ctx.message?.message_id,
+            previewMessageId: previewMsgId,
+          },
         }),
       );
     }
@@ -173,12 +180,12 @@ export async function newWorkout(
       convLogger.info('Action: approveDraft completed');
 
       // CLARIFY завершен, начинаем публикацию
-      tracker?.setDone(WorkoutStep.CLARIFY);
-      tracker?.setRunning(WorkoutStep.PUBLISH);
+      tracker?.setDone({ step: WorkoutStep.CLARIFY });
+      tracker?.setRunning({ step: WorkoutStep.PUBLISH });
       const publisher = new PublisherService(ctx.api);
       await publisher.publish(previewHtml);
       convLogger.info('Action: publisher.publish completed');
-      tracker?.setDone(WorkoutStep.PUBLISH);
+      tracker?.setDone({ step: WorkoutStep.PUBLISH });
 
       // Удаляем трекер — тренировка подтверждена
       await tracker?.delete();
@@ -227,10 +234,10 @@ export async function newWorkout(
 
       if (editInputCtx.message?.voice) {
         try {
-          editRawText = await downloadAndTranscribeVoice(
-            editInputCtx as CustomContext,
-            conversation,
-          );
+          editRawText = await downloadAndTranscribeVoice({
+            ctx: editInputCtx as CustomContext,
+            conversation: conversation,
+          });
         } catch (err: unknown) {
           const errorMsg =
             err instanceof AppError ? err.message : '⚠️ Ошибка при обработке голосового сообщения';
@@ -246,15 +253,15 @@ export async function newWorkout(
         continue;
       }
 
-      const editResult = await parseAndDisambiguateUserInput(
-        conversation,
-        ctx,
-        editRawText,
-        'edit',
-        userId,
-        JSON.stringify(loopWorkout, null, 2),
-        workoutId,
-      );
+      const editResult = await parseAndDisambiguateUserInput({
+        conversation: conversation,
+        ctx: ctx,
+        rawText: editRawText,
+        mode: 'edit',
+        userId: userId,
+        existingWorkoutContext: JSON.stringify(loopWorkout, null, 2),
+        workoutIdForDelta: workoutId,
+      });
 
       // Чистим историю сообщений редактирования, чтобы превью обновилось на месте
       if (ctx.chat?.id) {

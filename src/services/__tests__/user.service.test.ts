@@ -30,7 +30,11 @@ describe('UserService', () => {
         telegramId: '123',
       } as unknown as User);
 
-      const result = await service.getOrCreateByTelegram('123', 'testuser', 'Test');
+      const result = await service.getOrCreateByTelegram({
+        telegramId: '123',
+        username: 'testuser',
+        firstName: 'Test',
+      });
 
       expect(result.id).toBe('u1');
       expect(repositoryMock.findByTelegramId).toHaveBeenCalledWith('123');
@@ -44,11 +48,19 @@ describe('UserService', () => {
         telegramId: '456',
       } as unknown as User);
 
-      const result = await service.getOrCreateByTelegram('456', 'newuser', 'New');
+      const result = await service.getOrCreateByTelegram({
+        telegramId: '456',
+        username: 'newuser',
+        firstName: 'New',
+      });
 
       expect(result.id).toBe('u2');
       expect(repositoryMock.findByTelegramId).toHaveBeenCalledWith('456');
-      expect(repositoryMock.createWithTelegram).toHaveBeenCalledWith('456', 'newuser', 'New');
+      expect(repositoryMock.createWithTelegram).toHaveBeenCalledWith({
+        telegramId: '456',
+        username: 'newuser',
+        firstName: 'New',
+      });
     });
   });
 });

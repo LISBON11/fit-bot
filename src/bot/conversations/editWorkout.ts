@@ -21,7 +21,11 @@ export async function editWorkout(
   }
 
   const user = await conversation.external(() =>
-    userService.getOrCreateByTelegram(telegramId, ctx.from?.username || null, ctx.from?.first_name),
+    userService.getOrCreateByTelegram({
+      telegramId,
+      username: ctx.from?.username || null,
+      firstName: ctx.from?.first_name,
+    }),
   );
 
   const userId = user.id;
@@ -44,8 +48,13 @@ export async function editWorkout(
   const nluParser = getNluParser();
   const today = getCurrentDateString();
 
-  const targetDateStr = await withChatAction(ctx, conversation, async () => {
-    return await conversation.external(() => nluParser.parseDate(matchText, today));
+  const targetDateStr = await withChatAction({
+    ctx: ctx,
+    work: async () => {
+      return await conversation.external(() =>
+        nluParser.parseDate({ rawText: matchText, currentDate: today }),
+      );
+    },
   });
 
   if (!targetDateStr) {
@@ -54,7 +63,7 @@ export async function editWorkout(
   }
 
   const workout = await conversation.external(async () => {
-    const data = await workoutService.findByDate(userId, new Date(targetDateStr));
+    const data = await workoutService.findByDate({ userId, targetDate: new Date(targetDateStr) });
     return cloneWithoutClasses(data);
   });
 
@@ -98,8 +107,9 @@ export async function editWorkout(
       previewMsgId = previewMsg.message_id;
 
       await conversation.external(() =>
-        workoutService.updateMessageIds(workoutId, {
-          previewMessageId: previewMsgId,
+        workoutService.updateMessageIds({
+          id: workoutId,
+          data: { previewMessageId: previewMsgId },
         }),
       );
     }
@@ -154,7 +164,10 @@ export async function editWorkout(
       let editRawText: string;
 
       if (editInputCtx.message?.voice) {
-        editRawText = await downloadAndTranscribeVoice(editInputCtx, conversation);
+        editRawText = await downloadAndTranscribeVoice({
+          ctx: editInputCtx,
+          conversation: conversation,
+        });
       } else {
         editRawText = editInputCtx.message?.text || '';
       }
@@ -169,15 +182,15 @@ export async function editWorkout(
 
       const nluDto = formatWorkoutForNlu(fullWorkoutForDto);
 
-      const editResult = await parseAndDisambiguateUserInput(
-        conversation,
-        ctx,
-        editRawText,
-        'edit',
-        userId,
-        JSON.stringify(nluDto),
-        workoutId,
-      );
+      const editResult = await parseAndDisambiguateUserInput({
+        conversation: conversation,
+        ctx: ctx,
+        rawText: editRawText,
+        mode: 'edit',
+        userId: userId,
+        existingWorkoutContext: JSON.stringify(nluDto),
+        workoutIdForDelta: workoutId,
+      });
 
       // Чистим историю сообщений редактирования, чтобы превью обновилось на месте
       if (ctx.chat?.id) {

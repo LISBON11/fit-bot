@@ -48,11 +48,15 @@ export class UserRepository {
    * @param firstName Имя пользователя из Telegram
    * @returns Созданный пользователь
    */
-  async createWithTelegram(
-    telegramId: string,
-    username: string | null,
-    firstName: string | undefined,
-  ): Promise<User> {
+  async createWithTelegram({
+    telegramId,
+    username,
+    firstName,
+  }: {
+    telegramId: string;
+    username: string | null;
+    firstName: string | undefined;
+  }): Promise<User> {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {

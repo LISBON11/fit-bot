@@ -21,7 +21,7 @@ jest.unstable_mockModule('../../../services/index.js', () => ({
 }));
 
 jest.unstable_mockModule('../telegram.js', () => ({
-  withChatAction: jest.fn(async (_ctx: unknown, _conv: unknown, work: () => unknown) => work()),
+  withChatAction: jest.fn(async ({ work }: { work: () => unknown }) => work()),
 }));
 
 jest.unstable_mockModule('../disambiguation.js', () => ({
@@ -37,15 +37,15 @@ jest.unstable_mockModule('../../../logger/logger.js', () => ({
 }));
 
 describe('workoutFlow', () => {
-  let parseAndDisambiguateUserInput: (
-    conversation: Conversation<CustomContext, CustomContext>,
-    ctx: CustomContext,
-    inputText: string,
-    mode: 'new' | 'edit',
-    userId: string,
-    workoutContext?: string,
-    draftId?: string,
-  ) => Promise<
+  let parseAndDisambiguateUserInput: (params: {
+    conversation: Conversation<CustomContext, CustomContext>;
+    ctx: CustomContext;
+    rawText: string;
+    mode: 'new' | 'edit';
+    userId: string;
+    existingWorkoutContext?: string;
+    workoutIdForDelta?: string;
+  }) => Promise<
     | { status: string; ambiguousExercises?: ParsedExercise[]; workout?: { id: string } }
     | null
     | undefined
@@ -74,24 +74,28 @@ describe('workoutFlow', () => {
         external: jest.fn(async (fn: () => unknown) => fn()),
       } as unknown as Conversation<CustomContext, CustomContext>;
 
-      const result = await parseAndDisambiguateUserInput(
+      const result = await parseAndDisambiguateUserInput({
         conversation,
         ctx,
-        '10 pull ups',
-        'new',
-        'u1',
-      );
+        rawText: '10 pull ups',
+        mode: 'new',
+        userId: 'u1',
+      });
 
-      expect(mockNluParser.parse).toHaveBeenCalledWith('10 pull ups', '2023-01-01', []);
-      expect(runDisambiguationLoop).toHaveBeenCalledWith(
+      expect(mockNluParser.parse).toHaveBeenCalledWith({
+        rawText: '10 pull ups',
+        currentDate: '2023-01-01',
+        knownExercises: [],
+      });
+      expect(runDisambiguationLoop).toHaveBeenCalledWith({
         conversation,
         ctx,
-        expect.any(Object),
-        'draft',
-        'u1',
-        false,
-        undefined,
-      );
+        parsedDelta: expect.any(Object),
+        workoutId: 'draft',
+        userId: 'u1',
+        isEditMode: false,
+        tracker: undefined,
+      });
       expect(result?.status).toBe('created');
     });
 
@@ -104,30 +108,30 @@ describe('workoutFlow', () => {
         external: jest.fn(async (fn: () => unknown) => fn()),
       } as unknown as Conversation<CustomContext, CustomContext>;
 
-      const result = await parseAndDisambiguateUserInput(
+      const result = await parseAndDisambiguateUserInput({
         conversation,
         ctx,
-        'change pull ups to 12',
-        'edit',
-        'u1',
-        'current context',
-        'w1',
-      );
+        rawText: 'change pull ups to 12',
+        mode: 'edit',
+        userId: 'u1',
+        existingWorkoutContext: 'current context',
+        workoutIdForDelta: 'w1',
+      });
 
-      expect(mockNluParser.parseEdit).toHaveBeenCalledWith(
-        'change pull ups to 12',
-        '2023-01-01',
-        'current context',
-      );
-      expect(runDisambiguationLoop).toHaveBeenCalledWith(
+      expect(mockNluParser.parseEdit).toHaveBeenCalledWith({
+        rawText: 'change pull ups to 12',
+        currentDate: '2023-01-01',
+        currentWorkoutJson: 'current context',
+      });
+      expect(runDisambiguationLoop).toHaveBeenCalledWith({
         conversation,
         ctx,
-        expect.any(Object),
-        'w1',
-        'u1',
-        true,
-        undefined,
-      );
+        parsedDelta: expect.any(Object),
+        workoutId: 'w1',
+        userId: 'u1',
+        isEditMode: true,
+        tracker: undefined,
+      });
       expect(result?.status).toBe('updated');
     });
 
@@ -137,7 +141,15 @@ describe('workoutFlow', () => {
         external: jest.fn(async (fn: () => unknown) => fn()),
       } as unknown as Conversation<CustomContext, CustomContext>;
 
-      await parseAndDisambiguateUserInput(conversation, ctx, 'text', 'edit', 'u1', '', 'w1');
+      await parseAndDisambiguateUserInput({
+        conversation,
+        ctx,
+        rawText: 'text',
+        mode: 'edit',
+        userId: 'u1',
+        existingWorkoutContext: '',
+        workoutIdForDelta: 'w1',
+      });
       // Throws AppError which triggers catch block and returns null
       expect(ctx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Не удалось автоматически разобрать'),
@@ -153,13 +165,13 @@ describe('workoutFlow', () => {
         external: jest.fn(async (fn: () => unknown) => fn()),
       } as unknown as Conversation<CustomContext, CustomContext>;
 
-      const result = await (parseAndDisambiguateUserInput as typeof parseAndDisambiguateUserInput)(
+      const result = await parseAndDisambiguateUserInput({
         conversation,
         ctx,
-        'bad input',
-        'new',
-        'u1',
-      );
+        rawText: 'bad input',
+        mode: 'new',
+        userId: 'u1',
+      });
 
       expect(ctx.reply).toHaveBeenCalledWith(
         expect.stringContaining('Не удалось автоматически разобрать'),

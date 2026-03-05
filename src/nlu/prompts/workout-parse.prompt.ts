@@ -2,11 +2,15 @@ import type { ChatCompletionMessageParam } from 'openai/resources/index.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { ParsedWorkoutSchema } from '../nlu.schema.js';
 
-export function buildParsePrompt(
-  rawText: string,
-  currentDate: string,
-  knownExercises: { id: string; name: string; aliases: string[] }[] = [],
-): ChatCompletionMessageParam[] {
+export function buildParsePrompt({
+  rawText,
+  currentDate,
+  knownExercises = [],
+}: {
+  rawText: string;
+  currentDate: string;
+  knownExercises: { id: string; name: string; aliases: string[] }[];
+}): ChatCompletionMessageParam[] {
   const knownExercisesText =
     knownExercises.length > 0
       ? `Доступные упражнения в базе:\n${knownExercises.map((e) => `- ID: ${e.id}, Название: ${e.name} (Алиасы: ${e.aliases.join(', ')})`).join('\n')}`

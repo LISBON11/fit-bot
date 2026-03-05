@@ -60,7 +60,10 @@ export async function handleVoiceMessage(ctx: CustomContext): Promise<void> {
     // Отправляем текст в парсер
     const today = getCurrentDateString();
     const nluParser = getNluParser();
-    const parsedWorkout = await nluParser.parse(text, today);
+    const parsedWorkout = await nluParser.parse({
+      rawText: text,
+      currentDate: today,
+    });
 
     // Отправляем JSON-результат для наглядности (MVP Stage 2)
     await ctx.reply(

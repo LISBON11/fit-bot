@@ -69,7 +69,7 @@ describe('Exercise Resolving Integration', () => {
   });
 
   test('should exact match one exercise by synonym', async () => {
-    const result = await exerciseService.resolveExercise('СТАНОВАЯ', userId);
+    const result = await exerciseService.resolveExercise({ inputText: 'СТАНОВАЯ', userId });
 
     expect(result.status).toBe('resolved');
     if (result.status === 'resolved') {
@@ -79,7 +79,7 @@ describe('Exercise Resolving Integration', () => {
   });
 
   test('should return ambiguous matches for overlapping synonym', async () => {
-    const result = await exerciseService.resolveExercise('тяга', userId);
+    const result = await exerciseService.resolveExercise({ inputText: 'тяга', userId });
 
     expect(result.status).toBe('ambiguous');
     if (result.status === 'ambiguous') {
@@ -92,10 +92,14 @@ describe('Exercise Resolving Integration', () => {
 
   test('should resolve by user mapping after confirmMapping', async () => {
     // Пользователь выбирает Румынскую тягу
-    await exerciseService.confirmMapping(userId, 'тяга', '22222222-2222-2222-2222-222222222222');
+    await exerciseService.confirmMapping({
+      userId,
+      inputText: 'тяга',
+      exerciseId: '22222222-2222-2222-2222-222222222222',
+    });
 
     // Повторный резолв
-    const result = await exerciseService.resolveExercise('тяга', userId);
+    const result = await exerciseService.resolveExercise({ inputText: 'тяга', userId });
 
     expect(result.status).toBe('resolved');
     if (result.status === 'resolved') {
@@ -105,7 +109,7 @@ describe('Exercise Resolving Integration', () => {
   });
 
   test('should return not_found if no synonym matches', async () => {
-    const result = await exerciseService.resolveExercise('швунг', userId);
+    const result = await exerciseService.resolveExercise({ inputText: 'швунг', userId });
     expect(result.status).toBe('not_found');
   });
 });

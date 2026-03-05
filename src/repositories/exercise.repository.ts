@@ -18,10 +18,13 @@ export class ExerciseRepository {
    * @param userId ID пользователя для поиска специфичных синонимов
    * @returns Список найденных синонимов вместе с упражнениями
    */
-  async findSynonyms(
-    text: string,
-    userId?: string,
-  ): Promise<(ExerciseSynonym & { exercise: Exercise })[]> {
+  async findSynonyms({
+    text,
+    userId,
+  }: {
+    text: string;
+    userId?: string;
+  }): Promise<(ExerciseSynonym & { exercise: Exercise })[]> {
     const lowerText = text.toLowerCase();
 
     // В PostgreSQL мы можем использовать mode: 'insensitive' для регистронезависимого поиска
@@ -47,10 +50,13 @@ export class ExerciseRepository {
    * @param userId ID пользователя
    * @param inputText Введенный текст
    */
-  async findUserMapping(
-    userId: string,
-    inputText: string,
-  ): Promise<(UserExerciseMapping & { exercise: Exercise }) | null> {
+  async findUserMapping({
+    userId,
+    inputText,
+  }: {
+    userId: string;
+    inputText: string;
+  }): Promise<(UserExerciseMapping & { exercise: Exercise }) | null> {
     const lowerText = inputText.toLowerCase();
 
     return this.prisma.userExerciseMapping.findFirst({
@@ -70,11 +76,15 @@ export class ExerciseRepository {
    * @param inputText Введенный текст
    * @param exerciseId ID упражнения
    */
-  async upsertUserMapping(
-    userId: string,
-    inputText: string,
-    exerciseId: string,
-  ): Promise<UserExerciseMapping> {
+  async upsertUserMapping({
+    userId,
+    inputText,
+    exerciseId,
+  }: {
+    userId: string;
+    inputText: string;
+    exerciseId: string;
+  }): Promise<UserExerciseMapping> {
     const lowerText = inputText.toLowerCase();
 
     const existing = await this.prisma.userExerciseMapping.findFirst({
@@ -145,7 +155,7 @@ export class ExerciseRepository {
    * @param query Поисковый запрос
    * @param limit Ограничение количества результатов (по умолчанию 5)
    */
-  async searchSimilar(query: string, limit: number = 5): Promise<Exercise[]> {
+  async searchSimilar({ query, limit = 5 }: { query: string; limit: number }): Promise<Exercise[]> {
     const words = query
       .toLowerCase()
       .split(/\s+/)

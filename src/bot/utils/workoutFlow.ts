@@ -15,16 +15,25 @@ const logger = createLogger('WorkoutFlowHelper');
 
 export type WorkoutFlowMode = 'new' | 'edit';
 
-export async function parseAndDisambiguateUserInput(
-  conversation: Conversation<CustomContext, CustomContext>,
-  ctx: CustomContext,
-  rawText: string,
-  mode: WorkoutFlowMode,
-  userId: string,
-  existingWorkoutContext?: string,
-  workoutIdForDelta?: string,
-  tracker?: ProgressTracker,
-): Promise<{
+export async function parseAndDisambiguateUserInput({
+  conversation,
+  ctx,
+  rawText,
+  mode,
+  userId,
+  existingWorkoutContext,
+  workoutIdForDelta,
+  tracker,
+}: {
+  conversation: Conversation<CustomContext, CustomContext>;
+  ctx: CustomContext;
+  rawText: string;
+  mode: WorkoutFlowMode;
+  userId: string;
+  existingWorkoutContext?: string;
+  workoutIdForDelta?: string;
+  tracker?: ProgressTracker;
+}): Promise<{
   status: string;
   ambiguousExercises?: ParsedExercise[];
   workout?: { id: string };
@@ -37,39 +46,46 @@ export async function parseAndDisambiguateUserInput(
 
   try {
     logger.info('parseAndDisambiguateUserInput: starting withChatAction');
-    tracker?.setRunning(WorkoutStep.NLU);
-    parsedWorkoutOrDelta = await withChatAction(ctx, conversation, async () => {
-      logger.info('parseAndDisambiguateUserInput: inside withChatAction work()');
-      if (mode === 'new') {
-        // Загружаем список упражнений с синонимами — DeepSeek использует их
-        // для маппинга оригинального названия на mappedExerciseId (в т.ч. при опечатках)
-        const knownExercises = await conversation.external(() =>
-          exerciseService.getExerciseListForNlu(),
-        );
-        logger.info(
-          { exerciseCount: knownExercises.length },
-          'parseAndDisambiguateUserInput: knownExercises loaded for NLU',
-        );
-        return await conversation.external(() =>
-          nluParser.parse(
-            rawText,
-            today,
-            knownExercises.map((e) => ({
-              id: e.id,
-              name: e.displayNameRu ?? e.canonicalName,
-              aliases: e.aliases,
-            })),
-          ),
-        );
-      } else {
-        if (!existingWorkoutContext)
-          throw new AppError('Требуется контекст для редактирования', 500);
-        return await conversation.external(() =>
-          nluParser.parseEdit(rawText, today, existingWorkoutContext),
-        );
-      }
+    tracker?.setRunning({ step: WorkoutStep.NLU });
+    parsedWorkoutOrDelta = await withChatAction({
+      ctx: ctx,
+      work: async () => {
+        logger.info('parseAndDisambiguateUserInput: inside withChatAction work()');
+        if (mode === 'new') {
+          // Загружаем список упражнений с синонимами — DeepSeek использует их
+          // для маппинга оригинального названия на mappedExerciseId (в т.ч. при опечатках)
+          const knownExercises = await conversation.external(() =>
+            exerciseService.getExerciseListForNlu(),
+          );
+          logger.info(
+            { exerciseCount: knownExercises.length },
+            'parseAndDisambiguateUserInput: knownExercises loaded for NLU',
+          );
+          return await conversation.external(() =>
+            nluParser.parse({
+              rawText: rawText,
+              currentDate: today,
+              knownExercises: knownExercises.map((e) => ({
+                id: e.id,
+                name: e.displayNameRu ?? e.canonicalName,
+                aliases: e.aliases,
+              })),
+            }),
+          );
+        } else {
+          if (!existingWorkoutContext)
+            throw new AppError('Требуется контекст для редактирования', 500);
+          return await conversation.external(() =>
+            nluParser.parseEdit({
+              rawText: rawText,
+              currentDate: today,
+              currentWorkoutJson: existingWorkoutContext,
+            }),
+          );
+        }
+      },
     });
-    tracker?.setDone(WorkoutStep.NLU);
+    tracker?.setDone({ step: WorkoutStep.NLU });
   } catch (err: unknown) {
     console.log(err);
     logger.error({ err }, 'Ошибка при парсинге NLU');
@@ -89,13 +105,13 @@ export async function parseAndDisambiguateUserInput(
 
   // Запуск цикла уточнения (Disambiguation)
   logger.info('parseAndDisambiguateUserInput: calling runDisambiguationLoop');
-  return await runDisambiguationLoop(
-    conversation,
-    ctx,
-    parsedWorkoutOrDelta,
-    mode === 'new' ? 'draft' : (workoutIdForDelta as string),
-    userId,
-    mode === 'edit',
-    tracker,
-  );
+  return await runDisambiguationLoop({
+    conversation: conversation,
+    ctx: ctx,
+    parsedDelta: parsedWorkoutOrDelta,
+    workoutId: mode === 'new' ? 'draft' : (workoutIdForDelta as string),
+    userId: userId,
+    isEditMode: mode === 'edit',
+    tracker: tracker,
+  });
 }

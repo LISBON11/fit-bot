@@ -59,7 +59,7 @@ describe('Workout Flow Integration', () => {
 
   test('should create draft, approve it and save all nested data', async () => {
     // 1. Создание черновика
-    const result = await workoutService.createDraft(userId, sampleParsedWorkout);
+    const result = await workoutService.createDraft({ userId, parsedWorkout: sampleParsedWorkout });
 
     expect(result.status).toBe('created');
     if (result.status !== 'created') throw new Error('Failed to create draft');
@@ -97,7 +97,7 @@ describe('Workout Flow Integration', () => {
   });
 
   test('should create draft and cancel it', async () => {
-    const result = await workoutService.createDraft(userId, sampleParsedWorkout);
+    const result = await workoutService.createDraft({ userId, parsedWorkout: sampleParsedWorkout });
 
     expect(result.status).toBe('created');
     if (result.status !== 'created') throw new Error('Failed to create draft');

@@ -32,7 +32,11 @@ describe('retry.ts', () => {
   it('should return result if operation succeeds first time', async () => {
     mockOperation.mockResolvedValue('success');
 
-    const result = await withRetry(mockOperation, 'TestContext');
+    const result = await withRetry({
+      operation: mockOperation,
+      context: 'TestContext',
+      options: {},
+    });
     expect(result).toBe('success');
     expect(mockOperation).toHaveBeenCalledTimes(1);
   });
@@ -43,7 +47,7 @@ describe('retry.ts', () => {
 
     mockOperation.mockRejectedValueOnce(rateLimitError).mockResolvedValueOnce('success');
 
-    const promise = withRetry(mockOperation, 'TestContext');
+    const promise = withRetry({ operation: mockOperation, context: 'TestContext', options: {} });
 
     await Promise.resolve();
     jest.advanceTimersByTime(1000);
@@ -59,7 +63,7 @@ describe('retry.ts', () => {
 
     mockOperation.mockRejectedValueOnce(serverError).mockResolvedValueOnce('success');
 
-    const promise = withRetry(mockOperation, 'TestContext');
+    const promise = withRetry({ operation: mockOperation, context: 'TestContext', options: {} });
 
     await Promise.resolve();
     jest.advanceTimersByTime(1000);
@@ -75,14 +79,18 @@ describe('retry.ts', () => {
 
     mockOperation.mockRejectedValue(badRequestError);
 
-    await expect(withRetry(mockOperation, 'TestContext')).rejects.toThrow('Bad request');
+    await expect(
+      withRetry({ operation: mockOperation, context: 'TestContext', options: {} }),
+    ).rejects.toThrow('Bad request');
     expect(mockOperation).toHaveBeenCalledTimes(1);
   });
 
   it('should not retry if error is not an Error instance with status', async () => {
     mockOperation.mockRejectedValue('String error');
 
-    await expect(withRetry(mockOperation, 'TestContext')).rejects.toBe('String error');
+    await expect(
+      withRetry({ operation: mockOperation, context: 'TestContext', options: {} }),
+    ).rejects.toBe('String error');
     expect(mockOperation).toHaveBeenCalledTimes(1);
   });
 
@@ -92,7 +100,11 @@ describe('retry.ts', () => {
 
     mockOperation.mockRejectedValue(serverError);
 
-    const promise = withRetry(mockOperation, 'TestContext', { maxRetries: 2, baseDelayMs: 100 });
+    const promise = withRetry({
+      operation: mockOperation,
+      context: 'TestContext',
+      options: { maxRetries: 2, baseDelayMs: 100 },
+    });
 
     // Attempt 1 fails, waits 100ms
     // Attempt 2 fails, waits 200ms
@@ -111,8 +123,12 @@ describe('retry.ts', () => {
 
     mockOperation.mockRejectedValueOnce(customError).mockResolvedValueOnce('success');
 
-    const promise = withRetry(mockOperation, 'TestContext', {
-      shouldRetry: (err) => err instanceof Error && err.message === 'Custom error',
+    const promise = withRetry({
+      operation: mockOperation,
+      context: 'TestContext',
+      options: {
+        shouldRetry: (err) => err instanceof Error && err.message === 'Custom error',
+      },
     });
 
     await Promise.resolve();

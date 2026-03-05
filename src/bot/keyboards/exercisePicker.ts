@@ -9,10 +9,13 @@ import type { Exercise } from '@prisma/client';
  * @param originalName Оригинальное название, введённое пользователем (для кнопки «Создать»)
  * @returns Экземпляр InlineKeyboard
  */
-export function createExercisePickerKeyboard(
-  options: Array<Pick<Exercise, 'id' | 'canonicalName' | 'displayNameRu'>>,
-  originalName: string,
-): InlineKeyboard {
+export function createExercisePickerKeyboard({
+  options,
+  originalName,
+}: {
+  options: Array<Pick<Exercise, 'id' | 'canonicalName' | 'displayNameRu'>>;
+  originalName: string;
+}): InlineKeyboard {
   const keyboard = new InlineKeyboard();
 
   // Добавляем кнопки с предложенными вариантами

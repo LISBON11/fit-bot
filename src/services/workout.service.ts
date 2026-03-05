@@ -29,7 +29,13 @@ export class WorkoutService {
    * @param parsedWorkout Распознанная тренировка из NLU
    * @returns Статус создания (успешно или требуется уточнение)
    */
-  async createDraft(userId: string, parsedWorkout: ParsedWorkout): Promise<CreateDraftResult> {
+  async createDraft({
+    userId,
+    parsedWorkout,
+  }: {
+    userId: string;
+    parsedWorkout: ParsedWorkout;
+  }): Promise<CreateDraftResult> {
     const ambiguousExercises: ParsedExercise[] = [];
     const resolvedExercises: Array<{ parsed: ParsedExercise; exerciseId: string }> = [];
 
@@ -40,10 +46,10 @@ export class WorkoutService {
         continue;
       }
 
-      const resolveResult = await this.exerciseService.resolveExercise(
-        parsedEx.originalName,
+      const resolveResult = await this.exerciseService.resolveExercise({
+        inputText: parsedEx.originalName,
         userId,
-      );
+      });
 
       if (resolveResult.status === 'ambiguous' || resolveResult.status === 'not_found') {
         ambiguousExercises.push({ ...parsedEx, isAmbiguous: true });
@@ -67,14 +73,14 @@ export class WorkoutService {
     const workoutDate = new Date(parsedWorkout.date);
     const focusArray = parsedWorkout.focus;
 
-    const workout = (await this.workoutRepository.createWithRelations(
+    const workout = (await this.workoutRepository.createWithRelations({
       userId,
       workoutDate,
       focusArray,
-      parsedWorkout.location ?? null,
+      location: parsedWorkout.location ?? null,
       resolvedExercises,
-      parsedWorkout.generalComments,
-    )) as Workout;
+      generalComments: parsedWorkout.generalComments,
+    })) as Workout;
 
     return { status: 'created', workout };
   }
@@ -85,7 +91,7 @@ export class WorkoutService {
    * @returns Обновленная тренировка со статусом APPROVED
    */
   async approveDraft(workoutId: string): Promise<Workout> {
-    return this.workoutRepository.updateStatus(workoutId, WorkoutStatus.APPROVED);
+    return this.workoutRepository.updateStatus({ id: workoutId, status: WorkoutStatus.APPROVED });
   }
 
   /**
@@ -112,8 +118,14 @@ export class WorkoutService {
    * @param targetDate Целевая дата тренировки
    * @returns Найденная тренировка или null
    */
-  async findByDate(userId: string, targetDate: Date): Promise<Workout | null> {
-    return this.workoutRepository.findByUserAndDate(userId, targetDate);
+  async findByDate({
+    userId,
+    targetDate,
+  }: {
+    userId: string;
+    targetDate: Date;
+  }): Promise<Workout | null> {
+    return this.workoutRepository.findByUserAndDate({ userId, targetDate });
   }
 
   /**
@@ -131,11 +143,14 @@ export class WorkoutService {
    * @param data Объект с идентификаторами сообщений (source, preview, published)
    * @returns Обновленная тренировка
    */
-  async updateMessageIds(
-    id: string,
-    data: { sourceMessageId?: number; previewMessageId?: number; publishedMessageId?: number },
-  ): Promise<Workout> {
-    return this.workoutRepository.updateMessageIds(id, data);
+  async updateMessageIds({
+    id,
+    data,
+  }: {
+    id: string;
+    data: { sourceMessageId?: number; previewMessageId?: number; publishedMessageId?: number };
+  }): Promise<Workout> {
+    return this.workoutRepository.updateMessageIds({ id, data });
   }
 
   /**
@@ -145,11 +160,15 @@ export class WorkoutService {
    * @param parsedWorkout Распарсенный обновленный объект тренировки от NLU
    * @returns Результат обновления или необходимости уточнения неоднозначностей
    */
-  async applyEdits(
-    workoutId: string,
-    userId: string,
-    parsedWorkout: ParsedWorkout,
-  ): Promise<{
+  async applyEdits({
+    workoutId,
+    userId,
+    parsedWorkout,
+  }: {
+    workoutId: string;
+    userId: string;
+    parsedWorkout: ParsedWorkout;
+  }): Promise<{
     status: 'updated' | 'needs_disambiguation';
     workout?: Workout;
     ambiguousExercises?: ParsedExercise[];
@@ -172,10 +191,10 @@ export class WorkoutService {
         continue;
       }
 
-      const resolveResult = await this.exerciseService.resolveExercise(
-        parsedEx.originalName,
+      const resolveResult = await this.exerciseService.resolveExercise({
+        inputText: parsedEx.originalName,
         userId,
-      );
+      });
 
       if (resolveResult.status === 'ambiguous' || resolveResult.status === 'not_found') {
         ambiguousExercises.push({ ...parsedEx, isAmbiguous: true });
@@ -198,12 +217,12 @@ export class WorkoutService {
       location: parsedWorkout.location ?? null,
     };
 
-    const updatedWorkout = await this.workoutRepository.replaceExercises(
+    const updatedWorkout = await this.workoutRepository.replaceExercises({
       workoutId,
       workoutUpdateData,
       resolvedExercises,
-      parsedWorkout.generalComments,
-    );
+      generalComments: parsedWorkout.generalComments,
+    });
 
     return { status: 'updated', workout: updatedWorkout as Workout };
   }

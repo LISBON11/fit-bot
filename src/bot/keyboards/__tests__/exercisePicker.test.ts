@@ -8,7 +8,7 @@ describe('createExercisePickerKeyboard', () => {
   ];
 
   it('should create keyboard with exercise options', () => {
-    const keyboard = createExercisePickerKeyboard(options, 'какое-то упражнение');
+    const keyboard = createExercisePickerKeyboard({ options, originalName: 'какое-то упражнение' });
 
     const inline_keyboard = keyboard.inline_keyboard;
     expect(inline_keyboard[0][0].text).toBe('Подтягивание');
@@ -19,7 +19,7 @@ describe('createExercisePickerKeyboard', () => {
   });
 
   it('should always include new_exercise and voice_list buttons', () => {
-    const keyboard = createExercisePickerKeyboard(options, 'джим');
+    const keyboard = createExercisePickerKeyboard({ options, originalName: 'джим' });
     const inline_keyboard = keyboard.inline_keyboard;
 
     const allButtons = inline_keyboard.flat().filter((btn) => 'callback_data' in btn) as Array<{
@@ -32,7 +32,7 @@ describe('createExercisePickerKeyboard', () => {
   });
 
   it('should show originalName in create button label', () => {
-    const keyboard = createExercisePickerKeyboard([], 'джим сидя');
+    const keyboard = createExercisePickerKeyboard({ options: [], originalName: 'джим сидя' });
     const inline_keyboard = keyboard.inline_keyboard;
 
     const createBtn = inline_keyboard.find(
@@ -46,7 +46,7 @@ describe('createExercisePickerKeyboard', () => {
 
   it('should truncate long originalName in create button label', () => {
     const longName = 'очень длинное название упражнения которое не помещается';
-    const keyboard = createExercisePickerKeyboard([], longName);
+    const keyboard = createExercisePickerKeyboard({ options: [], originalName: longName });
     const inline_keyboard = keyboard.inline_keyboard;
 
     const createBtn = inline_keyboard.find(
@@ -59,7 +59,7 @@ describe('createExercisePickerKeyboard', () => {
   });
 
   it('should create keyboard with only action buttons if options are empty', () => {
-    const keyboard = createExercisePickerKeyboard([], 'неизвестное');
+    const keyboard = createExercisePickerKeyboard({ options: [], originalName: 'неизвестное' });
     const inline_keyboard = keyboard.inline_keyboard;
 
     // grammy добавляет пустую строку после последнего .row()

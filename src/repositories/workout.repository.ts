@@ -18,14 +18,21 @@ export class WorkoutRepository {
    * @param generalComments Общие комментарии к тренировке
    * @returns Созданная тренировка со всеми вложенными связями или null при ошибке
    */
-  async createWithRelations(
-    userId: string,
-    workoutDate: Date,
-    focusArray: string[],
-    location: string | null,
-    resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[],
-    generalComments: ParsedComment[],
-  ): Promise<Workout | null> {
+  async createWithRelations({
+    userId,
+    workoutDate,
+    focusArray,
+    location,
+    resolvedExercises,
+    generalComments,
+  }: {
+    userId: string;
+    workoutDate: Date;
+    focusArray: string[];
+    location: string | null;
+    resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[];
+    generalComments: ParsedComment[];
+  }): Promise<Workout | null> {
     return this.prisma.$transaction(
       async (tx) => {
         const workout = await tx.workout.create({
@@ -134,7 +141,13 @@ export class WorkoutRepository {
    * @param targetDate Целевая дата поиска
    * @returns Тренировка за указанный день со всеми связями или null, если не найдена
    */
-  async findByUserAndDate(userId: string, targetDate: Date): Promise<Workout | null> {
+  async findByUserAndDate({
+    userId,
+    targetDate,
+  }: {
+    userId: string;
+    targetDate: Date;
+  }): Promise<Workout | null> {
     // В PostgreSQL db.Date хранит только дату. Но в Prisma это объект Date.
     // Сделаем поиск по диапазону дня (с начала до конца суток в UTC), чтобы быть уверенными.
     const startOfDay = new Date(targetDate);
@@ -200,7 +213,7 @@ export class WorkoutRepository {
    * @param status Новый статус тренировки
    * @returns Обновленная тренировка
    */
-  async updateStatus(id: string, status: WorkoutStatus): Promise<Workout> {
+  async updateStatus({ id, status }: { id: string; status: WorkoutStatus }): Promise<Workout> {
     return this.prisma.workout.update({
       where: { id },
       data: { status },
@@ -213,10 +226,13 @@ export class WorkoutRepository {
    * @param data Объект с идентификаторами сообщений (source, preview, published)
    * @returns Обновленная тренировка
    */
-  async updateMessageIds(
-    id: string,
-    data: { sourceMessageId?: number; previewMessageId?: number; publishedMessageId?: number },
-  ): Promise<Workout> {
+  async updateMessageIds({
+    id,
+    data,
+  }: {
+    id: string;
+    data: { sourceMessageId?: number; previewMessageId?: number; publishedMessageId?: number };
+  }): Promise<Workout> {
     return this.prisma.workout.update({
       where: { id },
       data,
@@ -242,12 +258,17 @@ export class WorkoutRepository {
    * @param generalComments Общие комментарии
    * @returns Обновленная тренировка с новыми упражнениями
    */
-  async replaceExercises(
-    workoutId: string,
-    workoutUpdateData: Prisma.WorkoutUpdateInput,
-    resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[],
-    generalComments: ParsedComment[],
-  ): Promise<Workout> {
+  async replaceExercises({
+    workoutId,
+    workoutUpdateData,
+    resolvedExercises,
+    generalComments,
+  }: {
+    workoutId: string;
+    workoutUpdateData: Prisma.WorkoutUpdateInput;
+    resolvedExercises: { exerciseId: string; parsed: ParsedExercise }[];
+    generalComments: ParsedComment[];
+  }): Promise<Workout> {
     return this.prisma.$transaction(
       async (tx) => {
         // 1. Удаляем все старые упражнения и их комментарии

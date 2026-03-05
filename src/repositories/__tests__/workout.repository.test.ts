@@ -43,14 +43,14 @@ describe('WorkoutRepository', () => {
       ];
       const generalComments: ParsedComment[] = [{ text: 'Good workout' }];
 
-      const result = await repository.createWithRelations(
-        'u1',
-        date,
-        ['Back'],
-        null,
-        exercises,
-        generalComments,
-      );
+      const result = await repository.createWithRelations({
+        userId: 'u1',
+        workoutDate: date,
+        focusArray: ['Back'],
+        location: null,
+        resolvedExercises: exercises,
+        generalComments: generalComments,
+      });
 
       expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function), {
         maxWait: 5000,
@@ -105,7 +105,14 @@ describe('WorkoutRepository', () => {
         },
       ];
 
-      await repository.createWithRelations('u1', date, ['Back'], null, exercises, []);
+      await repository.createWithRelations({
+        userId: 'u1',
+        workoutDate: date,
+        focusArray: ['Back'],
+        location: null,
+        resolvedExercises: exercises,
+        generalComments: [],
+      });
 
       expect(txMock.exerciseSet.createMany).not.toHaveBeenCalled();
       expect(txMock.workoutComment.createMany).not.toHaveBeenCalled();
@@ -128,7 +135,7 @@ describe('WorkoutRepository', () => {
       prismaMock.workout.findFirst.mockResolvedValue({ id: 'w1' } as never);
       const targetDate = new Date('2023-01-01T15:00:00Z');
 
-      const result = await repository.findByUserAndDate('u1', targetDate);
+      const result = await repository.findByUserAndDate({ userId: 'u1', targetDate: targetDate });
 
       expect(prismaMock.workout.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -167,7 +174,7 @@ describe('WorkoutRepository', () => {
         id: 'w1',
         status: WorkoutStatus.APPROVED,
       } as never);
-      const result = await repository.updateStatus('w1', WorkoutStatus.APPROVED);
+      const result = await repository.updateStatus({ id: 'w1', status: WorkoutStatus.APPROVED });
       expect(prismaMock.workout.update).toHaveBeenCalledWith({
         where: { id: 'w1' },
         data: { status: WorkoutStatus.APPROVED },
@@ -179,7 +186,7 @@ describe('WorkoutRepository', () => {
   describe('updateMessageIds', () => {
     it('should update message related fields', async () => {
       prismaMock.workout.update.mockResolvedValue({ id: 'w1', previewMessageId: 100 } as never);
-      await repository.updateMessageIds('w1', { previewMessageId: 100 });
+      await repository.updateMessageIds({ id: 'w1', data: { previewMessageId: 100 } });
       expect(prismaMock.workout.update).toHaveBeenCalledWith({
         where: { id: 'w1' },
         data: { previewMessageId: 100 },
@@ -221,12 +228,12 @@ describe('WorkoutRepository', () => {
       ];
       const generalComments: ParsedComment[] = [{ text: 'Replaced well' }];
 
-      const result = await repository.replaceExercises(
-        'w1',
-        { focus: ['Chest'] },
-        exercises,
-        generalComments,
-      );
+      const result = await repository.replaceExercises({
+        workoutId: 'w1',
+        workoutUpdateData: { focus: ['Chest'] },
+        resolvedExercises: exercises,
+        generalComments: generalComments,
+      });
 
       expect(prismaMock.$transaction).toHaveBeenCalledWith(expect.any(Function), {
         maxWait: 5000,
@@ -283,7 +290,12 @@ describe('WorkoutRepository', () => {
         },
       ];
 
-      await repository.replaceExercises('w1', { focus: ['Chest'] }, exercises, []);
+      await repository.replaceExercises({
+        workoutId: 'w1',
+        workoutUpdateData: { focus: ['Chest'] },
+        resolvedExercises: exercises,
+        generalComments: [],
+      });
 
       expect(txMock.exerciseSet.createMany).not.toHaveBeenCalled();
       expect(txMock.workoutComment.createMany).not.toHaveBeenCalled();

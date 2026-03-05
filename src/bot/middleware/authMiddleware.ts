@@ -21,7 +21,11 @@ export async function authMiddleware(ctx: CustomContext, next: NextFunction): Pr
   const firstName = ctx.from.first_name;
 
   try {
-    const user = await userService.getOrCreateByTelegram(telegramId, username, firstName);
+    const user = await userService.getOrCreateByTelegram({
+      telegramId,
+      username,
+      firstName,
+    });
     ctx.user = user;
     authLogger.debug({ userId: user.id }, 'User authenticated');
   } catch (error) {

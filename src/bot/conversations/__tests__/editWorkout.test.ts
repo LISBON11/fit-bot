@@ -35,7 +35,7 @@ jest.unstable_mockModule('../../../services/publisher.service.js', () => ({
 }));
 
 jest.unstable_mockModule('../../utils/telegram.js', () => ({
-  withChatAction: jest.fn(async (_ctx: unknown, _conv: unknown, work: () => unknown) => work()),
+  withChatAction: jest.fn(async ({ work }: { work: () => unknown }) => work()),
   downloadAndTranscribeVoice: jest.fn(),
 }));
 
@@ -105,7 +105,10 @@ describe('editWorkout conversation', () => {
     await editWorkout(conversation as never, ctx as never);
 
     expect(ctx.reply).toHaveBeenCalledWith(expect.stringContaining('Введите дату'));
-    expect(mockNluParser.parseDate).toHaveBeenCalledWith('вчера', expect.any(String));
+    expect(mockNluParser.parseDate).toHaveBeenCalledWith({
+      rawText: 'вчера',
+      currentDate: expect.any(String),
+    });
     expect(ctx.reply).toHaveBeenCalledWith('❌ Редактирование закрыто.');
   });
 
@@ -141,7 +144,10 @@ describe('editWorkout conversation', () => {
 
     await editWorkout(conversation as never, ctx as never);
 
-    expect(mockNluParser.parseDate).toHaveBeenCalledWith('вчера', expect.any(String));
+    expect(mockNluParser.parseDate).toHaveBeenCalledWith({
+      rawText: 'вчера',
+      currentDate: expect.any(String),
+    });
     expect(mockWorkoutService.approveDraft).toHaveBeenCalledWith('w1');
     expect(ctx.reply).toHaveBeenCalledWith('✅ Тренировка обновлена и опубликована!');
   });

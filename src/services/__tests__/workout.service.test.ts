@@ -40,7 +40,10 @@ describe('WorkoutService', () => {
     it('should return needs_disambiguation if exercise not resolved', async () => {
       exerciseServiceMock.resolveExercise.mockResolvedValue({ status: 'not_found' });
 
-      const result = await service.createDraft('user1', mockParsedWorkout);
+      const result = await service.createDraft({
+        userId: 'user1',
+        parsedWorkout: mockParsedWorkout,
+      });
 
       expect(result.status).toBe('needs_disambiguation');
       if (result.status === 'needs_disambiguation') {
@@ -60,7 +63,10 @@ describe('WorkoutService', () => {
         status: WorkoutStatus.DRAFT,
       } as unknown as Workout);
 
-      const result = await service.createDraft('user1', mockParsedWorkout);
+      const result = await service.createDraft({
+        userId: 'user1',
+        parsedWorkout: mockParsedWorkout,
+      });
 
       expect(result.status).toBe('created');
       expect(workoutRepoMock.createWithRelations).toHaveBeenCalled();
@@ -79,7 +85,10 @@ describe('WorkoutService', () => {
         status: WorkoutStatus.DRAFT,
       } as unknown as Workout);
 
-      const result = await service.createDraft('user1', mockParsedWorkout);
+      const result = await service.createDraft({
+        userId: 'user1',
+        parsedWorkout: mockParsedWorkout,
+      });
 
       expect(workoutRepoMock.deleteById).toHaveBeenCalledWith('old-draft');
       expect(result.status).toBe('created');
@@ -107,17 +116,17 @@ describe('WorkoutService', () => {
         status: WorkoutStatus.DRAFT,
       } as unknown as Workout);
 
-      const result = await service.createDraft('user1', mockWithMapped);
+      const result = await service.createDraft({ userId: 'user1', parsedWorkout: mockWithMapped });
 
       expect(exerciseServiceMock.resolveExercise).not.toHaveBeenCalled();
-      expect(workoutRepoMock.createWithRelations).toHaveBeenCalledWith(
-        'user1',
-        expect.any(Date),
-        ['quadriceps'],
-        null,
-        [{ parsed: mockWithMapped.exercises[0], exerciseId: 'mapped1' }],
-        [],
-      );
+      expect(workoutRepoMock.createWithRelations).toHaveBeenCalledWith({
+        userId: 'user1',
+        workoutDate: expect.any(Date),
+        focusArray: ['quadriceps'],
+        location: null,
+        resolvedExercises: [{ parsed: mockWithMapped.exercises[0], exerciseId: 'mapped1' }],
+        generalComments: [],
+      });
       expect(result.status).toBe('created');
     });
   });
@@ -125,7 +134,10 @@ describe('WorkoutService', () => {
   describe('approveDraft', () => {
     it('should update status to APPROVED', async () => {
       await service.approveDraft('w1');
-      expect(workoutRepoMock.updateStatus).toHaveBeenCalledWith('w1', WorkoutStatus.APPROVED);
+      expect(workoutRepoMock.updateStatus).toHaveBeenCalledWith({
+        id: 'w1',
+        status: WorkoutStatus.APPROVED,
+      });
     });
   });
 
@@ -139,8 +151,11 @@ describe('WorkoutService', () => {
   describe('findByDate', () => {
     it('should call repository for specific user and date', async () => {
       const date = new Date();
-      await service.findByDate('user1', date);
-      expect(workoutRepoMock.findByUserAndDate).toHaveBeenCalledWith('user1', date);
+      await service.findByDate({ userId: 'user1', targetDate: date });
+      expect(workoutRepoMock.findByUserAndDate).toHaveBeenCalledWith({
+        userId: 'user1',
+        targetDate: date,
+      });
     });
   });
 
@@ -165,23 +180,27 @@ describe('WorkoutService', () => {
 
     it('should throw AppError if workout not found', async () => {
       workoutRepoMock.findById.mockResolvedValue(null);
-      await expect(service.applyEdits('w1', 'user1', mockParsedWorkout)).rejects.toThrow(
-        'Тренировка не найдена',
-      );
+      await expect(
+        service.applyEdits({ workoutId: 'w1', userId: 'user1', parsedWorkout: mockParsedWorkout }),
+      ).rejects.toThrow('Тренировка не найдена');
     });
 
     it('should throw AppError if user does not own workout', async () => {
       workoutRepoMock.findById.mockResolvedValue({ userId: 'other-user' } as unknown as Workout);
-      await expect(service.applyEdits('w1', 'user1', mockParsedWorkout)).rejects.toThrow(
-        'Нет прав на редактирование этой тренировки',
-      );
+      await expect(
+        service.applyEdits({ workoutId: 'w1', userId: 'user1', parsedWorkout: mockParsedWorkout }),
+      ).rejects.toThrow('Нет прав на редактирование этой тренировки');
     });
 
     it('should call replaceExercises and return updated status', async () => {
       workoutRepoMock.findById.mockResolvedValue({ userId: 'user1' } as unknown as Workout);
       workoutRepoMock.replaceExercises.mockResolvedValue({ id: 'w1' } as unknown as Workout);
 
-      const result = await service.applyEdits('w1', 'user1', mockParsedWorkout);
+      const result = await service.applyEdits({
+        workoutId: 'w1',
+        userId: 'user1',
+        parsedWorkout: mockParsedWorkout,
+      });
 
       expect(result.status).toBe('updated');
       expect(workoutRepoMock.replaceExercises).toHaveBeenCalled();
@@ -209,7 +228,11 @@ describe('WorkoutService', () => {
         generalComments: [],
       };
 
-      const result = await service.applyEdits('w1', 'user1', mockWithExercise);
+      const result = await service.applyEdits({
+        workoutId: 'w1',
+        userId: 'user1',
+        parsedWorkout: mockWithExercise,
+      });
 
       expect(result.status).toBe('needs_disambiguation');
       expect(workoutRepoMock.replaceExercises).not.toHaveBeenCalled();

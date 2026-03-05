@@ -17,18 +17,26 @@ export class UserService {
    * @param firstName Имя пользователя из Telegram
    * @returns Найденный или созданный пользователь
    */
-  async getOrCreateByTelegram(
-    telegramId: string,
-    username: string | null,
-    firstName: string | undefined,
-  ): Promise<User> {
+  async getOrCreateByTelegram({
+    telegramId,
+    username,
+    firstName,
+  }: {
+    telegramId: string;
+    username: string | null;
+    firstName: string | undefined;
+  }): Promise<User> {
     const existingUser = await this.userRepository.findByTelegramId(telegramId);
 
     if (existingUser) {
       return existingUser;
     }
 
-    const newUser = await this.userRepository.createWithTelegram(telegramId, username, firstName);
+    const newUser = await this.userRepository.createWithTelegram({
+      telegramId,
+      username,
+      firstName,
+    });
     logger.info({ userId: newUser.id, telegramId }, 'Created new user');
     return newUser;
   }

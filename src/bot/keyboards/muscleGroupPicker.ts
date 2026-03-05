@@ -43,10 +43,13 @@ const MUSCLE_GROUP_CALLBACK_PREFIX = 'mg:';
  * @param groups Список групп мышц (обычно MUSCLE_GROUPS)
  * @returns Экземпляр InlineKeyboard с кнопками групп мышц
  */
-export function createMuscleGroupPickerKeyboard(
-  groups: ReadonlyArray<MuscleGroupEntry>,
-  originalName?: string,
-): InlineKeyboard {
+export function createMuscleGroupPickerKeyboard({
+  groups,
+  originalName,
+}: {
+  groups: ReadonlyArray<MuscleGroupEntry>;
+  originalName?: string;
+}): InlineKeyboard {
   const keyboard = new InlineKeyboard();
 
   groups.forEach((group, index) => {

@@ -21,19 +21,27 @@ export class ExerciseService {
    * @param userId ID пользователя
    * @returns Результат разрешения названия (успех, неоднозначность или не найдено)
    */
-  async resolveExercise(inputText: string, userId: string): Promise<ResolveResult> {
+  async resolveExercise({
+    inputText,
+    userId,
+  }: {
+    inputText: string;
+    userId: string;
+  }): Promise<ResolveResult> {
     // 1. Поиск в user_mapping
-    const mapping = await this.exerciseRepository.findUserMapping(userId, inputText);
+    const mapping = await this.exerciseRepository.findUserMapping({ userId, inputText });
     if (mapping) {
       return { status: 'resolved', exercise: mapping.exercise };
     }
 
     // 2. Поиск в синонимах (user + global)
-    const synonyms = await this.exerciseRepository.findSynonyms(inputText, userId);
+    const synonyms = await this.exerciseRepository.findSynonyms({ text: inputText, userId });
 
     if (synonyms.length === 0) {
-      // 3. Fallback: поиск похожих через частичное совпадение
-      const similarExercises = await this.exerciseRepository.searchSimilar(inputText, 5);
+      const similarExercises = await this.exerciseRepository.searchSimilar({
+        query: inputText,
+        limit: 5,
+      });
       if (similarExercises.length > 0) {
         return { status: 'ambiguous', options: similarExercises };
       }
@@ -65,8 +73,16 @@ export class ExerciseService {
    * @param inputText Введенный пользователем текст
    * @param exerciseId ID выбранного упражнения
    */
-  async confirmMapping(userId: string, inputText: string, exerciseId: string): Promise<void> {
-    await this.exerciseRepository.upsertUserMapping(userId, inputText, exerciseId);
+  async confirmMapping({
+    userId,
+    inputText,
+    exerciseId,
+  }: {
+    userId: string;
+    inputText: string;
+    exerciseId: string;
+  }): Promise<void> {
+    await this.exerciseRepository.upsertUserMapping({ userId, inputText, exerciseId });
   }
 
   /**
@@ -92,7 +108,7 @@ export class ExerciseService {
    * @param name Название упражнения (так, как ввёл пользователь)
    * @returns Созданное упражнение
    */
-  async createUserExercise(userId: string, name: string): Promise<Exercise> {
+  async createUserExercise({ userId, name }: { userId: string; name: string }): Promise<Exercise> {
     const exercise = await this.exerciseRepository.create({
       canonicalName: name.toLowerCase().trim(),
       displayNameRu: name.trim(),
@@ -103,7 +119,7 @@ export class ExerciseService {
       createdBy: userId,
     });
     // Сразу сохраняем маппинг, чтобы в следующий раз не показывал disambiguation
-    await this.confirmMapping(userId, name, exercise.id);
+    await this.confirmMapping({ userId, inputText: name, exerciseId: exercise.id });
     return exercise;
   }
 

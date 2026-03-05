@@ -36,14 +36,18 @@ jest.unstable_mockModule('../../../logger/logger.js', () => ({
 }));
 
 describe('disambiguation loop', () => {
-  let runDisambiguationLoop: (
-    conversation: Conversation<CustomContext, CustomContext>,
-    ctx: CustomContext,
-    workoutContext: ParsedWorkout,
-    draftId: string,
-    userId: string,
-    isEditMode?: boolean,
-  ) => Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: { id: string } }>;
+  let runDisambiguationLoop: (params: {
+    conversation: Conversation<CustomContext, CustomContext>;
+    ctx: CustomContext;
+    parsedDelta: ParsedWorkout | Record<string, unknown>;
+    workoutId: string;
+    userId: string;
+    isEditMode: boolean;
+  }) => Promise<{
+    status: string;
+    ambiguousExercises?: ParsedExercise[];
+    workout?: { id: string };
+  }>;
 
   beforeAll(async () => {
     const module = await import('../disambiguation.js');
@@ -71,14 +75,14 @@ describe('disambiguation loop', () => {
       workout: { id: 'w1' },
     } as never);
 
-    const result = await runDisambiguationLoop(
+    const result = await runDisambiguationLoop({
       conversation,
       ctx,
-      {} as ParsedWorkout,
-      'draft',
-      'u1',
-      false,
-    );
+      parsedDelta: {} as ParsedWorkout,
+      workoutId: 'draft',
+      userId: 'u1',
+      isEditMode: false,
+    });
 
     expect(result.status).toBe('created');
     expect(mockWorkoutService.createDraft).toHaveBeenCalled();
@@ -96,14 +100,14 @@ describe('disambiguation loop', () => {
       workout: { id: 'w1' },
     } as never);
 
-    const result = await runDisambiguationLoop(
+    const result = await runDisambiguationLoop({
       conversation,
       ctx,
-      { update: [] } as unknown as ParsedWorkout,
-      'w1',
-      'u1',
-      true,
-    );
+      parsedDelta: { update: [] } as Record<string, unknown>,
+      workoutId: 'w1',
+      userId: 'u1',
+      isEditMode: true,
+    });
 
     expect(result.status).toBe('updated');
     expect(mockWorkoutService.applyEdits).toHaveBeenCalled();
@@ -145,19 +149,26 @@ describe('disambiguation loop', () => {
       },
     } as never);
 
-    const result = await runDisambiguationLoop(
+    const result = await runDisambiguationLoop({
       conversation,
       ctx,
-      {} as ParsedWorkout,
-      'draft',
-      'u1',
-      false,
-    );
+      parsedDelta: {} as ParsedWorkout,
+      workoutId: 'draft',
+      userId: 'u1',
+      isEditMode: false,
+    });
 
     expect(result.status).toBe('created');
     expect(ctx.reply).toHaveBeenCalled();
-    expect(mockExerciseService.resolveExercise).toHaveBeenCalledWith('Pull up', 'u1');
-    expect(mockExerciseService.confirmMapping).toHaveBeenCalledWith('u1', 'Pull up', 'e1');
+    expect(mockExerciseService.resolveExercise).toHaveBeenCalledWith({
+      inputText: 'Pull up',
+      userId: 'u1',
+    });
+    expect(mockExerciseService.confirmMapping).toHaveBeenCalledWith({
+      userId: 'u1',
+      inputText: 'Pull up',
+      exerciseId: 'e1',
+    });
   });
 
   it('should handle voice_list choice and select exercise from flat list', async () => {
@@ -226,22 +237,22 @@ describe('disambiguation loop', () => {
       .mockResolvedValueOnce({ status: 'not_found' } as never) // Первый вызов из внешнего цикла (для Unknown exercise)
       .mockResolvedValueOnce({ status: 'resolved', exercise: { id: 'ex1' } } as never); // Вызов из handleFlatList (для 'Тестовое')
 
-    const result = await runDisambiguationLoop(
+    const result = await runDisambiguationLoop({
       conversation,
       ctx,
-      {} as ParsedWorkout,
-      'draft',
-      'u1',
-      false,
-    );
+      parsedDelta: {} as ParsedWorkout,
+      workoutId: 'draft',
+      userId: 'u1',
+      isEditMode: false,
+    });
 
     expect(result.status).toBe('created');
     expect(mockExerciseService.getByMuscleGroup).toHaveBeenCalled();
-    expect(mockExerciseService.confirmMapping).toHaveBeenCalledWith(
-      'u1',
-      'Unknown exercise',
-      'ex1',
-    );
+    expect(mockExerciseService.confirmMapping).toHaveBeenCalledWith({
+      userId: 'u1',
+      inputText: 'Unknown exercise',
+      exerciseId: 'ex1',
+    });
   });
 
   it('should handle voice_list choice and fallback to raw for new_exercise', async () => {
@@ -291,17 +302,20 @@ describe('disambiguation loop', () => {
         },
       } as never);
 
-    const result = await runDisambiguationLoop(
+    const result = await runDisambiguationLoop({
       conversation,
       ctx,
-      {} as ParsedWorkout,
-      'draft',
-      'u1',
-      false,
-    );
+      parsedDelta: {} as ParsedWorkout,
+      workoutId: 'draft',
+      userId: 'u1',
+      isEditMode: false,
+    });
 
     expect(result.status).toBe('created');
-    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith('u1', 'Unknown exercise');
+    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith({
+      userId: 'u1',
+      name: 'Unknown exercise',
+    });
   });
 
   it('should handle back button and return to muscle groups', async () => {
@@ -383,18 +397,21 @@ describe('disambiguation loop', () => {
       },
     } as never);
 
-    const result = await runDisambiguationLoop(
+    const result = await runDisambiguationLoop({
       conversation,
       ctx,
-      {} as ParsedWorkout,
-      'draft',
-      'u1',
-      false,
-    );
+      parsedDelta: {} as ParsedWorkout,
+      workoutId: 'draft',
+      userId: 'u1',
+      isEditMode: false,
+    });
 
     expect(result.status).toBe('created');
     expect(mockExerciseService.getAllExercises).toHaveBeenCalled();
-    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith('u1', 'Unknown exercise');
+    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith({
+      userId: 'u1',
+      name: 'Unknown exercise',
+    });
   });
 
   it('should handle explicitly declined list input (e.g. "нет такого")', async () => {
@@ -448,16 +465,19 @@ describe('disambiguation loop', () => {
       message: { text: 'нет такого' },
     } as never);
 
-    const result = await runDisambiguationLoop(
+    const result = await runDisambiguationLoop({
       conversation,
       ctx,
-      {} as ParsedWorkout,
-      'draft',
-      'u1',
-      false,
-    );
+      parsedDelta: {} as ParsedWorkout,
+      workoutId: 'draft',
+      userId: 'u1',
+      isEditMode: false,
+    });
 
     expect(result.status).toBe('created');
-    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith('u1', 'Unknown exercise');
+    expect(mockExerciseService.createUserExercise).toHaveBeenCalledWith({
+      userId: 'u1',
+      name: 'Unknown exercise',
+    });
   });
 });

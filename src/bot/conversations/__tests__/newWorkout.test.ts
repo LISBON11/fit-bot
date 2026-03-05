@@ -134,19 +134,19 @@ describe('newWorkout conversation', () => {
 
     await newWorkout(conversation, ctx);
 
-    expect(parseAndDisambiguateUserInput).toHaveBeenCalledWith(
+    expect(parseAndDisambiguateUserInput).toHaveBeenCalledWith({
       conversation,
       ctx,
-      'test workout',
-      'new',
-      'u1',
-      undefined,
-      undefined,
-      undefined,
-    );
-    expect(mockWorkoutService.updateMessageIds).toHaveBeenCalledWith('w1', {
-      sourceMessageId: 111,
-      previewMessageId: 222,
+      rawText: 'test workout',
+      mode: 'new',
+      userId: 'u1',
+      existingWorkoutContext: undefined,
+      workoutIdForDelta: undefined,
+      tracker: undefined,
+    });
+    expect(mockWorkoutService.updateMessageIds).toHaveBeenCalledWith({
+      id: 'w1',
+      data: { sourceMessageId: 111, previewMessageId: 222 },
     });
     expect(mockWorkoutService.approveDraft).toHaveBeenCalledWith('w1');
     expect(mockPublisher.publish).toHaveBeenCalledWith('preview_html');
@@ -197,16 +197,16 @@ describe('newWorkout conversation', () => {
     await newWorkout(conversation, ctx);
 
     expect(downloadAndTranscribeVoice).toHaveBeenCalled();
-    expect(parseAndDisambiguateUserInput).toHaveBeenCalledWith(
+    expect(parseAndDisambiguateUserInput).toHaveBeenCalledWith({
       conversation,
       ctx,
-      'test voice',
-      'new',
-      'u1',
-      undefined,
-      undefined,
-      expect.anything(), // tracker — создаётся для голосового
-    );
+      rawText: 'test voice',
+      mode: 'new',
+      userId: 'u1',
+      existingWorkoutContext: undefined,
+      workoutIdForDelta: undefined,
+      tracker: expect.anything(),
+    });
     expect(mockWorkoutService.cancelDraft).toHaveBeenCalledWith('w1');
     expect(ctx.api.editMessageText).toHaveBeenCalledWith(
       100,

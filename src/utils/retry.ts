@@ -14,11 +14,15 @@ export interface RetryOptions {
  * @param context Строковой контекст для логгирования
  * @param options Настройки (maxRetries, baseDelayMs, custom shouldRetry)
  */
-export async function withRetry<T>(
-  operation: () => Promise<T>,
-  context: string,
-  options: RetryOptions = {},
-): Promise<T> {
+export async function withRetry<T>({
+  operation,
+  context,
+  options = {},
+}: {
+  operation: () => Promise<T>;
+  context: string;
+  options: RetryOptions;
+}): Promise<T> {
   const {
     maxRetries = 2,
     baseDelayMs = 1000,

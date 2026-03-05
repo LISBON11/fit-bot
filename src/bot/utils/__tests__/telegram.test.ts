@@ -16,15 +16,14 @@ jest.unstable_mockModule('../../../config/env.js', () => ({
 }));
 
 describe('telegram utils', () => {
-  let withChatAction: (
-    ctx: CustomContext,
-    conversation: Conversation<CustomContext, CustomContext>,
-    work: () => Promise<unknown>,
-  ) => Promise<unknown>;
-  let downloadAndTranscribeVoice: (
-    ctx: CustomContext,
-    conversation: Conversation<CustomContext, CustomContext>,
-  ) => Promise<string>;
+  let withChatAction: (params: {
+    ctx: CustomContext;
+    work: () => Promise<unknown>;
+  }) => Promise<unknown>;
+  let downloadAndTranscribeVoice: (params: {
+    ctx: CustomContext;
+    conversation: Conversation<CustomContext, CustomContext>;
+  }) => Promise<string>;
 
   beforeAll(async () => {
     const module = await import('../telegram.js');
@@ -40,11 +39,8 @@ describe('telegram utils', () => {
     it('should resolve work successfully', async () => {
       const work = jest.fn<() => Promise<unknown>>().mockResolvedValue('success');
       const ctx = createMockCtx();
-      const conversation = {
-        external: jest.fn(async (fn: () => unknown) => fn()),
-      } as unknown as Conversation<CustomContext, CustomContext>;
 
-      const result = await withChatAction(ctx, conversation, work);
+      const result = await withChatAction({ ctx, work });
 
       expect(result).toBe('success');
       expect(work).toHaveBeenCalled();
@@ -85,7 +81,10 @@ describe('telegram utils', () => {
       Object.assign(ctxMock, {
         message: { voice: undefined },
       });
-      const result = await downloadAndTranscribeVoice(ctxMock, conversationMock);
+      const result = await downloadAndTranscribeVoice({
+        ctx: ctxMock,
+        conversation: conversationMock,
+      });
       expect(result).toBe('');
     });
 
@@ -95,26 +94,35 @@ describe('telegram utils', () => {
         file_unique_id: 'mock_file_unique_id',
         file_size: 1234,
       } as never);
-      await expect(downloadAndTranscribeVoice(ctxMock, conversationMock)).rejects.toThrow(AppError);
+      await expect(
+        downloadAndTranscribeVoice({ ctx: ctxMock, conversation: conversationMock }),
+      ).rejects.toThrow(AppError);
     });
 
     it('should throw if download fails', async () => {
       global.fetch = jest
         .fn<typeof fetch>()
         .mockResolvedValue({ ok: false } as unknown as Response);
-      await expect(downloadAndTranscribeVoice(ctxMock, conversationMock)).rejects.toThrow(AppError);
+      await expect(
+        downloadAndTranscribeVoice({ ctx: ctxMock, conversation: conversationMock }),
+      ).rejects.toThrow(AppError);
     });
 
     it('should download and transcribe', async () => {
       mockSttService.transcribe.mockResolvedValue('recognized text' as never);
-      const result = await downloadAndTranscribeVoice(ctxMock, conversationMock);
+      const result = await downloadAndTranscribeVoice({
+        ctx: ctxMock,
+        conversation: conversationMock,
+      });
       expect(result).toBe('recognized text');
       expect(mockSttService.transcribe).toHaveBeenCalled();
     });
 
     it('should throw if transcription is empty', async () => {
       mockSttService.transcribe.mockResolvedValue('   ' as never);
-      await expect(downloadAndTranscribeVoice(ctxMock, conversationMock)).rejects.toThrow(AppError);
+      await expect(
+        downloadAndTranscribeVoice({ ctx: ctxMock, conversation: conversationMock }),
+      ).rejects.toThrow(AppError);
     });
   });
 });

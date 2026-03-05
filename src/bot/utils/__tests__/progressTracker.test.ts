@@ -95,7 +95,7 @@ describe('ProgressTracker', () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
 
-      tracker.setRunning(WorkoutStep.STT);
+      tracker.setRunning({ step: WorkoutStep.STT });
       await flushQueue();
 
       expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('➤'), {
@@ -107,7 +107,7 @@ describe('ProgressTracker', () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
 
-      tracker.setDone(WorkoutStep.NLU);
+      tracker.setDone({ step: WorkoutStep.NLU });
       await flushQueue();
 
       expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('✔'), {
@@ -119,7 +119,7 @@ describe('ProgressTracker', () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
 
-      tracker.setSkipped(WorkoutStep.EXERCISES);
+      tracker.setSkipped({ step: WorkoutStep.EXERCISES });
       await flushQueue();
 
       expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('✖'), {
@@ -130,9 +130,9 @@ describe('ProgressTracker', () => {
     it('методы — graceful noop если send() не был вызван', () => {
       const tracker = new ProgressTracker(ctx);
 
-      tracker.setRunning(WorkoutStep.STT);
-      tracker.setDone(WorkoutStep.STT);
-      tracker.setSkipped(WorkoutStep.EXERCISES);
+      tracker.setRunning({ step: WorkoutStep.STT });
+      tracker.setDone({ step: WorkoutStep.STT });
+      tracker.setSkipped({ step: WorkoutStep.EXERCISES });
 
       expect(ctx.api.editMessageText).not.toHaveBeenCalled();
     });
@@ -143,7 +143,7 @@ describe('ProgressTracker', () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
 
-      tracker.addSubItems(WorkoutStep.EXERCISES, ['Отжимания', 'Подтягивания']);
+      tracker.addSubItems({ step: WorkoutStep.EXERCISES, items: ['Отжимания', 'Подтягивания'] });
       await flushQueue();
 
       const lastCall = ctx.api.editMessageText.mock.calls.at(-1) as
@@ -157,7 +157,9 @@ describe('ProgressTracker', () => {
 
     it('не падает если send() не вызван (graceful noop)', () => {
       const tracker = new ProgressTracker(ctx);
-      expect(() => tracker.addSubItems(WorkoutStep.EXERCISES, ['Отжимания'])).not.toThrow();
+      expect(() =>
+        tracker.addSubItems({ step: WorkoutStep.EXERCISES, items: ['Отжимания'] }),
+      ).not.toThrow();
     });
   });
 
@@ -165,10 +167,10 @@ describe('ProgressTracker', () => {
     it('помечает конкретный подпункт ⏳', async () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
-      tracker.addSubItems(WorkoutStep.EXERCISES, ['Отжимания', 'Подтягивания']);
+      tracker.addSubItems({ step: WorkoutStep.EXERCISES, items: ['Отжимания', 'Подтягивания'] });
       await flushQueue();
 
-      tracker.setSubItemRunning(WorkoutStep.EXERCISES, 1);
+      tracker.setSubItemRunning({ step: WorkoutStep.EXERCISES, index: 1 });
       await flushQueue();
 
       const lastCall = ctx.api.editMessageText.mock.calls.at(-1) as
@@ -181,10 +183,10 @@ describe('ProgressTracker', () => {
     it('помечает конкретный подпункт ✅', async () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
-      tracker.addSubItems(WorkoutStep.EXERCISES, ['Отжимания']);
+      tracker.addSubItems({ step: WorkoutStep.EXERCISES, items: ['Отжимания'] });
       await flushQueue();
 
-      tracker.setSubItemDone(WorkoutStep.EXERCISES, 0);
+      tracker.setSubItemDone({ step: WorkoutStep.EXERCISES, index: 0 });
       await flushQueue();
 
       const lastCall = ctx.api.editMessageText.mock.calls.at(-1) as
@@ -197,11 +199,11 @@ describe('ProgressTracker', () => {
     it('игнорирует некорректный индекс (graceful noop)', async () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
-      tracker.addSubItems(WorkoutStep.EXERCISES, ['Отжимания']);
+      tracker.addSubItems({ step: WorkoutStep.EXERCISES, items: ['Отжимания'] });
       await flushQueue();
       const callCountBefore = ctx.api.editMessageText.mock.calls.length;
 
-      tracker.setSubItemRunning(WorkoutStep.EXERCISES, 99);
+      tracker.setSubItemRunning({ step: WorkoutStep.EXERCISES, index: 99 });
       await flushQueue();
 
       expect(ctx.api.editMessageText.mock.calls.length).toBe(callCountBefore);

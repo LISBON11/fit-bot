@@ -39,7 +39,7 @@ jest.unstable_mockModule('../../config/env.js', () => ({
 }));
 
 jest.unstable_mockModule('../../utils/retry.js', () => ({
-  withRetry: jest.fn(async (operation: () => unknown) => await operation()),
+  withRetry: jest.fn(async ({ operation }: { operation: () => unknown }) => await operation()),
 }));
 
 /** Строит успешный ответ в формате DeepSeek (JSON в content) */
@@ -73,7 +73,11 @@ describe('WorkoutParser', () => {
         }),
       );
 
-      const result = await parser.parse('Вчера дома', '2023-10-02');
+      const result = await parser.parse({
+        rawText: 'Вчера дома',
+        currentDate: '2023-10-02',
+        knownExercises: [],
+      });
       expect(result).toMatchObject({ date: '2023-10-01', focus: ['quadriceps', 'hamstrings'] });
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -87,30 +91,36 @@ describe('WorkoutParser', () => {
       const parser = new WorkoutParser();
       mockCreate.mockResolvedValue({ choices: [{ message: { content: null } }] });
 
-      await expect(parser.parse('Вчера', '2023-10-02')).rejects.toThrow(NluParseError);
+      await expect(
+        parser.parse({ rawText: 'Вчера', currentDate: '2023-10-02', knownExercises: [] }),
+      ).rejects.toThrow(NluParseError);
     });
 
     it('должен выбрасывать NluParseError если JSON невалидный', async () => {
       const parser = new WorkoutParser();
       mockCreate.mockResolvedValue({ choices: [{ message: { content: 'not-json' } }] });
 
-      await expect(parser.parse('Вчера', '2023-10-02')).rejects.toThrow(NluParseError);
+      await expect(
+        parser.parse({ rawText: 'Вчера', currentDate: '2023-10-02', knownExercises: [] }),
+      ).rejects.toThrow(NluParseError);
     });
 
     it('должен оборачивать APIError в NluParseError', async () => {
       const parser = new WorkoutParser();
       mockCreate.mockRejectedValue(new APIError('Rate limit exceeded'));
 
-      await expect(parser.parse('Вчера', '2023-10-02')).rejects.toThrow(
-        'Ошибка API DeepSeek: Rate limit exceeded',
-      );
+      await expect(
+        parser.parse({ rawText: 'Вчера', currentDate: '2023-10-02', knownExercises: [] }),
+      ).rejects.toThrow('Ошибка API DeepSeek: Rate limit exceeded');
     });
 
     it('должен выбрасывать NluParseError для прочих ошибок', async () => {
       const parser = new WorkoutParser();
       mockCreate.mockRejectedValue(new Error('Unknown generic error'));
 
-      await expect(parser.parse('Вчера', '2023-10-02')).rejects.toThrow('Unknown generic error');
+      await expect(
+        parser.parse({ rawText: 'Вчера', currentDate: '2023-10-02', knownExercises: [] }),
+      ).rejects.toThrow('Unknown generic error');
     });
   });
 
@@ -126,7 +136,11 @@ describe('WorkoutParser', () => {
         }),
       );
 
-      const result = await parser.parseEdit('в зале', '2023-10-02', '{}');
+      const result = await parser.parseEdit({
+        rawText: 'в зале',
+        currentDate: '2023-10-02',
+        currentWorkoutJson: '{}',
+      });
       expect((result as unknown as { focus: string[] }).focus).toEqual([
         'chest',
         'back',
@@ -138,16 +152,26 @@ describe('WorkoutParser', () => {
       const parser = new WorkoutParser();
       mockCreate.mockResolvedValue({ choices: [{ message: { content: null } }] });
 
-      await expect(parser.parseEdit('в зале', '2023-10-02', '{}')).rejects.toThrow(NluParseError);
+      await expect(
+        parser.parseEdit({
+          rawText: 'в зале',
+          currentDate: '2023-10-02',
+          currentWorkoutJson: '{}',
+        }),
+      ).rejects.toThrow(NluParseError);
     });
 
     it('должен оборачивать APIError в NluParseError при редактировании', async () => {
       const parser = new WorkoutParser();
       mockCreate.mockRejectedValue(new APIError('API down'));
 
-      await expect(parser.parseEdit('в зале', '2023-10-02', '{}')).rejects.toThrow(
-        'Ошибка API DeepSeek: API down',
-      );
+      await expect(
+        parser.parseEdit({
+          rawText: 'в зале',
+          currentDate: '2023-10-02',
+          currentWorkoutJson: '{}',
+        }),
+      ).rejects.toThrow('Ошибка API DeepSeek: API down');
     });
   });
 
@@ -156,7 +180,7 @@ describe('WorkoutParser', () => {
       const parser = new WorkoutParser();
       mockCreate.mockResolvedValue(buildSuccessResponse({ date: '2023-10-01' }));
 
-      const date = await parser.parseDate('вчера', '2023-10-02');
+      const date = await parser.parseDate({ rawText: 'вчера', currentDate: '2023-10-02' });
       expect(date).toBe('2023-10-01');
     });
 
@@ -164,7 +188,9 @@ describe('WorkoutParser', () => {
       const parser = new WorkoutParser();
       mockCreate.mockResolvedValue(buildSuccessResponse({ date: null }));
 
-      await expect(parser.parseDate('неясно когда', '2023-10-02')).rejects.toThrow(NluParseError);
+      await expect(
+        parser.parseDate({ rawText: 'неясно когда', currentDate: '2023-10-02' }),
+      ).rejects.toThrow(NluParseError);
     });
 
     it('должен пробрасывать NluParseError', async () => {
@@ -173,14 +199,18 @@ describe('WorkoutParser', () => {
         new (await import('../workout-parser.js')).NluParseError('Direct NLU error'),
       );
 
-      await expect(parser.parseDate('давно', '2023-10-02')).rejects.toThrow('Direct NLU error');
+      await expect(
+        parser.parseDate({ rawText: 'давно', currentDate: '2023-10-02' }),
+      ).rejects.toThrow('Direct NLU error');
     });
 
     it('должен оборачивать прочие ошибки с DeepSeek сообщением', async () => {
       const parser = new WorkoutParser();
       mockCreate.mockRejectedValue(new Error('Random string error'));
 
-      await expect(parser.parseDate('завтра', '2023-10-02')).rejects.toThrow(/DeepSeek API Error/);
+      await expect(
+        parser.parseDate({ rawText: 'завтра', currentDate: '2023-10-02' }),
+      ).rejects.toThrow(/DeepSeek API Error/);
     });
   });
 });

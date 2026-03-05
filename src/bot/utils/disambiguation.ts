@@ -58,20 +58,32 @@ function buildExerciseListChunks(exercises: Exercise[]): string[] {
  * @param tracker Опциональный ProgressTracker для обновления статусов UI
  * @returns Финальный статус (обычно 'created' или 'updated')
  */
-export async function runDisambiguationLoop(
-  conversation: Conversation<CustomContext, CustomContext>,
-  ctx: CustomContext,
-  parsedDelta: ParsedWorkout | { add?: unknown[]; update?: unknown[]; remove?: string[] },
-  workoutId: string,
-  userId: string,
-  isEditMode: boolean = false,
-  tracker?: ProgressTracker,
-): Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: { id: string } }> {
-  tracker?.setRunning(WorkoutStep.SAVE);
+export async function runDisambiguationLoop({
+  conversation,
+  ctx,
+  parsedDelta,
+  workoutId,
+  userId,
+  isEditMode = false,
+  tracker,
+}: {
+  conversation: Conversation<CustomContext, CustomContext>;
+  ctx: CustomContext;
+  parsedDelta: ParsedWorkout | { add?: unknown[]; update?: unknown[]; remove?: string[] };
+  workoutId: string;
+  userId: string;
+  isEditMode: boolean;
+  tracker?: ProgressTracker;
+}): Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: { id: string } }> {
+  tracker?.setRunning({ step: WorkoutStep.SAVE });
   let result = await conversation.external(async () => {
     const fn = isEditMode
-      ? await workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
-      : await workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
+      ? await workoutService.applyEdits({
+          workoutId,
+          userId,
+          parsedWorkout: parsedDelta as ParsedWorkout,
+        })
+      : await workoutService.createDraft({ userId, parsedWorkout: parsedDelta as ParsedWorkout });
     return {
       status: fn.status,
       ambiguousExercises: 'ambiguousExercises' in fn ? fn.ambiguousExercises : undefined,
@@ -86,13 +98,13 @@ export async function runDisambiguationLoop(
   // Если нет неоднозначных упражнений — сразу сохраняем и пропускаем шаг EXERCISES
   // CLARIFY не трогаем — им управляет newWorkout.ts (фаза preview/review)
   if (result.status !== 'needs_disambiguation') {
-    tracker?.setSkipped(WorkoutStep.EXERCISES);
-    tracker?.setDone(WorkoutStep.SAVE);
+    tracker?.setSkipped({ step: WorkoutStep.EXERCISES });
+    tracker?.setDone({ step: WorkoutStep.SAVE });
     return result;
   }
 
   // Есть неоднозначные — собираем подсписок и переходим к CLARIFY
-  tracker?.setSkipped(WorkoutStep.SAVE);
+  tracker?.setSkipped({ step: WorkoutStep.SAVE });
 
   while (result.status === 'needs_disambiguation') {
     const ambiguousExercises = result.ambiguousExercises || [];
@@ -103,8 +115,8 @@ export async function runDisambiguationLoop(
       .map((a) => a.originalName);
 
     if (newExerciseNames.length > 0) {
-      tracker?.setRunning(WorkoutStep.EXERCISES);
-      tracker?.addSubItems(WorkoutStep.EXERCISES, newExerciseNames);
+      tracker?.setRunning({ step: WorkoutStep.EXERCISES });
+      tracker?.addSubItems({ step: WorkoutStep.EXERCISES, items: newExerciseNames });
       // CLARIFY не устанавливаем здесь — им управляет newWorkout.ts
     }
 
@@ -112,16 +124,19 @@ export async function runDisambiguationLoop(
     for (const ambig of ambiguousExercises) {
       if (ambig.mappedExerciseId) continue;
 
-      tracker?.setSubItemRunning(WorkoutStep.EXERCISES, subItemIndex);
+      tracker?.setSubItemRunning({ step: WorkoutStep.EXERCISES, index: subItemIndex });
 
       const resolveResult = await conversation.external(() =>
-        exerciseService.resolveExercise(ambig.originalName, userId),
+        exerciseService.resolveExercise({ inputText: ambig.originalName, userId }),
       );
 
       const options: Array<Pick<Exercise, 'id' | 'canonicalName' | 'displayNameRu'>> =
         resolveResult.status === 'ambiguous' ? resolveResult.options : [];
 
-      const kb = createExercisePickerKeyboard(options, ambig.originalName);
+      const kb = createExercisePickerKeyboard({
+        options: options,
+        originalName: ambig.originalName,
+      });
 
       await ctx.reply(
         `Немного не понял упражнение: «${ambig.originalName}». Выберите из списка или создайте новое:`,
@@ -166,29 +181,29 @@ export async function runDisambiguationLoop(
         // Пользователь выбрал готовый вариант из списка
         const exerciseId = data.split(':')[1];
         await conversation.external(() =>
-          exerciseService.confirmMapping(userId, ambig.originalName, exerciseId),
+          exerciseService.confirmMapping({ userId, inputText: ambig.originalName, exerciseId }),
         );
         ambig.mappedExerciseId = exerciseId;
       } else if (data === 'new_exercise') {
         // Пользователь хочет создать новое упражнение с оригинальным именем
         logger.info({ originalName: ambig.originalName }, 'Creating new user exercise');
         const newExercise = await conversation.external(() =>
-          exerciseService.createUserExercise(userId, ambig.originalName),
+          exerciseService.createUserExercise({ userId, name: ambig.originalName }),
         );
         ambig.mappedExerciseId = newExercise.id;
         logger.info({ exerciseId: newExercise.id }, 'New exercise created');
       } else if (data === 'voice_list') {
         // Двухшаговый выбор с навигацией: группа мышц → список → [Назад] → группа
-        const resolved = await handleVoiceListSelection(
-          conversation,
-          ctx,
-          ambig.originalName,
-          userId,
-        );
+        const resolved = await handleVoiceListSelection({
+          conversation: conversation,
+          ctx: ctx,
+          originalName: ambig.originalName,
+          userId: userId,
+        });
         if (resolved === 'raw') {
           logger.info({ originalName: ambig.originalName }, 'Voice list: creating new exercise');
           const newExercise = await conversation.external(() =>
-            exerciseService.createUserExercise(userId, ambig.originalName),
+            exerciseService.createUserExercise({ userId, name: ambig.originalName }),
           );
           ambig.mappedExerciseId = newExercise.id;
         } else {
@@ -196,17 +211,21 @@ export async function runDisambiguationLoop(
         }
       }
 
-      tracker?.setSubItemDone(WorkoutStep.EXERCISES, subItemIndex);
+      tracker?.setSubItemDone({ step: WorkoutStep.EXERCISES, index: subItemIndex });
       subItemIndex++;
     }
 
-    tracker?.setDone(WorkoutStep.EXERCISES);
+    tracker?.setDone({ step: WorkoutStep.EXERCISES });
 
-    tracker?.setRunning(WorkoutStep.SAVE);
+    tracker?.setRunning({ step: WorkoutStep.SAVE });
     result = await conversation.external(async () => {
       const fn = isEditMode
-        ? await workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
-        : await workoutService.createDraft(userId, parsedDelta as ParsedWorkout);
+        ? await workoutService.applyEdits({
+            workoutId,
+            userId,
+            parsedWorkout: parsedDelta as ParsedWorkout,
+          })
+        : await workoutService.createDraft({ userId, parsedWorkout: parsedDelta as ParsedWorkout });
       return {
         status: fn.status,
         ambiguousExercises: 'ambiguousExercises' in fn ? fn.ambiguousExercises : undefined,
@@ -217,7 +236,7 @@ export async function runDisambiguationLoop(
         workout?: { id: string };
       };
     });
-    tracker?.setDone(WorkoutStep.SAVE);
+    tracker?.setDone({ step: WorkoutStep.SAVE });
   }
 
   // CLARIFY не завершаем здесь — его завершает newWorkout.ts после Approve
@@ -238,21 +257,37 @@ export async function runDisambiguationLoop(
  * @param userId ID пользователя
  * @returns ID выбранного упражнения, или 'raw' если нужно создать новое
  */
-async function handleVoiceListSelection(
-  conversation: Conversation<CustomContext, CustomContext>,
-  ctx: CustomContext,
-  originalName: string,
-  userId: string,
-): Promise<string> {
+async function handleVoiceListSelection({
+  conversation,
+  ctx,
+  originalName,
+  userId,
+}: {
+  conversation: Conversation<CustomContext, CustomContext>;
+  ctx: CustomContext;
+  originalName: string;
+  userId: string;
+}): Promise<string> {
   // Группы мышц — фиксированный список, запрос в БД не нужен
   if (MUSCLE_GROUPS.length === 0) {
     // В этой ветке кнопки «Назад» нет — null означает «нет выбора», трактуем как 'raw'
-    return (await handleFlatList(conversation, ctx, originalName, userId, null)) ?? 'raw';
+    return (
+      (await handleFlatList({
+        conversation: conversation,
+        ctx: ctx,
+        originalName: originalName,
+        userId: userId,
+        muscleGroup: null,
+      })) ?? 'raw'
+    );
   }
 
   // Цикл навигации: выбор группы → список → [Назад] → возврат к выбору группы
   while (true) {
-    const groupKb = createMuscleGroupPickerKeyboard([...MUSCLE_GROUPS], originalName);
+    const groupKb = createMuscleGroupPickerKeyboard({
+      groups: [...MUSCLE_GROUPS],
+      originalName: originalName,
+    });
     await ctx.reply('💪 Выберите группу мышц:', { reply_markup: groupKb });
 
     const groupCtx = await conversation.waitForCallbackQuery(
@@ -280,7 +315,13 @@ async function handleVoiceListSelection(
     // 'all' → нет фильтра; числовой индекс → берём MuscleGroupEntry по индексу
     const selectedEntry = raw === 'all' ? null : (MUSCLE_GROUPS[parseInt(raw, 10)] ?? null);
 
-    const result = await handleFlatList(conversation, ctx, originalName, userId, selectedEntry);
+    const result = await handleFlatList({
+      conversation: conversation,
+      ctx: ctx,
+      originalName: originalName,
+      userId: userId,
+      muscleGroup: selectedEntry,
+    });
 
     // null — сигнал «вернуться назад», снова показываем группы
     if (result !== null) {
@@ -301,13 +342,19 @@ async function handleVoiceListSelection(
  * @param muscleGroup Группа мышц или null для «всех»
  * @returns ID выбранного упражнения | 'raw' | null (null = пользователь нажал «Назад»)
  */
-async function handleFlatList(
-  conversation: Conversation<CustomContext, CustomContext>,
-  ctx: CustomContext,
-  originalName: string,
-  userId: string,
-  muscleGroup: MuscleGroupEntry | null,
-): Promise<string | null> {
+async function handleFlatList({
+  conversation,
+  ctx,
+  originalName,
+  userId,
+  muscleGroup,
+}: {
+  conversation: Conversation<CustomContext, CustomContext>;
+  ctx: CustomContext;
+  originalName: string;
+  userId: string;
+  muscleGroup: MuscleGroupEntry | null;
+}): Promise<string | null> {
   const exercises =
     muscleGroup !== null
       ? await conversation.external(() =>
@@ -345,7 +392,10 @@ async function handleFlatList(
   let inputText: string;
   if (inputCtx.message?.voice) {
     try {
-      inputText = await downloadAndTranscribeVoice(inputCtx as CustomContext, conversation);
+      inputText = await downloadAndTranscribeVoice({
+        ctx: inputCtx as CustomContext,
+        conversation: conversation,
+      });
     } catch {
       logger.warn('Ошибка STT при голосовом выборе из списка — создаём с оригинальным именем');
       return 'raw';
@@ -365,18 +415,22 @@ async function handleFlatList(
   }
 
   const resolved = await conversation.external(() =>
-    exerciseService.resolveExercise(inputText, userId),
+    exerciseService.resolveExercise({ inputText: inputText, userId }),
   );
 
   if (resolved.status === 'resolved') {
     await conversation.external(() =>
-      exerciseService.confirmMapping(userId, originalName, resolved.exercise.id),
+      exerciseService.confirmMapping({
+        userId,
+        inputText: originalName,
+        exerciseId: resolved.exercise.id,
+      }),
     );
     return resolved.exercise.id;
   }
 
   if (resolved.status === 'ambiguous' && resolved.options.length > 0) {
-    const kb = createExercisePickerKeyboard(resolved.options, inputText);
+    const kb = createExercisePickerKeyboard({ options: resolved.options, originalName: inputText });
     await ctx.reply(`Нашёл несколько вариантов для «${inputText}»:`, { reply_markup: kb });
 
     const pickCtx = await conversation.waitForCallbackQuery([/^map:/, 'new_exercise'], {
@@ -400,7 +454,7 @@ async function handleFlatList(
     if (pickCtx.callbackQuery.data.startsWith('map:')) {
       const exerciseId = pickCtx.callbackQuery.data.split(':')[1];
       await conversation.external(() =>
-        exerciseService.confirmMapping(userId, originalName, exerciseId),
+        exerciseService.confirmMapping({ userId, inputText: originalName, exerciseId }),
       );
       return exerciseId;
     }

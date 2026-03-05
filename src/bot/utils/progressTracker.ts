@@ -108,24 +108,24 @@ export class ProgressTracker {
    * Помечает шаг как выполняется и обновляет сообщение.
    * @param step Шаг для обновления
    */
-  setRunning(step: WorkoutStep): void {
-    this.updateStep(step, 'running');
+  setRunning({ step }: { step: WorkoutStep }): void {
+    this.updateStep({ step, status: 'running' });
   }
 
   /**
    * Помечает шаг как выполнено и обновляет сообщение.
    * @param step Шаг для обновления
    */
-  setDone(step: WorkoutStep): void {
-    this.updateStep(step, 'done');
+  setDone({ step }: { step: WorkoutStep }): void {
+    this.updateStep({ step, status: 'done' });
   }
 
   /**
    * Помечает шаг как пропущено и обновляет сообщение.
    * @param step Шаг для обновления
    */
-  setSkipped(step: WorkoutStep): void {
-    this.updateStep(step, 'skipped');
+  setSkipped({ step }: { step: WorkoutStep }): void {
+    this.updateStep({ step, status: 'skipped' });
   }
 
   /**
@@ -134,7 +134,7 @@ export class ProgressTracker {
    * @param step Шаг, к которому добавляется подсписок
    * @param items Названия подпунктов (например, имена упражнений)
    */
-  addSubItems(step: WorkoutStep, items: string[]): void {
+  addSubItems({ step, items }: { step: WorkoutStep; items: string[] }): void {
     const state = this.steps.get(step);
     if (!state) return;
     state.subItems = items.map((label) => ({ label, status: 'pending' as StepStatus }));
@@ -146,8 +146,8 @@ export class ProgressTracker {
    * @param step Родительский шаг
    * @param index Индекс подпункта
    */
-  setSubItemRunning(step: WorkoutStep, index: number): void {
-    this.updateSubItem(step, index, 'running');
+  setSubItemRunning({ step, index }: { step: WorkoutStep; index: number }): void {
+    this.updateSubItem({ step, index, status: 'running' });
   }
 
   /**
@@ -155,8 +155,8 @@ export class ProgressTracker {
    * @param step Родительский шаг
    * @param index Индекс подпункта
    */
-  setSubItemDone(step: WorkoutStep, index: number): void {
-    this.updateSubItem(step, index, 'done');
+  setSubItemDone({ step, index }: { step: WorkoutStep; index: number }): void {
+    this.updateSubItem({ step, index, status: 'done' });
   }
 
   /**
@@ -176,7 +176,7 @@ export class ProgressTracker {
   // ─── Приватные методы ────────────────────────────────────────────────────────
 
   /** Обновляет статус шага и ставит в очередь редактирование сообщения */
-  private updateStep(step: WorkoutStep, status: StepStatus): void {
+  private updateStep({ step, status }: { step: WorkoutStep; status: StepStatus }): void {
     const state = this.steps.get(step);
     if (!state) return;
     state.status = status;
@@ -184,7 +184,15 @@ export class ProgressTracker {
   }
 
   /** Обновляет статус подпункта и ставит в очередь редактирование сообщения */
-  private updateSubItem(step: WorkoutStep, index: number, status: StepStatus): void {
+  private updateSubItem({
+    step,
+    index,
+    status,
+  }: {
+    step: WorkoutStep;
+    index: number;
+    status: StepStatus;
+  }): void {
     const state = this.steps.get(step);
     if (!state || index < 0 || index >= state.subItems.length) return;
     state.subItems[index].status = status;

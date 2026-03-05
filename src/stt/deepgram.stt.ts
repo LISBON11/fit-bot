@@ -38,21 +38,21 @@ export class DeepgramStt implements SttService {
    * @returns Распознанный текст
    * @throws SttError если произошла ошибка транскрибации
    */
-  async transcribe(audioBuffer: Buffer, language: string = 'ru'): Promise<string> {
+  async transcribe(audioBuffer: Buffer, language = 'ru'): Promise<string> {
     try {
       const start = Date.now();
       logger.debug('Отправка аудио в Deepgram...');
 
-      const { result, error } = await withRetry(
-        () =>
+      const { result, error } = await withRetry({
+        operation: () =>
           this.deepgram.listen.prerecorded.transcribeFile(audioBuffer, {
             model: 'nova-3',
             language,
             smart_format: true,
           }),
-        'Deepgram STT',
-        { maxRetries: 2, baseDelayMs: 2000 },
-      );
+        context: 'Deepgram STT',
+        options: { maxRetries: 2, baseDelayMs: 2000 },
+      });
 
       if (error) {
         logger.error({ err: error }, 'Deepgram вернул ошибку');

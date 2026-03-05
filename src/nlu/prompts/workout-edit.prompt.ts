@@ -2,11 +2,15 @@ import type { ChatCompletionMessageParam } from 'openai/resources/index.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { ParsedWorkoutSchema } from '../nlu.schema.js';
 
-export function buildEditPrompt(
-  currentWorkoutJson: string,
-  rawText: string,
-  currentDate: string,
-): ChatCompletionMessageParam[] {
+export function buildEditPrompt({
+  currentWorkoutJson,
+  rawText,
+  currentDate,
+}: {
+  currentWorkoutJson: string;
+  rawText: string;
+  currentDate: string;
+}): ChatCompletionMessageParam[] {
   const systemMessage = `Вы — профессиональный фитнес-ассистент. Ваша задача — применить изменения к существующей тренировке пользователя на основе его текстового или голосового запроса и вернуть ПОЛНУЮ обновленную тренировку строго в формате JSON, соответствующем заданной схеме.
 
 ГЛАВНЫЕ ПРАВИЛА:

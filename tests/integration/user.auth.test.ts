@@ -11,11 +11,11 @@ describe('User Authentication Integration', () => {
     await prisma.authProvider.deleteMany({ where: { providerUserId: testTelegramId.toString() } });
 
     // 2. Авто-регистрация
-    const user = await userService.getOrCreateByTelegram(
-      testTelegramId.toString(),
-      'new_test_username',
-      'Test First Name',
-    );
+    const user = await userService.getOrCreateByTelegram({
+      telegramId: testTelegramId.toString(),
+      username: 'new_test_username',
+      firstName: 'Test First Name',
+    });
 
     expect(user).toBeDefined();
     expect(user.telegramUsername).toBe('new_test_username');
@@ -36,18 +36,18 @@ describe('User Authentication Integration', () => {
 
   test('should return existing user without creating a new one', async () => {
     // 1. Создаем пользователя первого
-    const firstUser = await userService.getOrCreateByTelegram(
-      testTelegramId.toString(),
-      'new_test_username',
-      undefined,
-    );
+    const firstUser = await userService.getOrCreateByTelegram({
+      telegramId: testTelegramId.toString(),
+      username: 'new_test_username',
+      firstName: undefined,
+    });
 
     // 2. Идем еще раз к сервису с тем же telegramId
-    const secondUser = await userService.getOrCreateByTelegram(
-      testTelegramId.toString(),
-      'another_username',
-      undefined,
-    );
+    const secondUser = await userService.getOrCreateByTelegram({
+      telegramId: testTelegramId.toString(),
+      username: 'another_username',
+      firstName: undefined,
+    });
 
     // 3. ID должен совпадать
     expect(secondUser.id).toBe(firstUser.id);

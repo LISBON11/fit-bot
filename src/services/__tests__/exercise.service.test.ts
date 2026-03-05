@@ -50,10 +50,13 @@ describe('ExerciseService', () => {
         exercise: mockExercise1,
       } as unknown as UserExerciseMapping & { exercise: Exercise });
 
-      const result = await service.resolveExercise('присед', 'user1');
+      const result = await service.resolveExercise({ inputText: 'присед', userId: 'user1' });
 
       expect(result).toEqual({ status: 'resolved', exercise: mockExercise1 });
-      expect(repositoryMock.findUserMapping).toHaveBeenCalledWith('user1', 'присед');
+      expect(repositoryMock.findUserMapping).toHaveBeenCalledWith({
+        userId: 'user1',
+        inputText: 'присед',
+      });
       expect(repositoryMock.findSynonyms).not.toHaveBeenCalled();
     });
 
@@ -82,7 +85,7 @@ describe('ExerciseService', () => {
         },
       ]);
 
-      const result = await service.resolveExercise('присед', 'user1');
+      const result = await service.resolveExercise({ inputText: 'присед', userId: 'user1' });
 
       // Should pick user1's synonym!
       expect(result).toEqual({ status: 'resolved', exercise: mockExercise2 });
@@ -113,7 +116,7 @@ describe('ExerciseService', () => {
         },
       ]);
 
-      const result = await service.resolveExercise('присед', 'user1');
+      const result = await service.resolveExercise({ inputText: 'присед', userId: 'user1' });
 
       expect(result).toEqual({
         status: 'ambiguous',
@@ -126,13 +129,19 @@ describe('ExerciseService', () => {
       repositoryMock.findSynonyms.mockResolvedValue([]);
       repositoryMock.searchSimilar.mockResolvedValue([mockExercise1]);
 
-      const result = await service.resolveExercise('что_то_похожее', 'user1');
+      const result = await service.resolveExercise({
+        inputText: 'что_то_похожее',
+        userId: 'user1',
+      });
 
       expect(result).toEqual({
         status: 'ambiguous',
         options: [mockExercise1],
       });
-      expect(repositoryMock.searchSimilar).toHaveBeenCalledWith('что_то_похожее', 5);
+      expect(repositoryMock.searchSimilar).toHaveBeenCalledWith({
+        query: 'что_то_похожее',
+        limit: 5,
+      });
     });
 
     it('5. should return not_found if no matches and searchSimilar returns empty', async () => {
@@ -140,18 +149,28 @@ describe('ExerciseService', () => {
       repositoryMock.findSynonyms.mockResolvedValue([]);
       repositoryMock.searchSimilar.mockResolvedValue([]);
 
-      const result = await service.resolveExercise('неизвестное_упражнение', 'user1');
+      const result = await service.resolveExercise({
+        inputText: 'неизвестное_упражнение',
+        userId: 'user1',
+      });
 
       expect(result).toEqual({ status: 'not_found' });
-      expect(repositoryMock.searchSimilar).toHaveBeenCalledWith('неизвестное_упражнение', 5);
+      expect(repositoryMock.searchSimilar).toHaveBeenCalledWith({
+        query: 'неизвестное_упражнение',
+        limit: 5,
+      });
     });
   });
 
   describe('confirmMapping', () => {
     it('should call repository to upsert user mapping', async () => {
       repositoryMock.upsertUserMapping.mockResolvedValue({} as unknown as UserExerciseMapping);
-      await service.confirmMapping('user1', 'text', 'ex1');
-      expect(repositoryMock.upsertUserMapping).toHaveBeenCalledWith('user1', 'text', 'ex1');
+      await service.confirmMapping({ userId: 'user1', inputText: 'text', exerciseId: 'ex1' });
+      expect(repositoryMock.upsertUserMapping).toHaveBeenCalledWith({
+        userId: 'user1',
+        inputText: 'text',
+        exerciseId: 'ex1',
+      });
     });
   });
 
@@ -208,7 +227,7 @@ describe('ExerciseService', () => {
       repositoryMock.create.mockResolvedValue(createdExercise);
       repositoryMock.upsertUserMapping.mockResolvedValue({} as never);
 
-      const result = await service.createUserExercise('user1', 'Тяга');
+      const result = await service.createUserExercise({ userId: 'user1', name: 'Тяга' });
 
       expect(repositoryMock.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -219,7 +238,11 @@ describe('ExerciseService', () => {
         }),
       );
       // Маппинг должен быть сохранён сразу
-      expect(repositoryMock.upsertUserMapping).toHaveBeenCalledWith('user1', 'Тяга', 'new-ex');
+      expect(repositoryMock.upsertUserMapping).toHaveBeenCalledWith({
+        userId: 'user1',
+        inputText: 'Тяга',
+        exerciseId: 'new-ex',
+      });
       expect(result).toEqual(createdExercise);
     });
   });

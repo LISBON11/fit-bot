@@ -25,7 +25,7 @@ describe('ExerciseRepository', () => {
         },
       ] as never);
 
-      const result = await repository.findSynonyms('TEST', 'u1');
+      const result = await repository.findSynonyms({ text: 'TEST', userId: 'u1' });
 
       expect(prismaMock.exerciseSynonym.findMany).toHaveBeenCalledWith({
         where: {
@@ -44,7 +44,7 @@ describe('ExerciseRepository', () => {
     it('should find synonyms without userId', async () => {
       prismaMock.exerciseSynonym.findMany.mockResolvedValue([] as never);
 
-      await repository.findSynonyms('TEST');
+      await repository.findSynonyms({ text: 'TEST' });
 
       expect(prismaMock.exerciseSynonym.findMany).toHaveBeenCalledWith({
         where: {
@@ -65,7 +65,7 @@ describe('ExerciseRepository', () => {
       const mockResult = { id: '1', inputText: 'test', exerciseId: 'e1', userId: 'u1' };
       prismaMock.userExerciseMapping.findFirst.mockResolvedValue(mockResult as never);
 
-      const result = await repository.findUserMapping('u1', 'TEST');
+      const result = await repository.findUserMapping({ userId: 'u1', inputText: 'TEST' });
 
       expect(prismaMock.userExerciseMapping.findFirst).toHaveBeenCalledWith({
         where: { userId: 'u1', inputText: 'test' },
@@ -84,7 +84,11 @@ describe('ExerciseRepository', () => {
         useCount: 2,
       } as never);
 
-      const result = await repository.upsertUserMapping('u1', 'test_input', 'e1');
+      const result = await repository.upsertUserMapping({
+        userId: 'u1',
+        inputText: 'test_input',
+        exerciseId: 'e1',
+      });
 
       expect(prismaMock.userExerciseMapping.findFirst).toHaveBeenCalledWith({
         where: { userId: 'u1', inputText: 'test_input', exerciseId: 'e1' },
@@ -100,7 +104,11 @@ describe('ExerciseRepository', () => {
       prismaMock.userExerciseMapping.findFirst.mockResolvedValue(null as never);
       prismaMock.userExerciseMapping.create.mockResolvedValue({ id: 'm2', useCount: 1 } as never);
 
-      const result = await repository.upsertUserMapping('u1', 'test_input', 'e1');
+      const result = await repository.upsertUserMapping({
+        userId: 'u1',
+        inputText: 'test_input',
+        exerciseId: 'e1',
+      });
 
       expect(prismaMock.userExerciseMapping.create).toHaveBeenCalledWith({
         data: {

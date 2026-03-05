@@ -13,7 +13,7 @@ describe('createMuscleGroupPickerKeyboard', () => {
   ];
 
   it('should create a button for each muscle group with mg:{index} callback', () => {
-    const keyboard = createMuscleGroupPickerKeyboard(groups);
+    const keyboard = createMuscleGroupPickerKeyboard({ groups });
     const allButtons = keyboard.inline_keyboard
       .flat()
       .filter((btn) => 'callback_data' in btn) as Array<{ callback_data: string; text: string }>;
@@ -30,7 +30,7 @@ describe('createMuscleGroupPickerKeyboard', () => {
   });
 
   it('should always include a "Все упражнения" button with mg:all callback', () => {
-    const keyboard = createMuscleGroupPickerKeyboard(groups);
+    const keyboard = createMuscleGroupPickerKeyboard({ groups });
     const allButtons = keyboard.inline_keyboard
       .flat()
       .filter((btn) => 'callback_data' in btn) as Array<{ callback_data: string; text: string }>;
@@ -41,7 +41,7 @@ describe('createMuscleGroupPickerKeyboard', () => {
   });
 
   it('should work with empty muscle groups list (only "Все" button)', () => {
-    const keyboard = createMuscleGroupPickerKeyboard([]);
+    const keyboard = createMuscleGroupPickerKeyboard({ groups: [] });
     const allButtons = keyboard.inline_keyboard
       .flat()
       .filter((btn) => 'callback_data' in btn) as Array<{ callback_data: string; text: string }>;

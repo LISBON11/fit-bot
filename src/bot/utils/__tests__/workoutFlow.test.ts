@@ -90,6 +90,7 @@ describe('workoutFlow', () => {
         'draft',
         'u1',
         false,
+        undefined,
       );
       expect(result?.status).toBe('created');
     });
@@ -125,6 +126,7 @@ describe('workoutFlow', () => {
         'w1',
         'u1',
         true,
+        undefined,
       );
       expect(result?.status).toBe('updated');
     });

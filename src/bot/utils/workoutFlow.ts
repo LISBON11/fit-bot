@@ -8,6 +8,8 @@ import { AppError } from '../../errors/app-errors.js';
 import { createLogger } from '../../logger/logger.js';
 import type { ParsedWorkout, ParsedExercise } from '../../nlu/nlu.types.js';
 import { getCurrentDateString } from '../../utils/date.js';
+import type { ProgressTracker } from './progressTracker.js';
+import { WorkoutStep } from './progressTracker.js';
 
 const logger = createLogger('WorkoutFlowHelper');
 
@@ -21,6 +23,7 @@ export async function parseAndDisambiguateUserInput(
   userId: string,
   existingWorkoutContext?: string,
   workoutIdForDelta?: string,
+  tracker?: ProgressTracker,
 ): Promise<{
   status: string;
   ambiguousExercises?: ParsedExercise[];
@@ -34,6 +37,7 @@ export async function parseAndDisambiguateUserInput(
 
   try {
     logger.info('parseAndDisambiguateUserInput: starting withChatAction');
+    tracker?.setRunning(WorkoutStep.NLU);
     parsedWorkoutOrDelta = await withChatAction(ctx, conversation, async () => {
       logger.info('parseAndDisambiguateUserInput: inside withChatAction work()');
       if (mode === 'new') {
@@ -65,6 +69,7 @@ export async function parseAndDisambiguateUserInput(
         );
       }
     });
+    tracker?.setDone(WorkoutStep.NLU);
   } catch (err: unknown) {
     console.log(err);
     logger.error({ err }, 'Ошибка при парсинге NLU');
@@ -91,5 +96,6 @@ export async function parseAndDisambiguateUserInput(
     mode === 'new' ? 'draft' : (workoutIdForDelta as string),
     userId,
     mode === 'edit',
+    tracker,
   );
 }

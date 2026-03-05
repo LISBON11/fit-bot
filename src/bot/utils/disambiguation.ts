@@ -13,6 +13,8 @@ import { InlineKeyboard } from 'grammy';
 import type { Exercise } from '@prisma/client';
 import { createLogger } from '../../logger/logger.js';
 import { downloadAndTranscribeVoice } from './telegram.js';
+import type { ProgressTracker } from './progressTracker.js';
+import { WorkoutStep } from './progressTracker.js';
 
 const logger = createLogger('disambiguation');
 
@@ -53,6 +55,7 @@ function buildExerciseListChunks(exercises: Exercise[]): string[] {
  * @param workoutId ID текущей тренировки (черновика или редактируемой)
  * @param userId ID пользователя
  * @param isEditMode Режим редактирования
+ * @param tracker Опциональный ProgressTracker для обновления статусов UI
  * @returns Финальный статус (обычно 'created' или 'updated')
  */
 export async function runDisambiguationLoop(
@@ -62,7 +65,9 @@ export async function runDisambiguationLoop(
   workoutId: string,
   userId: string,
   isEditMode: boolean = false,
+  tracker?: ProgressTracker,
 ): Promise<{ status: string; ambiguousExercises?: ParsedExercise[]; workout?: { id: string } }> {
+  tracker?.setRunning(WorkoutStep.SAVE);
   let result = await conversation.external(async () => {
     const fn = isEditMode
       ? await workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
@@ -78,11 +83,36 @@ export async function runDisambiguationLoop(
     };
   });
 
+  // Если нет неоднозначных упражнений — сразу сохраняем и пропускаем шаг EXERCISES
+  // CLARIFY не трогаем — им управляет newWorkout.ts (фаза preview/review)
+  if (result.status !== 'needs_disambiguation') {
+    tracker?.setSkipped(WorkoutStep.EXERCISES);
+    tracker?.setDone(WorkoutStep.SAVE);
+    return result;
+  }
+
+  // Есть неоднозначные — собираем подсписок и переходим к CLARIFY
+  tracker?.setSkipped(WorkoutStep.SAVE);
+
   while (result.status === 'needs_disambiguation') {
     const ambiguousExercises = result.ambiguousExercises || [];
 
+    // При первом входе в цикл — добавляем подсписок к шагу EXERCISES
+    const newExerciseNames = ambiguousExercises
+      .filter((a) => !a.mappedExerciseId)
+      .map((a) => a.originalName);
+
+    if (newExerciseNames.length > 0) {
+      tracker?.setRunning(WorkoutStep.EXERCISES);
+      tracker?.addSubItems(WorkoutStep.EXERCISES, newExerciseNames);
+      // CLARIFY не устанавливаем здесь — им управляет newWorkout.ts
+    }
+
+    let subItemIndex = 0;
     for (const ambig of ambiguousExercises) {
       if (ambig.mappedExerciseId) continue;
+
+      tracker?.setSubItemRunning(WorkoutStep.EXERCISES, subItemIndex);
 
       const resolveResult = await conversation.external(() =>
         exerciseService.resolveExercise(ambig.originalName, userId),
@@ -165,8 +195,14 @@ export async function runDisambiguationLoop(
           ambig.mappedExerciseId = resolved;
         }
       }
+
+      tracker?.setSubItemDone(WorkoutStep.EXERCISES, subItemIndex);
+      subItemIndex++;
     }
 
+    tracker?.setDone(WorkoutStep.EXERCISES);
+
+    tracker?.setRunning(WorkoutStep.SAVE);
     result = await conversation.external(async () => {
       const fn = isEditMode
         ? await workoutService.applyEdits(workoutId, userId, parsedDelta as ParsedWorkout)
@@ -181,8 +217,10 @@ export async function runDisambiguationLoop(
         workout?: { id: string };
       };
     });
+    tracker?.setDone(WorkoutStep.SAVE);
   }
 
+  // CLARIFY не завершаем здесь — его завершает newWorkout.ts после Approve
   return result;
 }
 

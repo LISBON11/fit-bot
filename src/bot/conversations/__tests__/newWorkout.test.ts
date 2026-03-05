@@ -140,6 +140,9 @@ describe('newWorkout conversation', () => {
       'test workout',
       'new',
       'u1',
+      undefined,
+      undefined,
+      undefined,
     );
     expect(mockWorkoutService.updateMessageIds).toHaveBeenCalledWith('w1', {
       sourceMessageId: 111,
@@ -200,6 +203,9 @@ describe('newWorkout conversation', () => {
       'test voice',
       'new',
       'u1',
+      undefined,
+      undefined,
+      expect.anything(), // tracker — создаётся для голосового
     );
     expect(mockWorkoutService.cancelDraft).toHaveBeenCalledWith('w1');
     expect(ctx.api.editMessageText).toHaveBeenCalledWith(

@@ -10,6 +10,7 @@ import { PublisherService } from '../../services/publisher.service.js';
 import { downloadAndTranscribeVoice } from '../utils/telegram.js';
 import { cloneWithoutClasses } from '../utils/serialization.js';
 import { parseAndDisambiguateUserInput } from '../utils/workoutFlow.js';
+import { ProgressTracker, WorkoutStep } from '../utils/progressTracker.js';
 
 const convLogger = createLogger('newWorkoutConversation');
 
@@ -35,11 +36,20 @@ export async function newWorkout(
   const userId = user.id;
 
   let rawText: string;
+  let tracker: ProgressTracker | undefined;
 
   // 1. Получение текста (голос -> STT или напрямую текст)
   if (ctx.message?.voice) {
     convLogger.info('Step 1: Downloading and transcribing voice');
+
+    // Инициализируем трекер и сразу показываем статусы
+    tracker = new ProgressTracker(ctx);
+    await tracker.send();
+
+    tracker.setRunning(WorkoutStep.STT);
     rawText = await downloadAndTranscribeVoice(ctx, conversation);
+    tracker.setDone(WorkoutStep.STT);
+
     convLogger.info('Step 1: Voice transcription complete');
   } else if (ctx.message?.text) {
     rawText = ctx.message.text;
@@ -61,6 +71,9 @@ export async function newWorkout(
     rawText,
     'new',
     userId,
+    undefined,
+    undefined,
+    tracker,
   );
   convLogger.info(
     { draftResultStatus: draftResult?.status },
@@ -84,6 +97,10 @@ export async function newWorkout(
   }
 
   let previewMsgId: number | undefined;
+
+  // Процессинг завершён, показываем пользователю превью для подтверждения
+  // CLARIFY = фаза ревью (пользователь проверяет тренировку, нажимает кнопку)
+  tracker?.setRunning(WorkoutStep.CLARIFY);
 
   // 4. Показ итеративного превью и выбор действия
   while (true) {
@@ -154,9 +171,17 @@ export async function newWorkout(
       // Утверждаем и публикуем
       await conversation.external(() => workoutService.approveDraft(workoutId));
       convLogger.info('Action: approveDraft completed');
+
+      // CLARIFY завершен, начинаем публикацию
+      tracker?.setDone(WorkoutStep.CLARIFY);
+      tracker?.setRunning(WorkoutStep.PUBLISH);
       const publisher = new PublisherService(ctx.api);
       await publisher.publish(previewHtml);
       convLogger.info('Action: publisher.publish completed');
+      tracker?.setDone(WorkoutStep.PUBLISH);
+
+      // Удаляем трекер — тренировка подтверждена
+      await tracker?.delete();
 
       if (previewMsgId && ctx.chat?.id) {
         await ctx.api
@@ -176,6 +201,8 @@ export async function newWorkout(
     } else if (action === 'canc') {
       // Отменяем
       await conversation.external(() => workoutService.cancelDraft(workoutId));
+      // Удаляем трекер — тренировка отменена
+      await tracker?.delete();
       if (previewMsgId && ctx.chat?.id) {
         await ctx.api
           .editMessageText(

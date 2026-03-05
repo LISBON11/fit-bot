@@ -17,6 +17,7 @@ export default defineConfig(
       'jest.config.mjs',
       'jest.integration.config.mjs',
       'prisma/seed.ts',
+      'test-pg.js',
     ],
   },
   eslint.configs.recommended,

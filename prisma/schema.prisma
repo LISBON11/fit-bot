@@ -11,20 +11,20 @@ datasource db {
 // ─── Пользователи ────────────────────────────────────────────────
 
 model User {
-  id                String   @id @default(uuid()) @db.Uuid
-  telegramId        String?  @map("telegram_id")
-  telegramUsername   String?  @map("telegram_username")
-  email             String?  @unique
-  passwordHash      String?  @map("password_hash")
-  displayName       String?  @map("display_name")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid()) @db.Uuid
+  telegramId       String?  @map("telegram_id")
+  telegramUsername String?  @map("telegram_username")
+  email            String?  @unique
+  passwordHash     String?  @map("password_hash")
+  displayName      String?  @map("display_name")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  authProviders     AuthProvider[]
-  workouts          Workout[]
-  exerciseMappings  UserExerciseMapping[]
-  exerciseSynonyms  ExerciseSynonym[]
-  createdExercises  Exercise[]            @relation("CreatedExercises")
+  authProviders    AuthProvider[]
+  workouts         Workout[]
+  exerciseMappings UserExerciseMapping[]
+  exerciseSynonyms ExerciseSynonym[]
+  createdExercises Exercise[]            @relation("CreatedExercises")
 
   @@map("users")
 }
@@ -32,7 +32,7 @@ model User {
 model AuthProvider {
   id             String   @id @default(uuid()) @db.Uuid
   userId         String   @map("user_id") @db.Uuid
-  provider       String   // telegram | email | google | apple
+  provider       String // telegram | email | google | apple
   providerUserId String   @map("provider_user_id")
   metadata       Json?
   createdAt      DateTime @default(now()) @map("created_at")
@@ -52,22 +52,22 @@ enum WorkoutStatus {
 }
 
 model Workout {
-  id                 String   @id @default(uuid()) @db.Uuid
-  userId             String   @map("user_id") @db.Uuid
-  workoutDate        DateTime @map("workout_date") @db.Date
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @map("user_id") @db.Uuid
+  workoutDate        DateTime      @map("workout_date") @db.Date
   status             WorkoutStatus @default(DRAFT)
   focus              String[] // chest, back, shoulders, arms, legs, core, glutes, cardio
   location           String?
-  rawTranscript      String?  @map("raw_transcript") @db.Text
-  sourceMessageId    Int?     @map("source_message_id")
-  previewMessageId   Int?     @map("preview_message_id")
-  publishedMessageId Int?     @map("published_message_id")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  rawTranscript      String?       @map("raw_transcript") @db.Text
+  sourceMessageId    Int?          @map("source_message_id")
+  previewMessageId   Int?          @map("preview_message_id")
+  publishedMessageId Int?          @map("published_message_id")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
 
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workoutExercises  WorkoutExercise[]
-  comments          WorkoutComment[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutExercises WorkoutExercise[]
+  comments         WorkoutComment[]
 
   @@index([userId, workoutDate(sort: Desc)], map: "idx_workouts_user_date")
   @@map("workouts")
@@ -82,23 +82,23 @@ enum ExerciseCategory {
 }
 
 model Exercise {
-  id            String   @id @default(uuid()) @db.Uuid
-  canonicalName String   @unique @map("canonical_name")
-  displayNameRu String?  @map("display_name_ru")
-  displayNameEn String?  @map("display_name_en")
-  movementPattern String? @map("movement_pattern") // push, pull, squat, hinge, lunge, carry, rotation, core
-  equipment     String?  // barbell, dumbbell, machine, cable, bodyweight, kettlebell, smith_machine, resistance_band
-  primaryMuscle    String   @map("primary_muscle") // chest, back, shoulders, arms, legs, core, glutes
-  secondaryMuscles String[] @default([]) @map("secondary_muscles")
+  id               String            @id @default(uuid()) @db.Uuid
+  canonicalName    String            @unique @map("canonical_name")
+  displayNameRu    String?           @map("display_name_ru")
+  displayNameEn    String?           @map("display_name_en")
+  movementPattern  String?           @map("movement_pattern") // push, pull, squat, hinge, lunge, carry, rotation, core
+  equipment        String? // barbell, dumbbell, machine, cable, bodyweight, kettlebell, smith_machine, resistance_band
+  primaryMuscle    String            @map("primary_muscle") // chest, back, shoulders, arms, legs, core, glutes
+  secondaryMuscles String[]          @default([]) @map("secondary_muscles")
   category         ExerciseCategory?
-  isGlobal      Boolean  @default(true) @map("is_global")
-  createdBy     String?  @map("created_by") @db.Uuid
-  createdAt     DateTime @default(now()) @map("created_at")
+  isGlobal         Boolean           @default(true) @map("is_global")
+  createdBy        String?           @map("created_by") @db.Uuid
+  createdAt        DateTime          @default(now()) @map("created_at")
 
-  creator           User?                @relation("CreatedExercises", fields: [createdBy], references: [id], onDelete: SetNull)
-  synonyms          ExerciseSynonym[]
-  workoutExercises  WorkoutExercise[]
-  userMappings      UserExerciseMapping[]
+  creator          User?                 @relation("CreatedExercises", fields: [createdBy], references: [id], onDelete: SetNull)
+  synonyms         ExerciseSynonym[]
+  workoutExercises WorkoutExercise[]
+  userMappings     UserExerciseMapping[]
 
   @@map("exercises")
 }
@@ -107,7 +107,7 @@ model ExerciseSynonym {
   id         String   @id @default(uuid()) @db.Uuid
   exerciseId String   @map("exercise_id") @db.Uuid
   synonym    String
-  language   String   // ru | en
+  language   String // ru | en
   isGlobal   Boolean  @default(true) @map("is_global")
   userId     String?  @map("user_id") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at")
@@ -146,8 +146,8 @@ model WorkoutExercise {
   rawName    String?  @map("raw_name")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  workout  Workout       @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  exercise Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  workout  Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
   sets     ExerciseSet[]
   comments WorkoutComment[]
 
@@ -161,13 +161,13 @@ enum WeightUnit {
 }
 
 model ExerciseSet {
-  id                String   @id @default(uuid()) @db.Uuid
-  workoutExerciseId String   @map("workout_exercise_id") @db.Uuid
-  setNumber         Int      @map("set_number")
+  id                String     @id @default(uuid()) @db.Uuid
+  workoutExerciseId String     @map("workout_exercise_id") @db.Uuid
+  setNumber         Int        @map("set_number")
   reps              Int
-  weight            Decimal? @db.Decimal(8, 2)
+  weight            Decimal?   @db.Decimal(8, 2)
   unit              WeightUnit @default(KG)
-  createdAt         DateTime @default(now()) @map("created_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
 
   workoutExercise WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
 
@@ -197,15 +197,15 @@ enum SensationType {
 }
 
 model WorkoutComment {
-  id                String   @id @default(uuid()) @db.Uuid
-  workoutId         String   @map("workout_id") @db.Uuid
-  workoutExerciseId String?  @map("workout_exercise_id") @db.Uuid
-  commentType       CommentType @map("comment_type")
-  bodyPart          String?  @map("body_part")
+  id                String         @id @default(uuid()) @db.Uuid
+  workoutId         String         @map("workout_id") @db.Uuid
+  workoutExerciseId String?        @map("workout_exercise_id") @db.Uuid
+  commentType       CommentType    @map("comment_type")
+  bodyPart          String?        @map("body_part")
   side              BodySide?
-  sensationType     SensationType?  @map("sensation_type")
-  rawText           String   @map("raw_text") @db.Text
-  createdAt         DateTime @default(now()) @map("created_at")
+  sensationType     SensationType? @map("sensation_type")
+  rawText           String         @map("raw_text") @db.Text
+  createdAt         DateTime       @default(now()) @map("created_at")
 
   workout         Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   workoutExercise WorkoutExercise? @relation(fields: [workoutExerciseId], references: [id], onDelete: SetNull)

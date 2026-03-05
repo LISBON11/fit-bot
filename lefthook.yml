@@ -13,5 +13,12 @@ pre-commit:
       stage_fixed: true
     - name: typecheck
       run: npm run typecheck
+    - name: prisma-format
+      run: npm run db:format
+      glob: '*.prisma'
+      stage_fixed: true
+    - name: prisma-validate
+      run: npm run db:validate
+      glob: '*.prisma'
     - name: test
       run: npm run test

@@ -1,3 +1,5 @@
+import type { WorkoutFocus } from '../constants/muscleGroups.js';
+
 /**
  * Описание одного подхода упражнения
  */
@@ -33,17 +35,7 @@ export interface ParsedExercise {
 export interface ParsedWorkout {
   date: string; // YYYY-MM-DD
   location?: string | null;
-  focus:
-    | 'legs'
-    | 'glutes'
-    | 'back'
-    | 'chest'
-    | 'shoulders'
-    | 'arms'
-    | 'core'
-    | 'fullbody'
-    | 'cardio'
-    | 'mixed';
+  focus: WorkoutFocus[];
   exercises: ParsedExercise[];
   generalComments: ParsedComment[];
 }

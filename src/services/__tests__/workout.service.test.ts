@@ -24,7 +24,7 @@ describe('WorkoutService', () => {
   describe('createDraft', () => {
     const mockParsedWorkout: ParsedWorkout = {
       date: '2026-02-22',
-      focus: 'legs',
+      focus: ['quadriceps'],
       exercises: [
         {
           originalName: 'squat',
@@ -88,7 +88,7 @@ describe('WorkoutService', () => {
     it('should use mappedExerciseId if provided', async () => {
       const mockWithMapped: ParsedWorkout = {
         date: '2026-02-21',
-        focus: 'legs',
+        focus: ['quadriceps'],
         exercises: [
           {
             originalName: 'unknown',
@@ -113,7 +113,7 @@ describe('WorkoutService', () => {
       expect(workoutRepoMock.createWithRelations).toHaveBeenCalledWith(
         'user1',
         expect.any(Date),
-        ['legs'],
+        ['quadriceps'],
         null,
         [{ parsed: mockWithMapped.exercises[0], exerciseId: 'mapped1' }],
         [],
@@ -158,7 +158,7 @@ describe('WorkoutService', () => {
   describe('applyEdits', () => {
     const mockParsedWorkout: ParsedWorkout = {
       date: '2026-02-22',
-      focus: 'legs',
+      focus: ['quadriceps'],
       exercises: [],
       generalComments: [],
     };
@@ -196,7 +196,7 @@ describe('WorkoutService', () => {
 
       const mockWithExercise: ParsedWorkout = {
         date: '2026-02-22',
-        focus: 'legs',
+        focus: ['quadriceps'],
         exercises: [
           {
             originalName: 'тяга',

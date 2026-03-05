@@ -8,7 +8,7 @@ import type { MuscleGroupEntry } from '../muscleGroupPicker.js';
 describe('createMuscleGroupPickerKeyboard', () => {
   const groups: MuscleGroupEntry[] = [
     { label: 'Грудь', dbValues: ['chest'] },
-    { label: 'Спина', dbValues: ['back', 'lats'] },
+    { label: 'Спина', dbValues: ['back'] },
     { label: 'Ноги', dbValues: ['quadriceps', 'hamstrings'] },
   ];
 

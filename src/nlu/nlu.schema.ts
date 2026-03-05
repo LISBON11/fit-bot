@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { WORKOUT_FOCUSES } from '../constants/muscleGroups.js';
+
 /**
  * Zod схема для одного подхода упражнения
  */
@@ -64,20 +66,7 @@ export const ParsedWorkoutSchema = z
       .describe(
         'Место проведения тренировки (например, город, название тренажерного зала, "дома", "улица"). Может содержать любую комбинацию: "Алушта, дома", "Севастополь, зал Триумф", просто "дома" или просто название города. Если не указано или не удалось определить, возвращайте null.',
       ),
-    focus: z
-      .enum([
-        'legs',
-        'glutes',
-        'back',
-        'chest',
-        'shoulders',
-        'arms',
-        'core',
-        'fullbody',
-        'cardio',
-        'mixed',
-      ])
-      .describe('Глобальный фокус/тип тренировки'),
+    focus: z.array(z.enum(WORKOUT_FOCUSES)).describe('Глобальный фокус/тип тренировки'),
     exercises: z
       .array(ParsedExerciseSchema)
       .describe('Список упражнений, выполненных за тренировку'),

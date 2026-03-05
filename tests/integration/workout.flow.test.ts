@@ -41,7 +41,7 @@ describe('Workout Flow Integration', () => {
 
   const sampleParsedWorkout: ParsedWorkout = {
     date: new Date().toISOString().split('T')[0],
-    focus: 'legs',
+    focus: ['quadriceps', 'hamstrings'],
     exercises: [
       {
         originalName: 'присед',

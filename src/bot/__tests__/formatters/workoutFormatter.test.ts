@@ -92,7 +92,7 @@ describe('workoutFormatter', () => {
     expect(result).toContain('21.02.2026, суббота');
     // Локация и фокус на отдельных строках
     expect(result).toContain('🏠 <b>Alushta Home</b>');
-    expect(result).toContain('🏋 <b>Legs, Glutes</b>');
+    expect(result).toContain('🏋 <b>Legs, Ягодицы</b>');
     // Упражнение с разными подходами (не группируются)
     expect(result).toContain('1. Приседания со штангой — 40×12, 45×10');
     // Комментарий к упражнению как blockquote

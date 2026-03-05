@@ -158,10 +158,6 @@ export async function newWorkout(
       await publisher.publish(previewHtml);
       convLogger.info('Action: publisher.publish completed');
 
-      if (ctx.message?.message_id && ctx.chat?.id) {
-        ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
-      }
-
       if (previewMsgId && ctx.chat?.id) {
         await ctx.api
           .editMessageText(
@@ -180,10 +176,6 @@ export async function newWorkout(
     } else if (action === 'canc') {
       // Отменяем
       await conversation.external(() => workoutService.cancelDraft(workoutId));
-      if (ctx.message?.message_id && ctx.chat?.id) {
-        ctx.api.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(() => {});
-      }
-
       if (previewMsgId && ctx.chat?.id) {
         await ctx.api
           .editMessageText(

@@ -65,7 +65,7 @@ export class WorkoutService {
     }
 
     const workoutDate = new Date(parsedWorkout.date);
-    const focusArray = [parsedWorkout.focus];
+    const focusArray = parsedWorkout.focus;
 
     const workout = (await this.workoutRepository.createWithRelations(
       userId,
@@ -190,8 +190,7 @@ export class WorkoutService {
 
     // 2. Оформляем обновление тренировки
     const workoutDate = new Date(parsedWorkout.date);
-    const focusArray =
-      typeof parsedWorkout.focus === 'string' ? [parsedWorkout.focus] : parsedWorkout.focus;
+    const focusArray = parsedWorkout.focus;
 
     const workoutUpdateData = {
       workoutDate,

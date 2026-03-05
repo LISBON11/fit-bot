@@ -56,7 +56,7 @@ model Workout {
   userId             String   @map("user_id") @db.Uuid
   workoutDate        DateTime @map("workout_date") @db.Date
   status             WorkoutStatus @default(DRAFT)
-  focus              String[] // legs, glutes, back, chest, shoulders, arms, core, cardio
+  focus              String[] // chest, back, shoulders, biceps, triceps, core, quadriceps, hamstrings, glutes, calves, cardio
   location           String?
   rawTranscript      String?  @map("raw_transcript") @db.Text
   sourceMessageId    Int?     @map("source_message_id")

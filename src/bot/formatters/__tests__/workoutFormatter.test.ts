@@ -111,7 +111,7 @@ describe('workoutFormatter', () => {
       // Заголовок: дата + день недели
       expect(html).toContain('25.10.2023, среда');
       // Мышечные группы и локация на отдельных строках
-      expect(html).toContain('🏋 <b>Legs, Back</b>');
+      expect(html).toContain('🏋 <b>Legs, Спина</b>');
       expect(html).toContain('🏠 <b>Gym</b>');
 
       // Упражнение 1 с компактными подходами (разные веса — не группируются)

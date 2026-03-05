@@ -1,4 +1,5 @@
 import { InlineKeyboard } from 'grammy';
+import type { WorkoutFocus } from '../../constants/muscleGroups.js';
 
 /**
  * Описание группы мышц для навигации.
@@ -9,7 +10,7 @@ export interface MuscleGroupEntry {
   /** Отображаемое русское название кнопки */
   label: string;
   /** Значения в поле muscleGroups в БД (английские строки из seed) */
-  dbValues: ReadonlyArray<string>;
+  dbValues: ReadonlyArray<WorkoutFocus>;
 }
 
 /**
@@ -18,7 +19,7 @@ export interface MuscleGroupEntry {
  */
 export const MUSCLE_GROUPS: ReadonlyArray<MuscleGroupEntry> = [
   { label: 'Грудь', dbValues: ['chest'] },
-  { label: 'Спина', dbValues: ['back', 'lats', 'rhomboids'] },
+  { label: 'Спина', dbValues: ['back'] },
   { label: 'Плечи', dbValues: ['shoulders'] },
   { label: 'Бицепс', dbValues: ['biceps'] },
   { label: 'Трицепс', dbValues: ['triceps'] },

@@ -1,5 +1,8 @@
 import type { Prisma } from '@prisma/client';
 
+import { MUSCLE_GROUPS, type MuscleGroupEntry } from '../keyboards/muscleGroupPicker.js';
+import type { WorkoutFocus } from '../../constants/muscleGroups.js';
+
 export type WorkoutWithRelations = Prisma.WorkoutGetPayload<{
   include: {
     workoutExercises: {
@@ -113,7 +116,22 @@ export function formatPreview(workout: WorkoutWithRelations): string {
   const headerLines: string[] = [`🗓 <b>${dateStr}, ${dayOfWeek}</b>`];
 
   if (workout.focus && workout.focus.length > 0) {
-    headerLines.push(`🏋 <b>${escapeHtml(workout.focus.join(', '))}</b>`);
+    const formattedFocus = Array.from(
+      new Set(
+        workout.focus.map((f) => {
+          const lowerF = f.toLowerCase();
+          const group = MUSCLE_GROUPS.find((g: MuscleGroupEntry) =>
+            g.dbValues.includes(lowerF as WorkoutFocus),
+          );
+          if (group) return group.label;
+          return f.charAt(0).toUpperCase() + f.slice(1);
+        }),
+      ),
+    ).join(', ');
+
+    if (formattedFocus) {
+      headerLines.push(`🏋 <b>${escapeHtml(formattedFocus)}</b>`);
+    }
   }
   if (workout.location) {
     headerLines.push(`🏠 <b>${escapeHtml(workout.location)}</b>`);

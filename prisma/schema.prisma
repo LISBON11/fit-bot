@@ -56,7 +56,7 @@ model Workout {
   userId             String   @map("user_id") @db.Uuid
   workoutDate        DateTime @map("workout_date") @db.Date
   status             WorkoutStatus @default(DRAFT)
-  focus              String[] // chest, back, shoulders, biceps, triceps, core, quadriceps, hamstrings, glutes, calves, cardio
+  focus              String[] // chest, back, shoulders, arms, legs, core, glutes, cardio
   location           String?
   rawTranscript      String?  @map("raw_transcript") @db.Text
   sourceMessageId    Int?     @map("source_message_id")
@@ -86,8 +86,11 @@ model Exercise {
   canonicalName String   @unique @map("canonical_name")
   displayNameRu String?  @map("display_name_ru")
   displayNameEn String?  @map("display_name_en")
-  muscleGroups  String[] @map("muscle_groups")
-  category      ExerciseCategory?
+  movementPattern String? @map("movement_pattern") // push, pull, squat, hinge, lunge, carry, rotation, core
+  equipment     String?  // barbell, dumbbell, machine, cable, bodyweight, kettlebell, smith_machine, resistance_band
+  primaryMuscle    String   @map("primary_muscle") // chest, back, shoulders, arms, legs, core, glutes
+  secondaryMuscles String[] @default([]) @map("secondary_muscles")
+  category         ExerciseCategory?
   isGlobal      Boolean  @default(true) @map("is_global")
   createdBy     String?  @map("created_by") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at")

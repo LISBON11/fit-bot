@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
-import { WORKOUT_FOCUSES } from '../constants/muscleGroups.js';
+import { PRIMARY_MUSCLES } from '../constants/muscleGroups.js';
+import { MOVEMENT_PATTERNS } from '../constants/movementPatterns.js';
+import { EQUIPMENT_TYPES } from '../constants/equipment.js';
 
 /**
  * Zod схема для одного подхода упражнения
@@ -44,6 +46,16 @@ export const ParsedExerciseSchema = z
       .describe(
         'Устанавливается в true, если невозможно точно определить упражнение (например, "тяга" без уточнений)',
       ),
+    movementPattern: z
+      .enum(MOVEMENT_PATTERNS)
+      .nullable()
+      .optional()
+      .describe('Паттерн движения упражнения, если его можно определить'),
+    equipment: z
+      .enum(EQUIPMENT_TYPES)
+      .nullable()
+      .optional()
+      .describe('Оборудование, используемое в упражнении, если его можно определить'),
     sets: z.array(ParsedSetSchema).describe('Список выполненных подходов'),
     comments: z.array(ParsedCommentSchema).describe('Специфичные комментарии к этому упражнению'),
   })
@@ -66,7 +78,7 @@ export const ParsedWorkoutSchema = z
       .describe(
         'Место проведения тренировки (например, город, название тренажерного зала, "дома", "улица"). Может содержать любую комбинацию: "Алушта, дома", "Севастополь, зал Триумф", просто "дома" или просто название города. Если не указано или не удалось определить, возвращайте null.',
       ),
-    focus: z.array(z.enum(WORKOUT_FOCUSES)).describe('Глобальный фокус/тип тренировки'),
+    focus: z.array(z.enum(PRIMARY_MUSCLES)).describe('Глобальный фокус/тип тренировки'),
     exercises: z
       .array(ParsedExerciseSchema)
       .describe('Список упражнений, выполненных за тренировку'),

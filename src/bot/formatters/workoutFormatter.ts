@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 
 import { MUSCLE_GROUPS, type MuscleGroupEntry } from '../keyboards/muscleGroupPicker.js';
-import type { WorkoutFocus } from '../../constants/muscleGroups.js';
+import type { PrimaryMuscle } from '../../constants/muscleGroups.js';
 
 export type WorkoutWithRelations = Prisma.WorkoutGetPayload<{
   include: {
@@ -121,7 +121,7 @@ export function formatPreview(workout: WorkoutWithRelations): string {
         workout.focus.map((f) => {
           const lowerF = f.toLowerCase();
           const group = MUSCLE_GROUPS.find((g: MuscleGroupEntry) =>
-            g.dbValues.includes(lowerF as WorkoutFocus),
+            g.dbValues.includes(lowerF as PrimaryMuscle),
           );
           if (group) return group.label;
           return f.charAt(0).toUpperCase() + f.slice(1);

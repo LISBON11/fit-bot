@@ -9,7 +9,7 @@ describe('createMuscleGroupPickerKeyboard', () => {
   const groups: MuscleGroupEntry[] = [
     { label: 'Грудь', dbValues: ['chest'] },
     { label: 'Спина', dbValues: ['back'] },
-    { label: 'Ноги', dbValues: ['quadriceps', 'hamstrings'] },
+    { label: 'Ноги', dbValues: ['legs'] },
   ];
 
   it('should create a button for each muscle group with mg:{index} callback', () => {

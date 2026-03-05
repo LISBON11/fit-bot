@@ -1,16 +1,16 @@
 import { InlineKeyboard } from 'grammy';
-import type { WorkoutFocus } from '../../constants/muscleGroups.js';
+import type { PrimaryMuscle } from '../../constants/muscleGroups.js';
 
 /**
  * Описание группы мышц для навигации.
  * `label` — отображаемое пользователю имя.
- * `dbValues` — значения, которые ищутся в поле `muscleGroups` в БД (английские).
+ * `dbValues` — значения, которые ищутся в поле `primaryMuscle` в БД (английские).
  */
 export interface MuscleGroupEntry {
   /** Отображаемое русское название кнопки */
   label: string;
-  /** Значения в поле muscleGroups в БД (английские строки из seed) */
-  dbValues: ReadonlyArray<WorkoutFocus>;
+  /** Значения в поле primaryMuscle в БД (английские строки из seed) */
+  dbValues: ReadonlyArray<PrimaryMuscle>;
 }
 
 /**
@@ -21,12 +21,10 @@ export const MUSCLE_GROUPS: ReadonlyArray<MuscleGroupEntry> = [
   { label: 'Грудь', dbValues: ['chest'] },
   { label: 'Спина', dbValues: ['back'] },
   { label: 'Плечи', dbValues: ['shoulders'] },
-  { label: 'Бицепс', dbValues: ['biceps'] },
-  { label: 'Трицепс', dbValues: ['triceps'] },
+  { label: 'Руки', dbValues: ['arms'] },
   { label: 'Пресс', dbValues: ['core'] },
-  { label: 'Ноги', dbValues: ['quadriceps', 'hamstrings'] },
+  { label: 'Ноги', dbValues: ['legs'] },
   { label: 'Ягодицы', dbValues: ['glutes'] },
-  { label: 'Икры', dbValues: ['calves'] },
 ] as const;
 
 /**

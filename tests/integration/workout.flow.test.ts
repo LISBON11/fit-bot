@@ -25,7 +25,8 @@ describe('Workout Flow Integration', () => {
         displayNameRu: 'Приседания со штангой',
         displayNameEn: 'Barbell Squat',
         isGlobal: true,
-        muscleGroups: ['LEGS'],
+        primaryMuscle: 'legs',
+        secondaryMuscles: [],
       },
     });
 
@@ -41,12 +42,14 @@ describe('Workout Flow Integration', () => {
 
   const sampleParsedWorkout: ParsedWorkout = {
     date: new Date().toISOString().split('T')[0],
-    focus: ['quadriceps', 'hamstrings'],
+    focus: ['legs'],
     exercises: [
       {
         originalName: 'присед',
         mappedExerciseId: null,
         isAmbiguous: false,
+        movementPattern: 'squat',
+        equipment: 'barbell',
         sets: [
           { reps: 10, weight: 60, duration: null, distance: null, rpe: null },
           { reps: 8, weight: 65, duration: null, distance: null, rpe: null },

@@ -195,23 +195,22 @@ export class ExerciseRepository {
 
   /**
    * Возвращает отсортированный список уникальных групп мышц из всех глобальных упражнений.
-   * Использует `unnest` для разворачивания массива `muscle_groups`.
+   * Возвращает уникальные значения поля `primaryMuscle`.
    * @returns Массив строк с уникальными группами мышц
    */
   async getMuscleGroups(): Promise<string[]> {
-    const rows = await this.prisma.$queryRaw<Array<{ muscle_group: string }>>`
-      SELECT DISTINCT unnest(muscle_groups) AS muscle_group
+    const rows = await this.prisma.$queryRaw<Array<{ primary_muscle: string }>>`
+      SELECT DISTINCT primary_muscle
       FROM exercises
       WHERE is_global = true
-        AND array_length(muscle_groups, 1) > 0
-      ORDER BY muscle_group ASC
+      ORDER BY primary_muscle ASC
     `;
-    return rows.map((r) => r.muscle_group);
+    return rows.map((r) => r.primary_muscle);
   }
 
   /**
-   * Возвращает глобальные упражнения, у которых `muscleGroups` содержит
-   * хотя бы одно из переданных значений.
+   * Возвращает глобальные упражнения, у которых `primaryMuscle` соответствует
+   * одному из переданных значений.
    * @param muscleGroupValues Массив английских ключей из БД (из MuscleGroupEntry.dbValues)
    * @returns Список упражнений данной группы мышц
    */
@@ -219,7 +218,7 @@ export class ExerciseRepository {
     return this.prisma.exercise.findMany({
       where: {
         isGlobal: true,
-        muscleGroups: { hasSome: muscleGroupValues },
+        primaryMuscle: { in: muscleGroupValues },
       },
       orderBy: { displayNameRu: 'asc' },
     });

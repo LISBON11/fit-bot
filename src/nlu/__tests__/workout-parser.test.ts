@@ -67,7 +67,7 @@ describe('WorkoutParser', () => {
       mockCreate.mockResolvedValue(
         buildSuccessResponse({
           date: '2023-10-01',
-          focus: ['quadriceps', 'hamstrings'],
+          focus: ['legs'],
           exercises: [],
           generalComments: [],
         }),
@@ -78,7 +78,7 @@ describe('WorkoutParser', () => {
         currentDate: '2023-10-02',
         knownExercises: [],
       });
-      expect(result).toMatchObject({ date: '2023-10-01', focus: ['quadriceps', 'hamstrings'] });
+      expect(result).toMatchObject({ date: '2023-10-01', focus: ['legs'] });
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'deepseek-chat',
@@ -130,7 +130,7 @@ describe('WorkoutParser', () => {
       mockCreate.mockResolvedValue(
         buildSuccessResponse({
           date: '2023-10-01',
-          focus: ['chest', 'back', 'quadriceps'],
+          focus: ['chest', 'back', 'legs'],
           exercises: [],
           generalComments: [],
         }),
@@ -141,11 +141,7 @@ describe('WorkoutParser', () => {
         currentDate: '2023-10-02',
         currentWorkoutJson: '{}',
       });
-      expect((result as unknown as { focus: string[] }).focus).toEqual([
-        'chest',
-        'back',
-        'quadriceps',
-      ]);
+      expect((result as unknown as { focus: string[] }).focus).toEqual(['chest', 'back', 'legs']);
     });
 
     it('должен выбрасывать NluParseError если content пустой', async () => {

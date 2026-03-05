@@ -114,7 +114,10 @@ export class ExerciseService {
       displayNameRu: name.trim(),
       displayNameEn: null,
       isGlobal: false,
-      muscleGroups: [],
+      movementPattern: null,
+      equipment: null,
+      primaryMuscle: 'unknown',
+      secondaryMuscles: [],
       category: null,
       createdBy: userId,
     });

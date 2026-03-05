@@ -1,4 +1,6 @@
-import type { WorkoutFocus } from '../constants/muscleGroups.js';
+import type { PrimaryMuscle } from '../constants/muscleGroups.js';
+import type { MovementPattern } from '../constants/movementPatterns.js';
+import type { Equipment } from '../constants/equipment.js';
 
 /**
  * Описание одного подхода упражнения
@@ -25,6 +27,8 @@ export interface ParsedExercise {
   originalName: string; // То, как назвал пользователь
   mappedExerciseId: string | null; // ID из БД (опционально, если не распознано или нет базы в промпте)
   isAmbiguous: boolean; // Требует уточнения
+  movementPattern?: MovementPattern | null;
+  equipment?: Equipment | null;
   sets: ParsedSet[];
   comments: ParsedComment[];
 }
@@ -35,7 +39,7 @@ export interface ParsedExercise {
 export interface ParsedWorkout {
   date: string; // YYYY-MM-DD
   location?: string | null;
-  focus: WorkoutFocus[];
+  focus: PrimaryMuscle[];
   exercises: ParsedExercise[];
   generalComments: ParsedComment[];
 }

@@ -1,15 +1,11 @@
-export const WORKOUT_FOCUSES = [
+export const PRIMARY_MUSCLES = [
   'chest',
   'back',
   'shoulders',
-  'biceps',
-  'triceps',
+  'arms',
+  'legs',
   'core',
-  'quadriceps',
-  'hamstrings',
   'glutes',
-  'calves',
-  'cardio',
 ] as const;
 
-export type WorkoutFocus = (typeof WORKOUT_FOCUSES)[number];
+export type PrimaryMuscle = (typeof PRIMARY_MUSCLES)[number];

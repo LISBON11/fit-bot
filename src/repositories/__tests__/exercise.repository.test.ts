@@ -159,7 +159,10 @@ describe('ExerciseRepository', () => {
         description: null,
         videoUrl: null,
         bodyParts: ['Legs'],
-        muscleGroups: ['quads', 'glutes'],
+        movementPattern: 'squat',
+        equipment: 'barbell',
+        primaryMuscle: 'legs',
+        secondaryMuscles: ['quads', 'glutes'],
         category: null,
         isGlobal: true,
         createdBy: null,
@@ -197,8 +200,8 @@ describe('ExerciseRepository', () => {
   describe('getMuscleGroups', () => {
     it('should return unique muscle groups via $queryRaw', async () => {
       prismaMock.$queryRaw.mockResolvedValue([
-        { muscle_group: 'грудь' },
-        { muscle_group: 'спина' },
+        { primary_muscle: 'грудь' },
+        { primary_muscle: 'спина' },
       ] as never);
 
       const result = await repository.getMuscleGroups();
@@ -217,8 +220,8 @@ describe('ExerciseRepository', () => {
   });
 
   describe('getByMuscleGroup', () => {
-    it('should filter exercises by muscleGroups has', async () => {
-      const mockExercises = [{ id: 'e1', muscleGroups: ['грудь'] }];
+    it('should filter exercises by primaryMuscle', async () => {
+      const mockExercises = [{ id: 'e1', primaryMuscle: 'грудь' }];
       prismaMock.exercise.findMany.mockResolvedValue(mockExercises as never);
 
       const result = await repository.getByMuscleGroup(['грудь']);
@@ -226,7 +229,7 @@ describe('ExerciseRepository', () => {
       expect(prismaMock.exercise.findMany).toHaveBeenCalledWith({
         where: {
           isGlobal: true,
-          muscleGroups: { hasSome: ['грудь'] },
+          primaryMuscle: { in: ['грудь'] },
         },
         orderBy: { displayNameRu: 'asc' },
       });

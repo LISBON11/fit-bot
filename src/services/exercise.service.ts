@@ -1,6 +1,6 @@
 import type { ExerciseRepository } from '../repositories/exercise.repository.js';
 import type { ResolveResult, ExerciseForNlu } from './exercise.types.js';
-import type { Exercise } from '@prisma/client';
+import type { Exercise } from '../generated/prisma/index.js';
 
 /**
  * Сервис для бизнес-логики, связанной с поиском и разрешением названий упражнений

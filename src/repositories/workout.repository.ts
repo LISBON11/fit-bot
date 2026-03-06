@@ -1,5 +1,5 @@
-import type { PrismaClient, Prisma, Workout } from '@prisma/client';
-import { WorkoutStatus, CommentType } from '@prisma/client';
+import type { PrismaClient, Prisma, Workout } from '../generated/prisma/index.js';
+import { WorkoutStatus, CommentType } from '../generated/prisma/index.js';
 import type { ParsedExercise, ParsedComment } from '../nlu/nlu.types.js';
 import type { WorkoutWithRelations } from '../bot/formatters/workoutFormatter.js';
 

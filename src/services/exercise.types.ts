@@ -1,4 +1,4 @@
-import type { Exercise } from '@prisma/client';
+import type { Exercise } from '../generated/prisma/index.js';
 
 /**
  * Результат разрешения названия упражнения

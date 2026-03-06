@@ -1,7 +1,13 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../src/generated/prisma/index.js';
 import { exerciseService } from '../../src/services/index.js';
 
-const prisma = new PrismaClient();
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
+
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 describe('Exercise Resolving Integration', () => {
   const userId = '33333333-3333-3333-3333-333333333333';

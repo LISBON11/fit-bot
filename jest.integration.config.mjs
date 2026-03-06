@@ -5,7 +5,9 @@ const config = {
   roots: ['<rootDir>/tests/integration/'],
   testMatch: ['**/*.test.ts'],
   moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
     '^\\.\\./\\.\\./src/(.*)\\.js$': '<rootDir>/src/$1',
+    '(.*/generated/prisma/.*\\.js)$': '<rootDir>/src/generated/prisma/index.js',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {

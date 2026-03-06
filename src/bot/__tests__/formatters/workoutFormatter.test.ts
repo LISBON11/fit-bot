@@ -1,6 +1,6 @@
 import { formatPreview } from '../../formatters/workoutFormatter.js';
 import type { WorkoutWithRelations } from '../../formatters/workoutFormatter.js';
-import { WorkoutStatus, CommentType, Prisma, WeightUnit } from '@prisma/client';
+import { WorkoutStatus, CommentType, Prisma, WeightUnit } from '../../../generated/prisma/index.js';
 
 describe('workoutFormatter', () => {
   it('должен корректно форматировать тренировку со всеми связями', () => {

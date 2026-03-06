@@ -4,7 +4,7 @@ import type {
   Prisma,
   UserExerciseMapping,
   ExerciseSynonym,
-} from '@prisma/client';
+} from '../generated/prisma/index.js';
 
 /**
  * Репозиторий для управления упражнениями, синонимами и пользовательскими маппингами

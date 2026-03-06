@@ -7,8 +7,16 @@ const mockPrismaClientInstance = {
   $extends: jest.fn<() => unknown>().mockReturnThis(),
 };
 
-jest.unstable_mockModule('@prisma/client', () => ({
+jest.unstable_mockModule('../generated/prisma/index.js', () => ({
   PrismaClient: jest.fn(() => mockPrismaClientInstance),
+}));
+
+jest.unstable_mockModule('pg', () => ({
+  Pool: jest.fn(),
+}));
+
+jest.unstable_mockModule('@prisma/adapter-pg', () => ({
+  PrismaPg: jest.fn(),
 }));
 
 jest.unstable_mockModule('../../logger/logger.js', () => ({
@@ -36,7 +44,7 @@ describe('database.ts', () => {
     jest.useRealTimers();
     // Reset singleton if possible, but it's an exported local variable in the module
     // We can reset it using disconnectDatabase
-    if (dbModule.disconnectDatabase) {
+    if (dbModule && dbModule.disconnectDatabase) {
       return dbModule.disconnectDatabase();
     }
   });

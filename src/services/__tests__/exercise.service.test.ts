@@ -2,7 +2,7 @@ import type { DeepMockProxy } from 'jest-mock-extended';
 import { createMockExerciseRepository } from '../../__tests__/utils/mockRepositories.js';
 import { ExerciseService } from '../exercise.service.js';
 import type { ExerciseRepository } from '../../repositories/exercise.repository.js';
-import type { Exercise, UserExerciseMapping } from '@prisma/client';
+import type { Exercise, UserExerciseMapping } from '../../generated/prisma/index.js';
 
 describe('ExerciseService', () => {
   let service: ExerciseService;

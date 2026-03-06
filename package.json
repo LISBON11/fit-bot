@@ -24,9 +24,6 @@
     "db:validate": "prisma validate",
     "postinstall": "lefthook install || true"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LISBON11/fit-bot.git"
@@ -40,8 +37,10 @@
   "homepage": "https://github.com/LISBON11/fit-bot#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@prisma/adapter-pg": "^7.4.2",
     "@types/jest": "^29.5.14",
     "@types/node": "^25.3.0",
+    "@types/pg": "^8.18.0",
     "@typescript-eslint/eslint-plugin": "^8.56.0",
     "@typescript-eslint/parser": "^8.56.0",
     "eslint": "^10.0.1",
@@ -52,8 +51,9 @@
     "jest-mock-extended": "^4.0.0",
     "jest-ts-webcompat-resolver": "^1.0.1",
     "lefthook": "^2.1.1",
+    "pg": "^8.20.0",
     "prettier": "^3.8.1",
-    "prisma": "^6.8.0",
+    "prisma": "^7.4.2",
     "ts-jest": "^29.4.6",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
@@ -64,7 +64,8 @@
     "@grammyjs/auto-chat-action": "^0.1.1",
     "@grammyjs/conversations": "^2.1.1",
     "@grammyjs/storage-redis": "^2.5.1",
-    "@prisma/client": "^6.8.0",
+    "@prisma/client": "^7.4.2",
+    "dotenv": "^17.3.1",
     "grammy": "^1.40.0",
     "ioredis": "^5.4.0",
     "openai": "^6.22.0",

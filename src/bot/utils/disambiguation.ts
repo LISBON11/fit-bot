@@ -10,7 +10,7 @@ import {
 } from '../keyboards/muscleGroupPicker.js';
 import type { MuscleGroupEntry } from '../keyboards/muscleGroupPicker.js';
 import { InlineKeyboard } from 'grammy';
-import type { Exercise } from '@prisma/client';
+import type { Exercise } from '../../generated/prisma/index.js';
 import { createLogger } from '../../logger/logger.js';
 import { downloadAndTranscribeVoice } from './telegram.js';
 import type { ProgressTracker } from './progressTracker.js';

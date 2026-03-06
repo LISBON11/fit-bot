@@ -1,5 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../generated/prisma/index.js';
 import { createLogger } from '../logger/logger.js';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 const logger = createLogger('database');
 
@@ -16,7 +18,12 @@ type PrismaClientWithLogging = ReturnType<typeof createPrismaClientWithLogging>;
  * @returns PrismaClient, расширенный query middleware
  */
 function createPrismaClientWithLogging(): PrismaClient {
+  const connectionString = process.env.DATABASE_URL;
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+
   const client = new PrismaClient({
+    adapter,
     log: [
       { emit: 'stdout', level: 'error' },
       { emit: 'stdout', level: 'warn' },

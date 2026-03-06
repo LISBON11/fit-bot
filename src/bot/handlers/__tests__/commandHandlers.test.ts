@@ -1,5 +1,5 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import type { User } from '@prisma/client';
+import type { User } from '../../../generated/prisma/index.js';
 import { handleStart, handleHelp, handleCancel } from '../commandHandlers.js';
 import { createMockCtx } from '../../__tests__/utils/mockCtx.js';
 import type { DeepMockProxy } from 'jest-mock-extended';

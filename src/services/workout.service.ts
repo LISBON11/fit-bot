@@ -1,8 +1,8 @@
 import type { WorkoutRepository } from '../repositories/workout.repository.js';
 import type { ExerciseService } from './exercise.service.js';
 import type { ParsedWorkout, ParsedExercise } from '../nlu/nlu.types.js';
-import type { Workout } from '@prisma/client';
-import { WorkoutStatus } from '@prisma/client';
+import type { Workout } from '../generated/prisma/index.js';
+import { WorkoutStatus } from '../generated/prisma/index.js';
 import { AppError } from '../errors/app-errors.js';
 import type { WorkoutWithRelations } from '../bot/formatters/workoutFormatter.js';
 

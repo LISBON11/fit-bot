@@ -3,7 +3,7 @@ import type { DeepMockProxy } from 'jest-mock-extended';
 import { createMockUserRepository } from '../../__tests__/utils/mockRepositories.js';
 import { UserService } from '../user.service.js';
 import type { UserRepository } from '../../repositories/user.repository.js';
-import type { User } from '@prisma/client';
+import type { User } from '../../generated/prisma/index.js';
 
 // Mock logger to avoid noisy output during tests
 jest.mock('../../logger/logger.js', () => ({

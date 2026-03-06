@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Пользователи ────────────────────────────────────────────────
+
+model User {
+  id               String   @id @default(uuid()) @db.Uuid
+  telegramId       String?  @map("telegram_id")
+  telegramUsername String?  @map("telegram_username")
+  email            String?  @unique
+  passwordHash     String?  @map("password_hash")
+  displayName      String?  @map("display_name")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  authProviders    AuthProvider[]
+  workouts         Workout[]
+  exerciseMappings UserExerciseMapping[]
+  createdExercises Exercise[]            @relation("CreatedExercises")
+
+  @@map("users")
+}
+
+model AuthProvider {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  provider       String // telegram | email | google | apple
+  providerUserId String   @map("provider_user_id")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId], map: "idx_auth_providers_provider")
+  @@map("auth_providers")
+}
+
+// ─── Тренировки ──────────────────────────────────────────────────
+
+enum WorkoutStatus {
+  DRAFT
+  APPROVED
+  CANCELLED
+}
+
+model Workout {
+  id                 String        @id @default(uuid()) @db.Uuid
+  userId             String        @map("user_id") @db.Uuid
+  workoutDate        DateTime      @map("workout_date") @db.Date
+  status             WorkoutStatus @default(DRAFT)
+  focus              String[] // chest, back, shoulders, arms, legs, core, glutes, cardio
+  location           String?
+  comment            String?       @db.Text
+  rawTranscript      String?       @map("raw_transcript") @db.Text
+  sourceMessageId    Int?          @map("source_message_id")
+  previewMessageId   Int?          @map("preview_message_id")
+  publishedMessageId Int?          @map("published_message_id")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutExercises WorkoutExercise[]
+  comments         WorkoutComment[]
+
+  @@index([userId, workoutDate(sort: Desc)], map: "idx_workouts_user_date")
+  @@map("workouts")
+}
+
+// ─── Упражнения ──────────────────────────────────────────────────
+
+enum ExerciseCategory {
+  COMPOUND
+  ISOLATION
+  CARDIO
+}
+
+model Exercise {
+  id               String            @id @default(uuid()) @db.Uuid
+  canonicalName    String            @unique @map("canonical_name")
+  displayNameRu    String?           @map("display_name_ru")
+  displayNameEn    String?           @map("display_name_en")
+  movementPattern  String?           @map("movement_pattern") // push, pull, squat, hinge, lunge, carry, rotation, core
+  equipment        String? // barbell, dumbbell, machine, cable, bodyweight, kettlebell, smith_machine, resistance_band
+  primaryMuscle    String            @map("primary_muscle") // chest, back, shoulders, arms, legs, core, glutes
+  secondaryMuscles String[]          @default([]) @map("secondary_muscles")
+  category         ExerciseCategory?
+  isGlobal         Boolean           @default(true) @map("is_global")
+  createdBy        String?           @map("created_by") @db.Uuid
+  createdAt        DateTime          @default(now()) @map("created_at")
+
+  creator          User?                 @relation("CreatedExercises", fields: [createdBy], references: [id], onDelete: SetNull)
+  synonyms         ExerciseSynonym[]
+  workoutExercises WorkoutExercise[]
+  userMappings     UserExerciseMapping[]
+
+  @@map("exercises")
+}
+
+model ExerciseSynonym {
+  id         String @id @default(uuid()) @db.Uuid
+  exerciseId String @map("exercise_id") @db.Uuid
+  synonym    String
+  language   String // ru | en
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([synonym(ops: raw("text_pattern_ops"))], map: "idx_exercise_synonyms_text")
+  @@map("exercise_synonyms")
+}
+
+model UserExerciseMapping {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  inputText  String   @map("input_text")
+  exerciseId String   @map("exercise_id") @db.Uuid
+  useCount   Int      @default(1) @map("use_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, inputText], map: "idx_user_exercise_mappings_user_text")
+  @@map("user_exercise_mappings")
+}
+
+// ─── Связь тренировка ↔ упражнение ──────────────────────────────
+
+model WorkoutExercise {
+  id         String @id @default(uuid()) @db.Uuid
+  workoutId  String @map("workout_id") @db.Uuid
+  exerciseId String @map("exercise_id") @db.Uuid
+  sortOrder  Int    @map("sort_order")
+
+  workout  Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  sets     ExerciseSet[]
+  comments WorkoutComment[]
+
+  @@index([workoutId], map: "idx_workout_exercises_workout")
+  @@map("workout_exercises")
+}
+
+enum WeightUnit {
+  KG
+  LB
+}
+
+model ExerciseSet {
+  id                String     @id @default(uuid()) @db.Uuid
+  workoutExerciseId String     @map("workout_exercise_id") @db.Uuid
+  setNumber         Int        @map("set_number")
+  reps              Int
+  weight            Decimal?   @db.Decimal(8, 2)
+  unit              WeightUnit @default(KG)
+
+  workoutExercise WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+
+  @@index([workoutExerciseId, setNumber], map: "idx_exercise_sets_workout_exercise")
+  @@map("exercise_sets")
+}
+
+// ─── Комментарии к тренировке ────────────────────────────────────
+
+enum CommentType {
+  TECHNIQUE
+  SENSATION
+  ASYMMETRY
+  OTHER
+}
+
+enum BodySide {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+enum SensationType {
+  PAIN
+  TENSION
+  BURN
+}
+
+model WorkoutComment {
+  id                String         @id @default(uuid()) @db.Uuid
+  workoutId         String         @map("workout_id") @db.Uuid
+  workoutExerciseId String?        @map("workout_exercise_id") @db.Uuid
+  commentType       CommentType    @map("comment_type")
+  bodyPart          String?        @map("body_part")
+  side              BodySide?
+  sensationType     SensationType? @map("sensation_type")
+  rawText           String         @map("raw_text") @db.Text
+  createdAt         DateTime       @default(now()) @map("created_at")
+
+  workout         Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  workoutExercise WorkoutExercise? @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+
+  @@map("workout_comments")
+}

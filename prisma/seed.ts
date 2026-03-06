@@ -1,4 +1,4 @@
-import { PrismaClient, ExerciseCategory } from '@prisma/client';
+import { PrismaClient, ExerciseCategory } from '../src/generated/prisma/index.js';
 
 const prisma = new PrismaClient();
 

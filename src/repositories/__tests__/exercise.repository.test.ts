@@ -1,7 +1,7 @@
 import type { DeepMockProxy } from 'jest-mock-extended';
 import { createMockPrismaClient } from '../../__tests__/utils/mockPrisma.js';
 import { ExerciseRepository } from '../exercise.repository.js';
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '../../generated/prisma/index.js';
 
 describe('ExerciseRepository', () => {
   let repository: ExerciseRepository;

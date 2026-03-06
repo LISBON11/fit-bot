@@ -1,5 +1,5 @@
 import { createExercisePickerKeyboard } from '../exercisePicker.js';
-import type { Exercise } from '@prisma/client';
+import type { Exercise } from '../../../generated/prisma/index.js';
 
 describe('createExercisePickerKeyboard', () => {
   const options: Array<Pick<Exercise, 'id' | 'canonicalName' | 'displayNameRu'>> = [

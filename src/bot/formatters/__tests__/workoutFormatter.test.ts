@@ -1,6 +1,6 @@
 import { formatPreview, formatPublish, formatWorkoutForNlu } from '../workoutFormatter.js';
 import type { WorkoutWithRelations } from '../workoutFormatter.js';
-import { Prisma, WeightUnit } from '@prisma/client';
+import { Prisma, WeightUnit } from '../../../generated/prisma/index.js';
 
 describe('workoutFormatter', () => {
   const getMockWorkout = () =>

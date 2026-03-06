@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../generated/prisma/index.js';
 
 import { MUSCLE_GROUPS, type MuscleGroupEntry } from '../keyboards/muscleGroupPicker.js';
 import type { PrimaryMuscle } from '../../constants/muscleGroups.js';

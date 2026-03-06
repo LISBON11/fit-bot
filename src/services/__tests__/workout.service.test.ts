@@ -5,8 +5,8 @@ import { createMockExerciseService } from '../../__tests__/utils/mockServices.js
 import { WorkoutService } from '../workout.service.js';
 import type { WorkoutRepository } from '../../repositories/workout.repository.js';
 import type { ExerciseService } from '../exercise.service.js';
-import { WorkoutStatus } from '@prisma/client';
-import type { Exercise, Workout } from '@prisma/client';
+import { WorkoutStatus } from '../../generated/prisma/index.js';
+import type { Exercise, Workout } from '../../generated/prisma/index.js';
 import type { WorkoutWithRelations } from '../../bot/formatters/workoutFormatter.js';
 
 describe('WorkoutService', () => {

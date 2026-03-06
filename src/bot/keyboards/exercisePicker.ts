@@ -1,5 +1,5 @@
 import { InlineKeyboard } from 'grammy';
-import type { Exercise } from '@prisma/client';
+import type { Exercise } from '../../generated/prisma/index.js';
 
 /**
  * Создает клавиатуру для выбора упражнения (Disambiguation потоку).

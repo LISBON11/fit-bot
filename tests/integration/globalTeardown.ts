@@ -1,9 +1,14 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../src/generated/prisma/index.js';
 
 export default async function globalTeardown() {
   console.log('🧹 Cleaning up test database...');
 
-  const prisma = new PrismaClient();
+  const { Pool } = await import('pg');
+  const { PrismaPg } = await import('@prisma/adapter-pg');
+  const connectionString = process.env.DATABASE_URL;
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
 
   // Здесь можно выполнить дроп схемы или другие глобальные действия,
   // но TRUNCATE обычно достаточно, и он делается в beforeEach.

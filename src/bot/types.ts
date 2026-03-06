@@ -1,6 +1,6 @@
 import type { Context, SessionFlavor } from 'grammy';
 import type { ConversationFlavor } from '@grammyjs/conversations';
-import type { User } from '@prisma/client';
+import type { User } from '../generated/prisma/index.js';
 
 /**
  * Описание данных сессии бота

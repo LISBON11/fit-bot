@@ -1,4 +1,4 @@
-import type { PrismaClient, User } from '@prisma/client';
+import type { PrismaClient, User } from '../generated/prisma/index.js';
 import { getPrismaClient } from '../config/database.js';
 
 /**

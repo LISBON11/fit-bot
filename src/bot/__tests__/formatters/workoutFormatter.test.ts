@@ -11,6 +11,7 @@ describe('workoutFormatter', () => {
       status: WorkoutStatus.DRAFT,
       focus: ['Legs', 'Glutes'],
       location: 'Alushta Home',
+      comment: null,
       rawTranscript: null,
       sourceMessageId: null,
       previewMessageId: null,
@@ -23,8 +24,6 @@ describe('workoutFormatter', () => {
           workoutId: 'mock-id',
           exerciseId: 'ex-1',
           sortOrder: 0,
-          rawName: 'Присед',
-          createdAt: new Date(),
           exercise: {
             id: 'ex-1',
             canonicalName: 'back_squat',
@@ -47,7 +46,6 @@ describe('workoutFormatter', () => {
               reps: 12,
               weight: new Prisma.Decimal(40),
               unit: WeightUnit.KG,
-              createdAt: new Date(),
             },
             {
               id: 'set-2',
@@ -56,7 +54,6 @@ describe('workoutFormatter', () => {
               reps: 10,
               weight: new Prisma.Decimal(45),
               unit: WeightUnit.KG,
-              createdAt: new Date(),
             },
           ],
           comments: [

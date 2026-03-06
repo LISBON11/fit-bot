@@ -45,10 +45,9 @@ describe('Exercise Resolving Integration', () => {
     // 3. Создаем глобальные синонимы (только 1 для ex-1)
     await prisma.exerciseSynonym.create({
       data: {
-        exerciseId: '11111111-1111-1111-1111-111111111111',
-        synonym: 'становая',
+        exerciseId: '11111111-1111-1111-1111-111111111111', // Assuming globalExerciseId maps to this
+        synonym: 'жим штанги лежа',
         language: 'ru',
-        isGlobal: true,
       },
     });
 
@@ -56,16 +55,14 @@ describe('Exercise Resolving Integration', () => {
     await prisma.exerciseSynonym.createMany({
       data: [
         {
-          exerciseId: '11111111-1111-1111-1111-111111111111',
-          synonym: 'тяга',
+          exerciseId: '22222222-2222-2222-2222-222222222222', // Assuming globalExerciseId2 maps to this
+          synonym: 'становая',
           language: 'ru',
-          isGlobal: true,
         },
         {
-          exerciseId: '22222222-2222-2222-2222-222222222222',
-          synonym: 'тяга',
+          exerciseId: '22222222-2222-2222-2222-222222222222', // Assuming globalExerciseId2 maps to this
+          synonym: 'мертвая тяга',
           language: 'ru',
-          isGlobal: true,
         },
       ],
     });

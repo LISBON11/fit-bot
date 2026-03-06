@@ -22,6 +22,9 @@ describe('WorkoutRepository', () => {
       txMock.workout.create.mockResolvedValue({ id: 'w1' } as never);
       txMock.workoutExercise.create.mockResolvedValue({ id: 'we1' } as never);
       txMock.workout.findUnique.mockResolvedValue({ id: 'w1', workoutExercises: [] } as never);
+      txMock.workoutExercise.findMany.mockResolvedValue([
+        { exercise: { primaryMuscle: 'Back', secondaryMuscles: [] } },
+      ] as never);
       prismaMock.$transaction.mockImplementation(async (cb: unknown) => {
         if (typeof cb === 'function') {
           return cb(txMock);
@@ -85,6 +88,9 @@ describe('WorkoutRepository', () => {
       txMock.workout.create.mockResolvedValue({ id: 'w1' } as never);
       txMock.workoutExercise.create.mockResolvedValue({ id: 'we1' } as never);
       txMock.workout.findUnique.mockResolvedValue({ id: 'w1', workoutExercises: [] } as never);
+      txMock.workoutExercise.findMany.mockResolvedValue([
+        { exercise: { primaryMuscle: 'Back', secondaryMuscles: [] } },
+      ] as never);
       prismaMock.$transaction.mockImplementation(async (cb: unknown) => {
         if (typeof cb === 'function') {
           return cb(txMock);
@@ -207,6 +213,9 @@ describe('WorkoutRepository', () => {
       txMock.workout.update.mockResolvedValue({ id: 'w1' } as never);
       txMock.workoutExercise.create.mockResolvedValue({ id: 'we1' } as never);
       txMock.workout.findUniqueOrThrow.mockResolvedValue({ id: 'w1' } as never);
+      txMock.workoutExercise.findMany.mockResolvedValue([
+        { exercise: { primaryMuscle: 'Chest', secondaryMuscles: ['Triceps'] } },
+      ] as never);
       prismaMock.$transaction.mockImplementation(async (cb: unknown) => {
         if (typeof cb === 'function') {
           return cb(txMock);
@@ -270,6 +279,9 @@ describe('WorkoutRepository', () => {
       txMock.workout.update.mockResolvedValue({ id: 'w1' } as never);
       txMock.workoutExercise.create.mockResolvedValue({ id: 'we1' } as never);
       txMock.workout.findUniqueOrThrow.mockResolvedValue({ id: 'w1' } as never);
+      txMock.workoutExercise.findMany.mockResolvedValue([
+        { exercise: { primaryMuscle: 'Chest', secondaryMuscles: ['Triceps'] } },
+      ] as never);
       prismaMock.$transaction.mockImplementation(async (cb: unknown) => {
         if (typeof cb === 'function') {
           return cb(txMock);

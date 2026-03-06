@@ -20,9 +20,7 @@ describe('workoutFormatter', () => {
           id: 'we1',
           workoutId: 'w1',
           exerciseId: 'e1',
-          rawName: 'Squat',
           order: 1,
-          createdAt: new Date(),
           updatedAt: new Date(),
           exercise: {
             id: 'e1',
@@ -40,8 +38,6 @@ describe('workoutFormatter', () => {
               reps: 10,
               weight: 50,
               unit: 'KG',
-              createdAt: new Date(),
-              updatedAt: new Date(),
             },
             {
               id: 's2',
@@ -50,8 +46,6 @@ describe('workoutFormatter', () => {
               reps: 8,
               weight: 55,
               unit: 'KG',
-              createdAt: new Date(),
-              updatedAt: new Date(),
             },
           ],
           comments: [
@@ -69,9 +63,7 @@ describe('workoutFormatter', () => {
           id: 'we2',
           workoutId: 'w1',
           exerciseId: null,
-          rawName: 'Unknown Exercise',
           order: 2,
-          createdAt: new Date(),
           updatedAt: new Date(),
           exercise: null as unknown as NonNullable<
             WorkoutWithRelations['workoutExercises'][0]['exercise']
@@ -84,8 +76,6 @@ describe('workoutFormatter', () => {
               reps: 5,
               weight: 10,
               unit: 'LB',
-              createdAt: new Date(),
-              updatedAt: new Date(),
             },
           ],
           comments: [],
@@ -119,8 +109,8 @@ describe('workoutFormatter', () => {
       // Комментарий к упражнению как blockquote
       expect(html).toContain('<blockquote>Hard set</blockquote>');
 
-      // Упражнение 2 с lb
-      expect(html).toContain('2. Unknown Exercise — 10×5');
+      // Упражнение 2 без упражнения выведет Упражнение
+      expect(html).toContain('2. Упражнение — 10×5');
 
       // Общий комментарий к тренировке как blockquote
       expect(html).toContain('<blockquote>Great workout</blockquote>');
@@ -178,7 +168,6 @@ describe('workoutFormatter', () => {
       workout.workoutExercises[0].exercise = null as unknown as NonNullable<
         WorkoutWithRelations['workoutExercises'][0]['exercise']
       >;
-      workout.workoutExercises[0].rawName = null as unknown as string;
 
       const html = formatPreview(workout);
       expect(html).toContain('1. Упражнение');
@@ -186,10 +175,13 @@ describe('workoutFormatter', () => {
 
     it('должен экранировать HTML-символы в названиях и комментариях', () => {
       const workout = getMockWorkout();
-      workout.workoutExercises[0].rawName = '<script>alert(1)</script>';
-      workout.workoutExercises[0].exercise = null as unknown as NonNullable<
-        WorkoutWithRelations['workoutExercises'][0]['exercise']
-      >;
+      const exercise = workout.workoutExercises[0].exercise;
+      if (exercise) {
+        workout.workoutExercises[0].exercise = {
+          ...exercise,
+          displayNameRu: '<script>alert(1)</script>',
+        };
+      }
       workout.workoutExercises[0].comments[0].rawText = 'Боль в <плече> & лопатке';
 
       const html = formatPreview(workout);
@@ -230,7 +222,7 @@ describe('workoutFormatter', () => {
       expect(ex1.sets[1]).toEqual({ reps: 8, weight: 55, unit: 'KG' });
 
       const ex2 = (dto.exercises as Array<NluExercise>)[1];
-      expect(ex2.name).toBe('Unknown Exercise');
+      expect(ex2.name).toBe('Упражнение');
       expect(ex2.sets[0]).toEqual({ reps: 5, weight: 10, unit: 'LB' });
     });
   });

@@ -10,6 +10,36 @@ export class WorkoutRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   /**
+   * Приватный метод для пересчета уникальных мышечных групп (focus) тренировки в рамках транзакции
+   */
+  private async _recalculateFocus({
+    workoutId,
+    tx,
+  }: {
+    workoutId: string;
+    tx: Prisma.TransactionClient;
+  }): Promise<void> {
+    const workoutExercises = await tx.workoutExercise.findMany({
+      where: { workoutId },
+      include: { exercise: true },
+    });
+
+    const uniqueMuscles = new Set<string>();
+
+    for (const we of workoutExercises) {
+      if (we.exercise.primaryMuscle) {
+        uniqueMuscles.add(we.exercise.primaryMuscle);
+      }
+      we.exercise.secondaryMuscles.forEach((muscle) => uniqueMuscles.add(muscle));
+    }
+
+    await tx.workout.update({
+      where: { id: workoutId },
+      data: { focus: Array.from(uniqueMuscles) },
+    });
+  }
+
+  /**
    * Создает тренировку со всеми вложенными связями (упражнения, подходы, комментарии)
    * @param userId ID пользователя, для которого создается тренировка
    * @param workoutDate Дата тренировки
@@ -52,7 +82,6 @@ export class WorkoutRepository {
               workoutId: workout.id,
               exerciseId: resData.exerciseId,
               sortOrder: i,
-              rawName: resData.parsed.originalName,
             },
           });
 
@@ -88,6 +117,8 @@ export class WorkoutRepository {
             })),
           });
         }
+
+        await this._recalculateFocus({ workoutId: workout.id, tx });
 
         return tx.workout.findUnique({
           where: { id: workout.id },
@@ -294,7 +325,6 @@ export class WorkoutRepository {
               workoutId,
               exerciseId: resData.exerciseId,
               sortOrder: i,
-              rawName: resData.parsed.originalName,
             },
           });
 
@@ -330,6 +360,8 @@ export class WorkoutRepository {
             })),
           });
         }
+
+        await this._recalculateFocus({ workoutId, tx });
 
         return tx.workout.findUniqueOrThrow({
           where: { id: workoutId },

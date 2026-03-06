@@ -35,7 +35,6 @@ describe('Workout Flow Integration', () => {
         exerciseId: '11111111-1111-1111-1111-111111111111',
         synonym: 'присед',
         language: 'ru',
-        isGlobal: true,
       },
     });
   });

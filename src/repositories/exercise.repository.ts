@@ -20,27 +20,38 @@ export class ExerciseRepository {
    */
   async findSynonyms({
     text,
-    userId,
   }: {
     text: string;
-    userId?: string;
   }): Promise<(ExerciseSynonym & { exercise: Exercise })[]> {
     const lowerText = text.toLowerCase();
 
     // В PostgreSQL мы можем использовать mode: 'insensitive' для регистронезависимого поиска
     const whereClause: Prisma.ExerciseSynonymWhereInput = {
-      AND: [
-        { synonym: { equals: lowerText, mode: 'insensitive' } },
-        {
-          OR: [...(userId ? [{ userId }] : []), { isGlobal: true }],
-        },
-      ],
+      synonym: { equals: lowerText, mode: 'insensitive' },
     };
 
     return this.prisma.exerciseSynonym.findMany({
       where: whereClause,
       include: {
         exercise: true,
+      },
+    });
+  }
+
+  /**
+   * Ищет упражнение по точному совпадению с canonicalName или displayNameRu.
+   * Используется как детерминированный fallback, когда NLU не проставила mappedExerciseId,
+   * но originalName совпадает с официальным названием упражнения.
+   * @param name Строка для поиска (регистронезависимо)
+   * @returns Список найденных упражнений (обычно 0 или 1)
+   */
+  async findByExactName({ name }: { name: string }): Promise<Exercise[]> {
+    return this.prisma.exercise.findMany({
+      where: {
+        OR: [
+          { canonicalName: { equals: name.toLowerCase().trim(), mode: 'insensitive' } },
+          { displayNameRu: { equals: name.trim(), mode: 'insensitive' } },
+        ],
       },
     });
   }
@@ -124,7 +135,7 @@ export class ExerciseRepository {
   async getAllWithSynonyms(): Promise<Array<Exercise & { synonyms: ExerciseSynonym[] }>> {
     return this.prisma.exercise.findMany({
       where: { isGlobal: true },
-      include: { synonyms: { where: { isGlobal: true } } },
+      include: { synonyms: true },
     });
   }
 

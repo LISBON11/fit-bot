@@ -142,7 +142,7 @@ export function formatPreview(workout: WorkoutWithRelations): string {
   // Упражнения
   workout.workoutExercises.forEach((we, index) => {
     const name = escapeHtml(
-      we.exercise?.displayNameRu || we.exercise?.canonicalName || we.rawName || 'Упражнение',
+      we.exercise?.displayNameRu || we.exercise?.canonicalName || 'Упражнение',
     );
 
     const setsStr = formatSetsCompact(we.sets);
@@ -197,7 +197,7 @@ export function formatWorkoutForNlu(workout: WorkoutWithRelations): Record<strin
     location: workout.location,
     comments: workout.comments.map((c) => c.rawText),
     exercises: workout.workoutExercises.map((we) => ({
-      name: we.exercise?.displayNameRu || we.exercise?.canonicalName || we.rawName || 'Упражнение',
+      name: we.exercise?.displayNameRu || we.exercise?.canonicalName || 'Упражнение',
       sets: we.sets.map((s) => ({
         reps: s.reps,
         weight: s.weight ? Number(s.weight) : null,

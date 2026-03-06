@@ -13,50 +13,65 @@ describe('ExerciseRepository', () => {
   });
 
   describe('findSynonyms', () => {
-    it('should find synonyms considering case-insensitivity and global scope', async () => {
+    it('should find synonyms case-insensitively', async () => {
       prismaMock.exerciseSynonym.findMany.mockResolvedValue([
         {
           id: '1',
           synonym: 'test',
           exerciseId: 'e1',
-          userId: null,
-          isGlobal: true,
           exercise: { id: 'e1' },
         },
       ] as never);
 
-      const result = await repository.findSynonyms({ text: 'TEST', userId: 'u1' });
+      const result = await repository.findSynonyms({ text: 'TEST' });
 
       expect(prismaMock.exerciseSynonym.findMany).toHaveBeenCalledWith({
         where: {
-          AND: [
-            { synonym: { equals: 'test', mode: 'insensitive' } },
-            {
-              OR: [{ userId: 'u1' }, { isGlobal: true }],
-            },
-          ],
+          synonym: { equals: 'test', mode: 'insensitive' },
         },
         include: { exercise: true },
       });
       expect(result).toHaveLength(1);
     });
 
-    it('should find synonyms without userId', async () => {
+    it('should find synonyms for empty text', async () => {
       prismaMock.exerciseSynonym.findMany.mockResolvedValue([] as never);
 
       await repository.findSynonyms({ text: 'TEST' });
 
       expect(prismaMock.exerciseSynonym.findMany).toHaveBeenCalledWith({
         where: {
-          AND: [
-            { synonym: { equals: 'test', mode: 'insensitive' } },
-            {
-              OR: [{ isGlobal: true }],
-            },
-          ],
+          synonym: { equals: 'test', mode: 'insensitive' },
         },
         include: { exercise: true },
       });
+    });
+  });
+
+  describe('findByExactName', () => {
+    it('should find exercise by canonicalName or displayNameRu (case-insensitive)', async () => {
+      const mockExercise = [{ id: 'e1', canonicalName: 'bench_press', displayNameRu: 'Жим лёжа' }];
+      prismaMock.exercise.findMany.mockResolvedValue(mockExercise as never);
+
+      const result = await repository.findByExactName({ name: 'Жим лёжа' });
+
+      expect(prismaMock.exercise.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { canonicalName: { equals: 'жим лёжа', mode: 'insensitive' } },
+            { displayNameRu: { equals: 'Жим лёжа', mode: 'insensitive' } },
+          ],
+        },
+      });
+      expect(result).toEqual(mockExercise);
+    });
+
+    it('should return empty array if nothing found', async () => {
+      prismaMock.exercise.findMany.mockResolvedValue([] as never);
+
+      const result = await repository.findByExactName({ name: 'неизвестное' });
+
+      expect(result).toEqual([]);
     });
   });
 
@@ -177,12 +192,12 @@ describe('ExerciseRepository', () => {
   });
 
   describe('getAllWithSynonyms', () => {
-    it('should return global exercises with their global synonyms', async () => {
+    it('should return global exercises with all their synonyms', async () => {
       const mockData = [
         {
           id: 'e1',
           isGlobal: true,
-          synonyms: [{ id: 's1', synonym: 'жим', isGlobal: true }],
+          synonyms: [{ id: 's1', synonym: 'жим' }],
         },
       ];
       prismaMock.exercise.findMany.mockResolvedValue(mockData as never);
@@ -191,7 +206,7 @@ describe('ExerciseRepository', () => {
 
       expect(prismaMock.exercise.findMany).toHaveBeenCalledWith({
         where: { isGlobal: true },
-        include: { synonyms: { where: { isGlobal: true } } },
+        include: { synonyms: true },
       });
       expect(result).toEqual(mockData);
     });

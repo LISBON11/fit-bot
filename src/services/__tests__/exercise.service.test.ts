@@ -66,34 +66,20 @@ describe('ExerciseService', () => {
       expect(repositoryMock.findSynonyms).not.toHaveBeenCalled();
     });
 
-    it('2. should resolve single synonym successfully (prioritizing user synonyms)', async () => {
+    it('2. should resolve single synonym successfully', async () => {
       repositoryMock.findUserMapping.mockResolvedValue(null);
       repositoryMock.findSynonyms.mockResolvedValue([
-        {
-          id: 's1',
-          exerciseId: 'e1',
-          synonym: 'присед',
-          language: 'ru',
-          isGlobal: true,
-          userId: null,
-          createdAt: new Date(),
-          exercise: mockExercise1,
-        },
         {
           id: 's2',
           exerciseId: 'e2',
           synonym: 'присед',
           language: 'ru',
-          isGlobal: false,
-          userId: 'user1',
-          createdAt: new Date(),
           exercise: mockExercise2,
         },
       ]);
 
       const result = await service.resolveExercise({ inputText: 'присед', userId: 'user1' });
 
-      // Should pick user1's synonym!
       expect(result).toEqual({ status: 'resolved', exercise: mockExercise2 });
     });
 
@@ -105,9 +91,6 @@ describe('ExerciseService', () => {
           exerciseId: 'e1',
           synonym: 'присед',
           language: 'ru',
-          isGlobal: true,
-          userId: null,
-          createdAt: new Date(),
           exercise: mockExercise1,
         },
         {
@@ -115,9 +98,6 @@ describe('ExerciseService', () => {
           exerciseId: 'e2',
           synonym: 'присед',
           language: 'ru',
-          isGlobal: true,
-          userId: null,
-          createdAt: new Date(),
           exercise: mockExercise2,
         },
       ]);
@@ -130,9 +110,32 @@ describe('ExerciseService', () => {
       });
     });
 
-    it('4. should return ambiguous with options if no matches but searchSimilar finds exercises', async () => {
+    it('4. should resolve by exact Exercise name when synonyms return empty (NLU hallucination fallback)', async () => {
       repositoryMock.findUserMapping.mockResolvedValue(null);
       repositoryMock.findSynonyms.mockResolvedValue([]);
+      repositoryMock.findByExactName.mockResolvedValue([mockExercise1]);
+
+      const result = await service.resolveExercise({ inputText: 'Жим лёжа', userId: 'user1' });
+
+      expect(result).toEqual({ status: 'resolved', exercise: mockExercise1 });
+      expect(repositoryMock.findByExactName).toHaveBeenCalledWith({ name: 'Жим лёжа' });
+      expect(repositoryMock.searchSimilar).not.toHaveBeenCalled();
+    });
+
+    it('5. should return ambiguous if findByExactName returns multiple exercises', async () => {
+      repositoryMock.findUserMapping.mockResolvedValue(null);
+      repositoryMock.findSynonyms.mockResolvedValue([]);
+      repositoryMock.findByExactName.mockResolvedValue([mockExercise1, mockExercise2]);
+
+      const result = await service.resolveExercise({ inputText: 'присед', userId: 'user1' });
+
+      expect(result).toEqual({ status: 'ambiguous', options: [mockExercise1, mockExercise2] });
+    });
+
+    it('6. should return ambiguous with options if no matches but searchSimilar finds exercises', async () => {
+      repositoryMock.findUserMapping.mockResolvedValue(null);
+      repositoryMock.findSynonyms.mockResolvedValue([]);
+      repositoryMock.findByExactName.mockResolvedValue([]);
       repositoryMock.searchSimilar.mockResolvedValue([mockExercise1]);
 
       const result = await service.resolveExercise({
@@ -150,9 +153,10 @@ describe('ExerciseService', () => {
       });
     });
 
-    it('5. should return not_found if no matches and searchSimilar returns empty', async () => {
+    it('7. should return not_found if no matches and searchSimilar returns empty', async () => {
       repositoryMock.findUserMapping.mockResolvedValue(null);
       repositoryMock.findSynonyms.mockResolvedValue([]);
+      repositoryMock.findByExactName.mockResolvedValue([]);
       repositoryMock.searchSimilar.mockResolvedValue([]);
 
       const result = await service.resolveExercise({
@@ -186,8 +190,8 @@ describe('ExerciseService', () => {
         {
           ...mockExercise1,
           synonyms: [
-            { id: 's1', synonym: 'жим', isGlobal: true },
-            { id: 's2', synonym: 'bench', isGlobal: true },
+            { id: 's1', synonym: 'жим' },
+            { id: 's2', synonym: 'bench' },
           ],
         },
         {

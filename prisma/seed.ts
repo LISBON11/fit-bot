@@ -399,23 +399,24 @@ async function seed(): Promise<void> {
         equipment: ex.equipment,
         secondaryMuscles: ex.secondaryMuscles,
         category: ex.category as ExerciseCategory,
-        isGlobal: true,
       },
     });
 
-    // Удаляем старые глобальные синонимы и создаём заново
-    await prisma.exerciseSynonym.deleteMany({
-      where: { exerciseId: exercise.id, isGlobal: true },
-    });
+    for (const syn of ex.synonyms) {
+      const existingSynonym = await prisma.exerciseSynonym.findFirst({
+        where: { exerciseId: exercise.id, synonym: syn.synonym },
+      });
 
-    await prisma.exerciseSynonym.createMany({
-      data: ex.synonyms.map((syn) => ({
-        exerciseId: exercise.id,
-        synonym: syn.synonym,
-        language: syn.language,
-        isGlobal: true,
-      })),
-    });
+      if (!existingSynonym) {
+        await prisma.exerciseSynonym.create({
+          data: {
+            exerciseId: exercise.id,
+            synonym: syn.synonym.toLowerCase(),
+            language: syn.language,
+          },
+        });
+      }
+    }
 
     console.log(`  ✅ ${ex.canonicalName} (${ex.synonyms.length} синонимов)`);
   }

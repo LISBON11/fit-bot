@@ -11,11 +11,11 @@ export class ExerciseService {
   /**
    * Разрешает название упражнения во внутреннее представление (Exercise).
    * Алгоритм:
-   * 1. Ищем в user_mapping (точные совпадения пользователя)
-   * 2. Ищем в синонимах (сначала user-specific, потом глобальные)
-   * 3. Если найдено ровно одно упражнение - возвращаем resolved.
-   * 4. Если несколько - возвращаем ambiguous с вариантами.
-   * 5. Если ничего - not_found.
+   * 1. Ищем в user_mapping (точный маппинг пользователя)
+   * 2. Ищем в синонимах (глобальная таблица)
+   * 3. Ищем по точному совпадению с canonicalName / displayNameRu (NLU могла вернуть правильное название, но не проставить ID)
+   * 4. Fuzzy-поиск (searchSimilar) — возвращает ambiguous с вариантами
+   * 5. Если ничего не найдено — not_found
    *
    * @param inputText Введенное пользователем название
    * @param userId ID пользователя
@@ -34,37 +34,41 @@ export class ExerciseService {
       return { status: 'resolved', exercise: mapping.exercise };
     }
 
-    // 2. Поиск в синонимах (user + global)
-    const synonyms = await this.exerciseRepository.findSynonyms({ text: inputText, userId });
+    // 2. Поиск в синонимах (все они теперь глобальные)
+    const synonyms = await this.exerciseRepository.findSynonyms({ text: inputText });
 
-    if (synonyms.length === 0) {
-      const similarExercises = await this.exerciseRepository.searchSimilar({
-        query: inputText,
-        limit: 5,
-      });
-      if (similarExercises.length > 0) {
-        return { status: 'ambiguous', options: similarExercises };
+    if (synonyms.length > 0) {
+      const uniqueExercisesMap = new Map();
+      for (const syn of synonyms) {
+        uniqueExercisesMap.set(syn.exercise.id, syn.exercise);
       }
-      return { status: 'not_found' };
+      const exercises = Array.from(uniqueExercisesMap.values());
+
+      if (exercises.length === 1) {
+        return { status: 'resolved', exercise: exercises[0] };
+      }
+      return { status: 'ambiguous', options: exercises };
     }
 
-    // Приоритизация: если есть user-specific синонимы, берем их
-    const userSynonyms = synonyms.filter((s) => s.userId === userId);
-    const relevantSynonyms = userSynonyms.length > 0 ? userSynonyms : synonyms;
-
-    // Убираем дубликаты упражнений на случай, если разные синонимы указывают на одно упражнение
-    const uniqueExercisesMap = new Map();
-    for (const syn of relevantSynonyms) {
-      uniqueExercisesMap.set(syn.exercise.id, syn.exercise);
+    // 3. Детерминированный fallback: ищем по точному имени упражнения.
+    // NLU могла вернуть правильное название (например, «Жим лёжа»), но «забыть» проставить mappedExerciseId.
+    const byName = await this.exerciseRepository.findByExactName({ name: inputText });
+    if (byName.length === 1) {
+      return { status: 'resolved', exercise: byName[0] };
     }
-    const exercises = Array.from(uniqueExercisesMap.values());
-
-    if (exercises.length === 1) {
-      return { status: 'resolved', exercise: exercises[0] };
+    if (byName.length > 1) {
+      return { status: 'ambiguous', options: byName };
     }
 
-    // Здесь может быть ситуация, когда несколько упражнений найдено (ambiguous)
-    return { status: 'ambiguous', options: exercises };
+    // 4. Fuzzy-поиск: если и точный поиск ничего не дал
+    const similarExercises = await this.exerciseRepository.searchSimilar({
+      query: inputText,
+      limit: 5,
+    });
+    if (similarExercises.length > 0) {
+      return { status: 'ambiguous', options: similarExercises };
+    }
+    return { status: 'not_found' };
   }
 
   /**

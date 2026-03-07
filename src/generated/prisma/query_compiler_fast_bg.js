@@ -312,7 +312,7 @@ function se() {
   return new Map();
 }
 function ue() {
-  return [];
+  return new Array();
 }
 function fe(e, t, n) {
   Uint8Array.prototype.set.call($(e, t), n);

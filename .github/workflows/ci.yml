@@ -32,11 +32,14 @@ jobs:
       - name: Validate Prisma Schema
         run: npm run db:validate
 
+      - name: Check Prisma Migrations
+        run: npx prisma migrate status
+
       - name: Run Linter
         run: npm run lint
 
       - name: Run Unit Tests
-        run: npm test
+        run: npm run test:coverage
 
       - name: Build TypeScript
         run: npm run build

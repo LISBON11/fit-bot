@@ -600,7 +600,7 @@ export namespace Prisma {
         ? False
         : T extends Uint8Array
           ? False
-          : T extends bigint
+          : T extends BigInt
             ? False
             : T extends object
               ? True
@@ -5984,7 +5984,8 @@ export namespace Prisma {
     displayNameEn: string | null;
     movementPattern: string | null;
     equipment: string | null;
-    primaryMuscle: string | null;
+    level: string | null;
+    exerciseType: string | null;
     category: $Enums.ExerciseCategory | null;
     isGlobal: boolean | null;
     createdBy: string | null;
@@ -5998,7 +5999,8 @@ export namespace Prisma {
     displayNameEn: string | null;
     movementPattern: string | null;
     equipment: string | null;
-    primaryMuscle: string | null;
+    level: string | null;
+    exerciseType: string | null;
     category: $Enums.ExerciseCategory | null;
     isGlobal: boolean | null;
     createdBy: string | null;
@@ -6012,8 +6014,11 @@ export namespace Prisma {
     displayNameEn: number;
     movementPattern: number;
     equipment: number;
-    primaryMuscle: number;
+    primaryMuscles: number;
     secondaryMuscles: number;
+    level: number;
+    instructions: number;
+    exerciseType: number;
     category: number;
     isGlobal: number;
     createdBy: number;
@@ -6028,7 +6033,8 @@ export namespace Prisma {
     displayNameEn?: true;
     movementPattern?: true;
     equipment?: true;
-    primaryMuscle?: true;
+    level?: true;
+    exerciseType?: true;
     category?: true;
     isGlobal?: true;
     createdBy?: true;
@@ -6042,7 +6048,8 @@ export namespace Prisma {
     displayNameEn?: true;
     movementPattern?: true;
     equipment?: true;
-    primaryMuscle?: true;
+    level?: true;
+    exerciseType?: true;
     category?: true;
     isGlobal?: true;
     createdBy?: true;
@@ -6056,8 +6063,11 @@ export namespace Prisma {
     displayNameEn?: true;
     movementPattern?: true;
     equipment?: true;
-    primaryMuscle?: true;
+    primaryMuscles?: true;
     secondaryMuscles?: true;
+    level?: true;
+    instructions?: true;
+    exerciseType?: true;
     category?: true;
     isGlobal?: true;
     createdBy?: true;
@@ -6145,8 +6155,11 @@ export namespace Prisma {
     displayNameEn: string | null;
     movementPattern: string | null;
     equipment: string | null;
-    primaryMuscle: string;
+    primaryMuscles: string[];
     secondaryMuscles: string[];
+    level: string | null;
+    instructions: string[];
+    exerciseType: string | null;
     category: $Enums.ExerciseCategory | null;
     isGlobal: boolean;
     createdBy: string | null;
@@ -6177,8 +6190,11 @@ export namespace Prisma {
         displayNameEn?: boolean;
         movementPattern?: boolean;
         equipment?: boolean;
-        primaryMuscle?: boolean;
+        primaryMuscles?: boolean;
         secondaryMuscles?: boolean;
+        level?: boolean;
+        instructions?: boolean;
+        exerciseType?: boolean;
         category?: boolean;
         isGlobal?: boolean;
         createdBy?: boolean;
@@ -6202,8 +6218,11 @@ export namespace Prisma {
       displayNameEn?: boolean;
       movementPattern?: boolean;
       equipment?: boolean;
-      primaryMuscle?: boolean;
+      primaryMuscles?: boolean;
       secondaryMuscles?: boolean;
+      level?: boolean;
+      instructions?: boolean;
+      exerciseType?: boolean;
       category?: boolean;
       isGlobal?: boolean;
       createdBy?: boolean;
@@ -6223,8 +6242,11 @@ export namespace Prisma {
       displayNameEn?: boolean;
       movementPattern?: boolean;
       equipment?: boolean;
-      primaryMuscle?: boolean;
+      primaryMuscles?: boolean;
       secondaryMuscles?: boolean;
+      level?: boolean;
+      instructions?: boolean;
+      exerciseType?: boolean;
       category?: boolean;
       isGlobal?: boolean;
       createdBy?: boolean;
@@ -6241,8 +6263,11 @@ export namespace Prisma {
     displayNameEn?: boolean;
     movementPattern?: boolean;
     equipment?: boolean;
-    primaryMuscle?: boolean;
+    primaryMuscles?: boolean;
     secondaryMuscles?: boolean;
+    level?: boolean;
+    instructions?: boolean;
+    exerciseType?: boolean;
     category?: boolean;
     isGlobal?: boolean;
     createdBy?: boolean;
@@ -6257,8 +6282,11 @@ export namespace Prisma {
       | 'displayNameEn'
       | 'movementPattern'
       | 'equipment'
-      | 'primaryMuscle'
+      | 'primaryMuscles'
       | 'secondaryMuscles'
+      | 'level'
+      | 'instructions'
+      | 'exerciseType'
       | 'category'
       | 'isGlobal'
       | 'createdBy'
@@ -6301,8 +6329,11 @@ export namespace Prisma {
           displayNameEn: string | null;
           movementPattern: string | null;
           equipment: string | null;
-          primaryMuscle: string;
+          primaryMuscles: string[];
           secondaryMuscles: string[];
+          level: string | null;
+          instructions: string[];
+          exerciseType: string | null;
           category: $Enums.ExerciseCategory | null;
           isGlobal: boolean;
           createdBy: string | null;
@@ -6879,8 +6910,11 @@ export namespace Prisma {
     readonly displayNameEn: FieldRef<'Exercise', 'String'>;
     readonly movementPattern: FieldRef<'Exercise', 'String'>;
     readonly equipment: FieldRef<'Exercise', 'String'>;
-    readonly primaryMuscle: FieldRef<'Exercise', 'String'>;
+    readonly primaryMuscles: FieldRef<'Exercise', 'String[]'>;
     readonly secondaryMuscles: FieldRef<'Exercise', 'String[]'>;
+    readonly level: FieldRef<'Exercise', 'String'>;
+    readonly instructions: FieldRef<'Exercise', 'String[]'>;
+    readonly exerciseType: FieldRef<'Exercise', 'String'>;
     readonly category: FieldRef<'Exercise', 'ExerciseCategory'>;
     readonly isGlobal: FieldRef<'Exercise', 'Boolean'>;
     readonly createdBy: FieldRef<'Exercise', 'String'>;
@@ -14094,8 +14128,11 @@ export namespace Prisma {
     displayNameEn: 'displayNameEn';
     movementPattern: 'movementPattern';
     equipment: 'equipment';
-    primaryMuscle: 'primaryMuscle';
+    primaryMuscles: 'primaryMuscles';
     secondaryMuscles: 'secondaryMuscles';
+    level: 'level';
+    instructions: 'instructions';
+    exerciseType: 'exerciseType';
     category: 'category';
     isGlobal: 'isGlobal';
     createdBy: 'createdBy';
@@ -14636,8 +14673,11 @@ export namespace Prisma {
     displayNameEn?: StringNullableFilter<'Exercise'> | string | null;
     movementPattern?: StringNullableFilter<'Exercise'> | string | null;
     equipment?: StringNullableFilter<'Exercise'> | string | null;
-    primaryMuscle?: StringFilter<'Exercise'> | string;
+    primaryMuscles?: StringNullableListFilter<'Exercise'>;
     secondaryMuscles?: StringNullableListFilter<'Exercise'>;
+    level?: StringNullableFilter<'Exercise'> | string | null;
+    instructions?: StringNullableListFilter<'Exercise'>;
+    exerciseType?: StringNullableFilter<'Exercise'> | string | null;
     category?: EnumExerciseCategoryNullableFilter<'Exercise'> | $Enums.ExerciseCategory | null;
     isGlobal?: BoolFilter<'Exercise'> | boolean;
     createdBy?: UuidNullableFilter<'Exercise'> | string | null;
@@ -14655,8 +14695,11 @@ export namespace Prisma {
     displayNameEn?: SortOrderInput | SortOrder;
     movementPattern?: SortOrderInput | SortOrder;
     equipment?: SortOrderInput | SortOrder;
-    primaryMuscle?: SortOrder;
+    primaryMuscles?: SortOrder;
     secondaryMuscles?: SortOrder;
+    level?: SortOrderInput | SortOrder;
+    instructions?: SortOrder;
+    exerciseType?: SortOrderInput | SortOrder;
     category?: SortOrderInput | SortOrder;
     isGlobal?: SortOrder;
     createdBy?: SortOrderInput | SortOrder;
@@ -14678,8 +14721,11 @@ export namespace Prisma {
       displayNameEn?: StringNullableFilter<'Exercise'> | string | null;
       movementPattern?: StringNullableFilter<'Exercise'> | string | null;
       equipment?: StringNullableFilter<'Exercise'> | string | null;
-      primaryMuscle?: StringFilter<'Exercise'> | string;
+      primaryMuscles?: StringNullableListFilter<'Exercise'>;
       secondaryMuscles?: StringNullableListFilter<'Exercise'>;
+      level?: StringNullableFilter<'Exercise'> | string | null;
+      instructions?: StringNullableListFilter<'Exercise'>;
+      exerciseType?: StringNullableFilter<'Exercise'> | string | null;
       category?: EnumExerciseCategoryNullableFilter<'Exercise'> | $Enums.ExerciseCategory | null;
       isGlobal?: BoolFilter<'Exercise'> | boolean;
       createdBy?: UuidNullableFilter<'Exercise'> | string | null;
@@ -14699,8 +14745,11 @@ export namespace Prisma {
     displayNameEn?: SortOrderInput | SortOrder;
     movementPattern?: SortOrderInput | SortOrder;
     equipment?: SortOrderInput | SortOrder;
-    primaryMuscle?: SortOrder;
+    primaryMuscles?: SortOrder;
     secondaryMuscles?: SortOrder;
+    level?: SortOrderInput | SortOrder;
+    instructions?: SortOrder;
+    exerciseType?: SortOrderInput | SortOrder;
     category?: SortOrderInput | SortOrder;
     isGlobal?: SortOrder;
     createdBy?: SortOrderInput | SortOrder;
@@ -14720,8 +14769,11 @@ export namespace Prisma {
     displayNameEn?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
     movementPattern?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
     equipment?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
-    primaryMuscle?: StringWithAggregatesFilter<'Exercise'> | string;
+    primaryMuscles?: StringNullableListFilter<'Exercise'>;
     secondaryMuscles?: StringNullableListFilter<'Exercise'>;
+    level?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
+    instructions?: StringNullableListFilter<'Exercise'>;
+    exerciseType?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
     category?:
       | EnumExerciseCategoryNullableWithAggregatesFilter<'Exercise'>
       | $Enums.ExerciseCategory
@@ -15394,8 +15446,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -15412,8 +15467,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -15430,8 +15488,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -15451,8 +15512,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -15472,8 +15536,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -15487,8 +15554,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -15504,8 +15574,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -16328,8 +16401,11 @@ export namespace Prisma {
     displayNameEn?: SortOrder;
     movementPattern?: SortOrder;
     equipment?: SortOrder;
-    primaryMuscle?: SortOrder;
+    primaryMuscles?: SortOrder;
     secondaryMuscles?: SortOrder;
+    level?: SortOrder;
+    instructions?: SortOrder;
+    exerciseType?: SortOrder;
     category?: SortOrder;
     isGlobal?: SortOrder;
     createdBy?: SortOrder;
@@ -16343,7 +16419,8 @@ export namespace Prisma {
     displayNameEn?: SortOrder;
     movementPattern?: SortOrder;
     equipment?: SortOrder;
-    primaryMuscle?: SortOrder;
+    level?: SortOrder;
+    exerciseType?: SortOrder;
     category?: SortOrder;
     isGlobal?: SortOrder;
     createdBy?: SortOrder;
@@ -16357,7 +16434,8 @@ export namespace Prisma {
     displayNameEn?: SortOrder;
     movementPattern?: SortOrder;
     equipment?: SortOrder;
-    primaryMuscle?: SortOrder;
+    level?: SortOrder;
+    exerciseType?: SortOrder;
     category?: SortOrder;
     isGlobal?: SortOrder;
     createdBy?: SortOrder;
@@ -17301,7 +17379,15 @@ export namespace Prisma {
     deleteMany?: WorkoutCommentScalarWhereInput | WorkoutCommentScalarWhereInput[];
   };
 
+  export type ExerciseCreateprimaryMusclesInput = {
+    set: string[];
+  };
+
   export type ExerciseCreatesecondaryMusclesInput = {
+    set: string[];
+  };
+
+  export type ExerciseCreateinstructionsInput = {
     set: string[];
   };
 
@@ -17404,7 +17490,17 @@ export namespace Prisma {
     connect?: UserExerciseMappingWhereUniqueInput | UserExerciseMappingWhereUniqueInput[];
   };
 
+  export type ExerciseUpdateprimaryMusclesInput = {
+    set?: string[];
+    push?: string | string[];
+  };
+
   export type ExerciseUpdatesecondaryMusclesInput = {
+    set?: string[];
+    push?: string | string[];
+  };
+
+  export type ExerciseUpdateinstructionsInput = {
     set?: string[];
     push?: string | string[];
   };
@@ -18531,8 +18627,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -18548,8 +18647,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -18698,8 +18800,11 @@ export namespace Prisma {
     displayNameEn?: StringNullableFilter<'Exercise'> | string | null;
     movementPattern?: StringNullableFilter<'Exercise'> | string | null;
     equipment?: StringNullableFilter<'Exercise'> | string | null;
-    primaryMuscle?: StringFilter<'Exercise'> | string;
+    primaryMuscles?: StringNullableListFilter<'Exercise'>;
     secondaryMuscles?: StringNullableListFilter<'Exercise'>;
+    level?: StringNullableFilter<'Exercise'> | string | null;
+    instructions?: StringNullableListFilter<'Exercise'>;
+    exerciseType?: StringNullableFilter<'Exercise'> | string | null;
     category?: EnumExerciseCategoryNullableFilter<'Exercise'> | $Enums.ExerciseCategory | null;
     isGlobal?: BoolFilter<'Exercise'> | boolean;
     createdBy?: UuidNullableFilter<'Exercise'> | string | null;
@@ -19265,8 +19370,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -19282,8 +19390,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -19315,8 +19426,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19335,8 +19449,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19391,8 +19508,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -19408,8 +19528,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -19501,8 +19624,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19521,8 +19647,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19583,8 +19712,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -19600,8 +19732,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -19765,8 +19900,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19785,8 +19923,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -20115,8 +20256,11 @@ export namespace Prisma {
     displayNameEn?: string | null;
     movementPattern?: string | null;
     equipment?: string | null;
-    primaryMuscle: string;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
+    level?: string | null;
+    instructions?: ExerciseCreateinstructionsInput | string[];
+    exerciseType?: string | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -20229,8 +20373,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -20249,8 +20396,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -20269,8 +20419,11 @@ export namespace Prisma {
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
     movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
     equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscle?: StringFieldUpdateOperationsInput | string;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
     secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
+    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    instructions?: ExerciseUpdateinstructionsInput | string[];
+    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory

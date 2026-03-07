@@ -159,19 +159,6 @@ describe('ExerciseRepository', () => {
     });
   });
 
-  describe('findById', () => {
-    it('should return exercise by id', async () => {
-      prismaMock.exercise.findUnique.mockResolvedValue({ id: 'e1' } as never);
-
-      const result = await repository.findById('e1');
-
-      expect(prismaMock.exercise.findUnique).toHaveBeenCalledWith({
-        where: { id: 'e1' },
-      });
-      expect(result).toEqual({ id: 'e1' });
-    });
-  });
-
   describe('create', () => {
     it('should create an exercise', async () => {
       const data = {
@@ -220,25 +207,6 @@ describe('ExerciseRepository', () => {
         include: { synonyms: true },
       });
       expect(result).toEqual(mockData);
-    });
-  });
-
-  describe('getMuscleGroups', () => {
-    it('should return unique muscle groups via $queryRaw', async () => {
-      prismaMock.$queryRaw.mockResolvedValue([{ muscle: 'CHEST' }, { muscle: 'BACK' }] as never);
-
-      const result = await repository.getMuscleGroups();
-
-      expect(result).toEqual(['CHEST', 'BACK']);
-      expect(prismaMock.$queryRaw).toHaveBeenCalled();
-    });
-
-    it('should return empty array if no muscle groups', async () => {
-      prismaMock.$queryRaw.mockResolvedValue([] as never);
-
-      const result = await repository.getMuscleGroups();
-
-      expect(result).toEqual([]);
     });
   });
 

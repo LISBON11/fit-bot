@@ -281,17 +281,6 @@ describe('ExerciseService', () => {
     });
   });
 
-  describe('getMuscleGroups', () => {
-    it('should delegate to repository.getMuscleGroups', async () => {
-      repositoryMock.getMuscleGroups.mockResolvedValue(['chest', 'back'] as never);
-
-      const result = await service.getMuscleGroups();
-
-      expect(repositoryMock.getMuscleGroups).toHaveBeenCalled();
-      expect(result).toEqual(['chest', 'back']);
-    });
-  });
-
   describe('getByMuscleGroup', () => {
     it('should delegate to repository.getByMuscleGroup with values array', async () => {
       repositoryMock.getByMuscleGroup.mockResolvedValue([mockExercise1] as never);

@@ -2,7 +2,7 @@ import { createLogger } from '../logger/logger.js';
 
 const logger = createLogger('retry');
 
-export interface RetryOptions {
+interface RetryOptions {
   maxRetries?: number;
   baseDelayMs?: number;
   shouldRetry?: (error: unknown) => boolean;

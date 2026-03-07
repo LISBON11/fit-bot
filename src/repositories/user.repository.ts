@@ -10,17 +10,6 @@ export class UserRepository {
   }
 
   /**
-   * Находит пользователя по его уникальному внутреннему ID
-   * @param id ID пользователя
-   * @returns Данные пользователя или null, если не найден
-   */
-  async findById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { id },
-    });
-  }
-
-  /**
    * Находит пользователя по его Telegram ID
    * @param telegramId Идентификатор пользователя в Telegram
    * @returns Данные пользователя или null, если не найден

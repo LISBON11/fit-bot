@@ -141,16 +141,6 @@ export class ExerciseRepository {
   }
 
   /**
-   * Возвращает упражнение по ID
-   * @param id ID упражнения
-   */
-  async findById(id: string): Promise<Exercise | null> {
-    return this.prisma.exercise.findUnique({
-      where: { id },
-    });
-  }
-
-  /**
    * Создает новое упражнение
    * @param data Данные для создания
    */
@@ -203,21 +193,6 @@ export class ExerciseRepository {
       },
       take: limit,
     });
-  }
-
-  /**
-   * Возвращает отсортированный список уникальных групп мышц из всех глобальных упражнений.
-   * Возвращает уникальные значения поля `primaryMuscles`.
-   * @returns Массив строк с уникальными группами мышц
-   */
-  async getMuscleGroups(): Promise<string[]> {
-    const rows = await this.prisma.$queryRaw<Array<{ muscle: string }>>`
-      SELECT DISTINCT unnest(primary_muscles) as muscle
-      FROM exercises
-      WHERE is_global = true
-      ORDER BY muscle ASC
-    `;
-    return rows.map((r) => r.muscle);
   }
 
   /**

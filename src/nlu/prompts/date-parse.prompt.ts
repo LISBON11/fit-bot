@@ -15,5 +15,3 @@ export const dateParseSystemPrompt = `
 export const DateParseSchema = z.object({
   date: z.string().describe('Дата в формате YYYY-MM-DD'),
 });
-
-export type DateParseResult = z.infer<typeof DateParseSchema>;

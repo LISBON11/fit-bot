@@ -9,7 +9,7 @@ import type { WorkoutWithRelations } from '../bot/formatters/workoutFormatter.js
 /**
  * Результат создания черновика тренировки
  */
-export type CreateDraftResult =
+type CreateDraftResult =
   | { status: 'created'; workout: Workout }
   | { status: 'needs_disambiguation'; ambiguousExercises: ParsedExercise[] };
 

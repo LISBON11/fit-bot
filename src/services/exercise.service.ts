@@ -143,15 +143,6 @@ export class ExerciseService {
   }
 
   /**
-   * Возвращает список уникальных групп мышц из всех глобальных упражнений.
-   * Используется для первого шага голосового выбора — кнопки категорий.
-   * @returns Массив строк с названиями групп мышц
-   */
-  async getMuscleGroups(): Promise<string[]> {
-    return this.exerciseRepository.getMuscleGroups();
-  }
-
-  /**
    * Возвращает глобальные упражнения по группе мышц.
    * @param muscleGroupValues Массив английских ключей из БД (из MuscleGroupEntry.dbValues)
    * @returns Список упражнений

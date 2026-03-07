@@ -13,7 +13,7 @@ import { WorkoutStep } from './progressTracker.js';
 
 const logger = createLogger('WorkoutFlowHelper');
 
-export type WorkoutFlowMode = 'new' | 'edit';
+type WorkoutFlowMode = 'new' | 'edit';
 
 export async function parseAndDisambiguateUserInput({
   conversation,

@@ -21,7 +21,7 @@ const envSchema = z.object({
 });
 
 /** Тип конфигурации, выведенный из Zod-схемы */
-export type EnvConfig = z.infer<typeof envSchema>;
+type EnvConfig = z.infer<typeof envSchema>;
 
 /** Типизированный объект конфигурации (загружается один раз при старте) */
 let _config: EnvConfig | null = null;

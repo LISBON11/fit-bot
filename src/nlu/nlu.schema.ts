@@ -7,7 +7,7 @@ import { EQUIPMENT_TYPES } from '../constants/equipment.js';
 /**
  * Zod схема для одного подхода упражнения
  */
-export const ParsedSetSchema = z
+const ParsedSetSchema = z
   .object({
     weight: z.number().nullable().describe('Вес отягощения в килограммах'),
     reps: z.number().nullable().describe('Количество повторений'),
@@ -25,7 +25,7 @@ export const ParsedSetSchema = z
 /**
  * Zod схема для комментария к упражнению или тренировке
  */
-export const ParsedCommentSchema = z
+const ParsedCommentSchema = z
   .object({
     text: z.string().describe('Текст комментария или заметки'),
   })
@@ -34,7 +34,7 @@ export const ParsedCommentSchema = z
 /**
  * Zod схема для одного распознанного упражнения
  */
-export const ParsedExerciseSchema = z
+const ParsedExerciseSchema = z
   .object({
     originalName: z.string().describe('Название упражнения так, как его произнес пользователь'),
     mappedExerciseId: z
@@ -94,9 +94,3 @@ export const ParsedWorkoutSchema = z
       .describe('Общие комментарии, не относящиеся к конкретному упражнению'),
   })
   .describe('Распознанная структура всей тренировки');
-
-// Экспорт типов, выведенных из Zod (для проверок совместимости с nlu.types.ts)
-/**
- * Тип распознанной тренировки, выведенный из Zod схемы
- */
-export type ZodParsedWorkout = z.infer<typeof ParsedWorkoutSchema>;

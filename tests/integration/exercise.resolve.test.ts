@@ -1,4 +1,9 @@
-import { PrismaClient } from '../../src/generated/prisma/index.js';
+import {
+  PrismaClient,
+  Muscle,
+  MovementPattern,
+  Equipment,
+} from '../../src/generated/prisma/index.js';
 import { exerciseService } from '../../src/services/index.js';
 
 import { Pool } from 'pg';
@@ -33,17 +38,19 @@ describe('Exercise Resolving Integration', () => {
           canonicalName: 'deadlift',
           displayNameRu: 'Становая тяга',
           isGlobal: true,
-          primaryMuscle: 'back',
+          primaryMuscles: [Muscle.BACK],
+          secondaryMuscles: [],
         },
         {
           id: '22222222-2222-2222-2222-222222222222',
           canonicalName: 'romanian_deadlift',
           displayNameRu: 'Румынская тяга',
           displayNameEn: 'Back Squat',
-          movementPattern: 'squat',
-          equipment: 'barbell',
+          movementPattern: MovementPattern.SQUAT,
+          equipment: Equipment.BARBELL,
           isGlobal: true,
-          primaryMuscle: 'legs',
+          primaryMuscles: [Muscle.LEGS],
+          secondaryMuscles: [],
         },
       ],
     });

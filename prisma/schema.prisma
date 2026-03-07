@@ -80,18 +80,72 @@ enum ExerciseCategory {
   CARDIO
 }
 
+enum Equipment {
+  BARBELL
+  DUMBBELL
+  MACHINE
+  CABLE
+  BODYWEIGHT
+  KETTLEBELL
+  SMITH_MACHINE
+  RESISTANCE_BAND
+}
+
+enum MovementPattern {
+  PUSH
+  PULL
+  STATIC
+  SQUAT
+  HINGE
+  LUNGE
+  CARRY
+  ISOLATION
+}
+
+enum Muscle {
+  ABDOMINALS
+  ABDUCTORS
+  ADDUCTORS
+  BACK
+  BICEPS
+  CALVES
+  CHEST
+  FOREARMS
+  GLUTES
+  HAMSTRINGS
+  LATS
+  LEGS
+  LOWER_BACK
+  MIDDLE_BACK
+  QUADRICEPS
+  SHOULDERS
+  TRAPS
+  TRICEPS
+}
+
+enum ExerciseType {
+  STRENGTH
+  PLYOMETRICS
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  EXPERT
+}
+
 model Exercise {
   id               String            @id @default(uuid()) @db.Uuid
   canonicalName    String            @unique @map("canonical_name")
   displayNameRu    String?           @map("display_name_ru")
   displayNameEn    String?           @map("display_name_en")
-  movementPattern  String?           @map("movement_pattern") // push, pull, squat, hinge, lunge, carry, rotation, core
-  equipment        String? // barbell, dumbbell, machine, cable, bodyweight, kettlebell, smith_machine, resistance_band
-  primaryMuscles   String[]          @map("primary_muscles") // chest, back, shoulders, arms, legs, core, glutes
-  secondaryMuscles String[]          @default([]) @map("secondary_muscles")
-  level            String?
+  movementPattern  MovementPattern?  @map("movement_pattern")
+  equipment        Equipment?
+  primaryMuscles   Muscle[]          @map("primary_muscles")
+  secondaryMuscles Muscle[]          @default([]) @map("secondary_muscles")
+  level            ExperienceLevel?
   instructions     String[]          @default([])
-  exerciseType     String?           @map("exercise_type")
+  exerciseType     ExerciseType?     @map("exercise_type")
   category         ExerciseCategory?
   isGlobal         Boolean           @default(true) @map("is_global")
   createdBy        String?           @map("created_by") @db.Uuid

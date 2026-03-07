@@ -246,10 +246,64 @@ exports.WorkoutStatus = exports.$Enums.WorkoutStatus = {
   CANCELLED: 'CANCELLED',
 };
 
+exports.MovementPattern = exports.$Enums.MovementPattern = {
+  PUSH: 'PUSH',
+  PULL: 'PULL',
+  STATIC: 'STATIC',
+  SQUAT: 'SQUAT',
+  HINGE: 'HINGE',
+  LUNGE: 'LUNGE',
+  CARRY: 'CARRY',
+  ISOLATION: 'ISOLATION',
+};
+
+exports.Equipment = exports.$Enums.Equipment = {
+  BARBELL: 'BARBELL',
+  DUMBBELL: 'DUMBBELL',
+  MACHINE: 'MACHINE',
+  CABLE: 'CABLE',
+  BODYWEIGHT: 'BODYWEIGHT',
+  KETTLEBELL: 'KETTLEBELL',
+  SMITH_MACHINE: 'SMITH_MACHINE',
+  RESISTANCE_BAND: 'RESISTANCE_BAND',
+};
+
+exports.ExperienceLevel = exports.$Enums.ExperienceLevel = {
+  BEGINNER: 'BEGINNER',
+  INTERMEDIATE: 'INTERMEDIATE',
+  EXPERT: 'EXPERT',
+};
+
+exports.ExerciseType = exports.$Enums.ExerciseType = {
+  STRENGTH: 'STRENGTH',
+  PLYOMETRICS: 'PLYOMETRICS',
+};
+
 exports.ExerciseCategory = exports.$Enums.ExerciseCategory = {
   COMPOUND: 'COMPOUND',
   ISOLATION: 'ISOLATION',
   CARDIO: 'CARDIO',
+};
+
+exports.Muscle = exports.$Enums.Muscle = {
+  ABDOMINALS: 'ABDOMINALS',
+  ABDUCTORS: 'ABDUCTORS',
+  ADDUCTORS: 'ADDUCTORS',
+  BACK: 'BACK',
+  BICEPS: 'BICEPS',
+  CALVES: 'CALVES',
+  CHEST: 'CHEST',
+  FOREARMS: 'FOREARMS',
+  GLUTES: 'GLUTES',
+  HAMSTRINGS: 'HAMSTRINGS',
+  LATS: 'LATS',
+  LEGS: 'LEGS',
+  LOWER_BACK: 'LOWER_BACK',
+  MIDDLE_BACK: 'MIDDLE_BACK',
+  QUADRICEPS: 'QUADRICEPS',
+  SHOULDERS: 'SHOULDERS',
+  TRAPS: 'TRAPS',
+  TRICEPS: 'TRICEPS',
 };
 
 exports.WeightUnit = exports.$Enums.WeightUnit = {

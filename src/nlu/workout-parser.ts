@@ -47,7 +47,8 @@ function parseAndValidate<T>({
   }
   try {
     return schema.parse(raw);
-  } catch {
+  } catch (error) {
+    console.error('Zod Error:', error);
     throw new NluParseError(`Ответ LLM не соответствует ожидаемой схеме`);
   }
 }
@@ -114,7 +115,7 @@ export class WorkoutParser {
 
       const parsedData = parseAndValidate<ParsedWorkout>({
         content: content,
-        schema: ParsedWorkoutSchema,
+        schema: ParsedWorkoutSchema as unknown as { parse: (data: unknown) => ParsedWorkout },
       });
 
       logger.info(
@@ -186,7 +187,7 @@ export class WorkoutParser {
 
       const parsedData = parseAndValidate<ParsedWorkout>({
         content: content,
-        schema: ParsedWorkoutSchema,
+        schema: ParsedWorkoutSchema as unknown as { parse: (data: unknown) => ParsedWorkout },
       });
 
       logger.info({ durationMs: Date.now() - start }, 'Изменения успешно применены с помощью NLU');

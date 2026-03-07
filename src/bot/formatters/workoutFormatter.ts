@@ -1,7 +1,7 @@
 import type { Prisma } from '../../generated/prisma/index.js';
 
 import { MUSCLE_GROUPS, type MuscleGroupEntry } from '../keyboards/muscleGroupPicker.js';
-import type { PrimaryMuscle } from '../../constants/muscleGroups.js';
+import { type Muscle } from '../../constants/muscleGroups.js';
 
 export type WorkoutWithRelations = Prisma.WorkoutGetPayload<{
   include: {
@@ -115,22 +115,22 @@ export function formatPreview(workout: WorkoutWithRelations): string {
   const dayOfWeek = WEEK_DAYS_RU[workoutDateObj.getDay()];
   const headerLines: string[] = [`🗓 <b>${dateStr}, ${dayOfWeek}</b>`];
 
-  if (workout.focus && workout.focus.length > 0) {
-    const formattedFocus = Array.from(
+  if (workout.focus.length > 0) {
+    const translatedFocus = Array.from(
       new Set(
         workout.focus.map((f) => {
-          const lowerF = f.toLowerCase();
           const group = MUSCLE_GROUPS.find((g: MuscleGroupEntry) =>
-            g.dbValues.includes(lowerF as PrimaryMuscle),
+            g.dbValues.includes(f as Muscle),
           );
           if (group) return group.label;
           return f.charAt(0).toUpperCase() + f.slice(1);
         }),
       ),
-    ).join(', ');
+    );
+    const focusStr = translatedFocus.join(', ');
 
-    if (formattedFocus) {
-      headerLines.push(`🏋 <b>${escapeHtml(formattedFocus)}</b>`);
+    if (focusStr) {
+      headerLines.push(`🏋 <b>${escapeHtml(focusStr)}</b>`);
     }
   }
   if (workout.location) {

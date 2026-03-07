@@ -1,12 +1,4 @@
-export const MOVEMENT_PATTERNS = [
-  'push',
-  'pull',
-  'squat',
-  'hinge',
-  'lunge',
-  'carry',
-  'rotation',
-  'core',
-] as const;
+import { MovementPattern } from '../generated/prisma/index.js';
 
-export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
+export { MovementPattern };
+export const MOVEMENT_PATTERNS = Object.values(MovementPattern);

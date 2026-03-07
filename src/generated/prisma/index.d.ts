@@ -77,6 +77,70 @@ export namespace $Enums {
 
   export type ExerciseCategory = (typeof ExerciseCategory)[keyof typeof ExerciseCategory];
 
+  export const Equipment: {
+    BARBELL: 'BARBELL';
+    DUMBBELL: 'DUMBBELL';
+    MACHINE: 'MACHINE';
+    CABLE: 'CABLE';
+    BODYWEIGHT: 'BODYWEIGHT';
+    KETTLEBELL: 'KETTLEBELL';
+    SMITH_MACHINE: 'SMITH_MACHINE';
+    RESISTANCE_BAND: 'RESISTANCE_BAND';
+  };
+
+  export type Equipment = (typeof Equipment)[keyof typeof Equipment];
+
+  export const MovementPattern: {
+    PUSH: 'PUSH';
+    PULL: 'PULL';
+    STATIC: 'STATIC';
+    SQUAT: 'SQUAT';
+    HINGE: 'HINGE';
+    LUNGE: 'LUNGE';
+    CARRY: 'CARRY';
+    ISOLATION: 'ISOLATION';
+  };
+
+  export type MovementPattern = (typeof MovementPattern)[keyof typeof MovementPattern];
+
+  export const Muscle: {
+    ABDOMINALS: 'ABDOMINALS';
+    ABDUCTORS: 'ABDUCTORS';
+    ADDUCTORS: 'ADDUCTORS';
+    BACK: 'BACK';
+    BICEPS: 'BICEPS';
+    CALVES: 'CALVES';
+    CHEST: 'CHEST';
+    FOREARMS: 'FOREARMS';
+    GLUTES: 'GLUTES';
+    HAMSTRINGS: 'HAMSTRINGS';
+    LATS: 'LATS';
+    LEGS: 'LEGS';
+    LOWER_BACK: 'LOWER_BACK';
+    MIDDLE_BACK: 'MIDDLE_BACK';
+    QUADRICEPS: 'QUADRICEPS';
+    SHOULDERS: 'SHOULDERS';
+    TRAPS: 'TRAPS';
+    TRICEPS: 'TRICEPS';
+  };
+
+  export type Muscle = (typeof Muscle)[keyof typeof Muscle];
+
+  export const ExerciseType: {
+    STRENGTH: 'STRENGTH';
+    PLYOMETRICS: 'PLYOMETRICS';
+  };
+
+  export type ExerciseType = (typeof ExerciseType)[keyof typeof ExerciseType];
+
+  export const ExperienceLevel: {
+    BEGINNER: 'BEGINNER';
+    INTERMEDIATE: 'INTERMEDIATE';
+    EXPERT: 'EXPERT';
+  };
+
+  export type ExperienceLevel = (typeof ExperienceLevel)[keyof typeof ExperienceLevel];
+
   export const WeightUnit: {
     KG: 'KG';
     LB: 'LB';
@@ -117,6 +181,26 @@ export const WorkoutStatus: typeof $Enums.WorkoutStatus;
 export type ExerciseCategory = $Enums.ExerciseCategory;
 
 export const ExerciseCategory: typeof $Enums.ExerciseCategory;
+
+export type Equipment = $Enums.Equipment;
+
+export const Equipment: typeof $Enums.Equipment;
+
+export type MovementPattern = $Enums.MovementPattern;
+
+export const MovementPattern: typeof $Enums.MovementPattern;
+
+export type Muscle = $Enums.Muscle;
+
+export const Muscle: typeof $Enums.Muscle;
+
+export type ExerciseType = $Enums.ExerciseType;
+
+export const ExerciseType: typeof $Enums.ExerciseType;
+
+export type ExperienceLevel = $Enums.ExperienceLevel;
+
+export const ExperienceLevel: typeof $Enums.ExperienceLevel;
 
 export type WeightUnit = $Enums.WeightUnit;
 
@@ -5982,10 +6066,10 @@ export namespace Prisma {
     canonicalName: string | null;
     displayNameRu: string | null;
     displayNameEn: string | null;
-    movementPattern: string | null;
-    equipment: string | null;
-    level: string | null;
-    exerciseType: string | null;
+    movementPattern: $Enums.MovementPattern | null;
+    equipment: $Enums.Equipment | null;
+    level: $Enums.ExperienceLevel | null;
+    exerciseType: $Enums.ExerciseType | null;
     category: $Enums.ExerciseCategory | null;
     isGlobal: boolean | null;
     createdBy: string | null;
@@ -5997,10 +6081,10 @@ export namespace Prisma {
     canonicalName: string | null;
     displayNameRu: string | null;
     displayNameEn: string | null;
-    movementPattern: string | null;
-    equipment: string | null;
-    level: string | null;
-    exerciseType: string | null;
+    movementPattern: $Enums.MovementPattern | null;
+    equipment: $Enums.Equipment | null;
+    level: $Enums.ExperienceLevel | null;
+    exerciseType: $Enums.ExerciseType | null;
     category: $Enums.ExerciseCategory | null;
     isGlobal: boolean | null;
     createdBy: string | null;
@@ -6153,13 +6237,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu: string | null;
     displayNameEn: string | null;
-    movementPattern: string | null;
-    equipment: string | null;
-    primaryMuscles: string[];
-    secondaryMuscles: string[];
-    level: string | null;
+    movementPattern: $Enums.MovementPattern | null;
+    equipment: $Enums.Equipment | null;
+    primaryMuscles: $Enums.Muscle[];
+    secondaryMuscles: $Enums.Muscle[];
+    level: $Enums.ExperienceLevel | null;
     instructions: string[];
-    exerciseType: string | null;
+    exerciseType: $Enums.ExerciseType | null;
     category: $Enums.ExerciseCategory | null;
     isGlobal: boolean;
     createdBy: string | null;
@@ -6327,13 +6411,13 @@ export namespace Prisma {
           canonicalName: string;
           displayNameRu: string | null;
           displayNameEn: string | null;
-          movementPattern: string | null;
-          equipment: string | null;
-          primaryMuscles: string[];
-          secondaryMuscles: string[];
-          level: string | null;
+          movementPattern: $Enums.MovementPattern | null;
+          equipment: $Enums.Equipment | null;
+          primaryMuscles: $Enums.Muscle[];
+          secondaryMuscles: $Enums.Muscle[];
+          level: $Enums.ExperienceLevel | null;
           instructions: string[];
-          exerciseType: string | null;
+          exerciseType: $Enums.ExerciseType | null;
           category: $Enums.ExerciseCategory | null;
           isGlobal: boolean;
           createdBy: string | null;
@@ -6908,13 +6992,13 @@ export namespace Prisma {
     readonly canonicalName: FieldRef<'Exercise', 'String'>;
     readonly displayNameRu: FieldRef<'Exercise', 'String'>;
     readonly displayNameEn: FieldRef<'Exercise', 'String'>;
-    readonly movementPattern: FieldRef<'Exercise', 'String'>;
-    readonly equipment: FieldRef<'Exercise', 'String'>;
-    readonly primaryMuscles: FieldRef<'Exercise', 'String[]'>;
-    readonly secondaryMuscles: FieldRef<'Exercise', 'String[]'>;
-    readonly level: FieldRef<'Exercise', 'String'>;
+    readonly movementPattern: FieldRef<'Exercise', 'MovementPattern'>;
+    readonly equipment: FieldRef<'Exercise', 'Equipment'>;
+    readonly primaryMuscles: FieldRef<'Exercise', 'Muscle[]'>;
+    readonly secondaryMuscles: FieldRef<'Exercise', 'Muscle[]'>;
+    readonly level: FieldRef<'Exercise', 'ExperienceLevel'>;
     readonly instructions: FieldRef<'Exercise', 'String[]'>;
-    readonly exerciseType: FieldRef<'Exercise', 'String'>;
+    readonly exerciseType: FieldRef<'Exercise', 'ExerciseType'>;
     readonly category: FieldRef<'Exercise', 'ExerciseCategory'>;
     readonly isGlobal: FieldRef<'Exercise', 'Boolean'>;
     readonly createdBy: FieldRef<'Exercise', 'String'>;
@@ -14306,6 +14390,83 @@ export namespace Prisma {
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>;
 
   /**
+   * Reference to a field of type 'MovementPattern'
+   */
+  export type EnumMovementPatternFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'MovementPattern'
+  >;
+
+  /**
+   * Reference to a field of type 'MovementPattern[]'
+   */
+  export type ListEnumMovementPatternFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'MovementPattern[]'
+  >;
+
+  /**
+   * Reference to a field of type 'Equipment'
+   */
+  export type EnumEquipmentFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'Equipment'
+  >;
+
+  /**
+   * Reference to a field of type 'Equipment[]'
+   */
+  export type ListEnumEquipmentFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'Equipment[]'
+  >;
+
+  /**
+   * Reference to a field of type 'Muscle[]'
+   */
+  export type ListEnumMuscleFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'Muscle[]'
+  >;
+
+  /**
+   * Reference to a field of type 'Muscle'
+   */
+  export type EnumMuscleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Muscle'>;
+
+  /**
+   * Reference to a field of type 'ExperienceLevel'
+   */
+  export type EnumExperienceLevelFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'ExperienceLevel'
+  >;
+
+  /**
+   * Reference to a field of type 'ExperienceLevel[]'
+   */
+  export type ListEnumExperienceLevelFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'ExperienceLevel[]'
+  >;
+
+  /**
+   * Reference to a field of type 'ExerciseType'
+   */
+  export type EnumExerciseTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'ExerciseType'
+  >;
+
+  /**
+   * Reference to a field of type 'ExerciseType[]'
+   */
+  export type ListEnumExerciseTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
+    $PrismaModel,
+    'ExerciseType[]'
+  >;
+
+  /**
    * Reference to a field of type 'ExerciseCategory'
    */
   export type EnumExerciseCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<
@@ -14671,13 +14832,13 @@ export namespace Prisma {
     canonicalName?: StringFilter<'Exercise'> | string;
     displayNameRu?: StringNullableFilter<'Exercise'> | string | null;
     displayNameEn?: StringNullableFilter<'Exercise'> | string | null;
-    movementPattern?: StringNullableFilter<'Exercise'> | string | null;
-    equipment?: StringNullableFilter<'Exercise'> | string | null;
-    primaryMuscles?: StringNullableListFilter<'Exercise'>;
-    secondaryMuscles?: StringNullableListFilter<'Exercise'>;
-    level?: StringNullableFilter<'Exercise'> | string | null;
+    movementPattern?: EnumMovementPatternNullableFilter<'Exercise'> | $Enums.MovementPattern | null;
+    equipment?: EnumEquipmentNullableFilter<'Exercise'> | $Enums.Equipment | null;
+    primaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+    secondaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+    level?: EnumExperienceLevelNullableFilter<'Exercise'> | $Enums.ExperienceLevel | null;
     instructions?: StringNullableListFilter<'Exercise'>;
-    exerciseType?: StringNullableFilter<'Exercise'> | string | null;
+    exerciseType?: EnumExerciseTypeNullableFilter<'Exercise'> | $Enums.ExerciseType | null;
     category?: EnumExerciseCategoryNullableFilter<'Exercise'> | $Enums.ExerciseCategory | null;
     isGlobal?: BoolFilter<'Exercise'> | boolean;
     createdBy?: UuidNullableFilter<'Exercise'> | string | null;
@@ -14719,13 +14880,16 @@ export namespace Prisma {
       NOT?: ExerciseWhereInput | ExerciseWhereInput[];
       displayNameRu?: StringNullableFilter<'Exercise'> | string | null;
       displayNameEn?: StringNullableFilter<'Exercise'> | string | null;
-      movementPattern?: StringNullableFilter<'Exercise'> | string | null;
-      equipment?: StringNullableFilter<'Exercise'> | string | null;
-      primaryMuscles?: StringNullableListFilter<'Exercise'>;
-      secondaryMuscles?: StringNullableListFilter<'Exercise'>;
-      level?: StringNullableFilter<'Exercise'> | string | null;
+      movementPattern?:
+        | EnumMovementPatternNullableFilter<'Exercise'>
+        | $Enums.MovementPattern
+        | null;
+      equipment?: EnumEquipmentNullableFilter<'Exercise'> | $Enums.Equipment | null;
+      primaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+      secondaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+      level?: EnumExperienceLevelNullableFilter<'Exercise'> | $Enums.ExperienceLevel | null;
       instructions?: StringNullableListFilter<'Exercise'>;
-      exerciseType?: StringNullableFilter<'Exercise'> | string | null;
+      exerciseType?: EnumExerciseTypeNullableFilter<'Exercise'> | $Enums.ExerciseType | null;
       category?: EnumExerciseCategoryNullableFilter<'Exercise'> | $Enums.ExerciseCategory | null;
       isGlobal?: BoolFilter<'Exercise'> | boolean;
       createdBy?: UuidNullableFilter<'Exercise'> | string | null;
@@ -14767,13 +14931,22 @@ export namespace Prisma {
     canonicalName?: StringWithAggregatesFilter<'Exercise'> | string;
     displayNameRu?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
     displayNameEn?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
-    movementPattern?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
-    equipment?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
-    primaryMuscles?: StringNullableListFilter<'Exercise'>;
-    secondaryMuscles?: StringNullableListFilter<'Exercise'>;
-    level?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
+    movementPattern?:
+      | EnumMovementPatternNullableWithAggregatesFilter<'Exercise'>
+      | $Enums.MovementPattern
+      | null;
+    equipment?: EnumEquipmentNullableWithAggregatesFilter<'Exercise'> | $Enums.Equipment | null;
+    primaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+    secondaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+    level?:
+      | EnumExperienceLevelNullableWithAggregatesFilter<'Exercise'>
+      | $Enums.ExperienceLevel
+      | null;
     instructions?: StringNullableListFilter<'Exercise'>;
-    exerciseType?: StringNullableWithAggregatesFilter<'Exercise'> | string | null;
+    exerciseType?:
+      | EnumExerciseTypeNullableWithAggregatesFilter<'Exercise'>
+      | $Enums.ExerciseType
+      | null;
     category?:
       | EnumExerciseCategoryNullableWithAggregatesFilter<'Exercise'>
       | $Enums.ExerciseCategory
@@ -15444,13 +15617,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -15465,13 +15638,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -15486,13 +15659,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -15510,13 +15686,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -15534,13 +15713,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -15552,13 +15731,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -15572,13 +15754,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -16355,6 +16540,42 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter<$PrismaModel>;
   };
 
+  export type EnumMovementPatternNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.MovementPattern | EnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumMovementPatternNullableFilter<$PrismaModel> | $Enums.MovementPattern | null;
+  };
+
+  export type EnumEquipmentNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Equipment | EnumEquipmentFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumEquipmentNullableFilter<$PrismaModel> | $Enums.Equipment | null;
+  };
+
+  export type EnumMuscleNullableListFilter<$PrismaModel = never> = {
+    equals?: $Enums.Muscle[] | ListEnumMuscleFieldRefInput<$PrismaModel> | null;
+    has?: $Enums.Muscle | EnumMuscleFieldRefInput<$PrismaModel> | null;
+    hasEvery?: $Enums.Muscle[] | ListEnumMuscleFieldRefInput<$PrismaModel>;
+    hasSome?: $Enums.Muscle[] | ListEnumMuscleFieldRefInput<$PrismaModel>;
+    isEmpty?: boolean;
+  };
+
+  export type EnumExperienceLevelNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExperienceLevel | EnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumExperienceLevelNullableFilter<$PrismaModel> | $Enums.ExperienceLevel | null;
+  };
+
+  export type EnumExerciseTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExerciseType | EnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumExerciseTypeNullableFilter<$PrismaModel> | $Enums.ExerciseType | null;
+  };
+
   export type EnumExerciseCategoryNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.ExerciseCategory | EnumExerciseCategoryFieldRefInput<$PrismaModel> | null;
     in?: $Enums.ExerciseCategory[] | ListEnumExerciseCategoryFieldRefInput<$PrismaModel> | null;
@@ -16440,6 +16661,55 @@ export namespace Prisma {
     isGlobal?: SortOrder;
     createdBy?: SortOrder;
     createdAt?: SortOrder;
+  };
+
+  export type EnumMovementPatternNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MovementPattern | EnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    not?:
+      | NestedEnumMovementPatternNullableWithAggregatesFilter<$PrismaModel>
+      | $Enums.MovementPattern
+      | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumMovementPatternNullableFilter<$PrismaModel>;
+    _max?: NestedEnumMovementPatternNullableFilter<$PrismaModel>;
+  };
+
+  export type EnumEquipmentNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Equipment | EnumEquipmentFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumEquipmentNullableWithAggregatesFilter<$PrismaModel> | $Enums.Equipment | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumEquipmentNullableFilter<$PrismaModel>;
+    _max?: NestedEnumEquipmentNullableFilter<$PrismaModel>;
+  };
+
+  export type EnumExperienceLevelNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExperienceLevel | EnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    not?:
+      | NestedEnumExperienceLevelNullableWithAggregatesFilter<$PrismaModel>
+      | $Enums.ExperienceLevel
+      | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumExperienceLevelNullableFilter<$PrismaModel>;
+    _max?: NestedEnumExperienceLevelNullableFilter<$PrismaModel>;
+  };
+
+  export type EnumExerciseTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExerciseType | EnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    not?:
+      | NestedEnumExerciseTypeNullableWithAggregatesFilter<$PrismaModel>
+      | $Enums.ExerciseType
+      | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumExerciseTypeNullableFilter<$PrismaModel>;
+    _max?: NestedEnumExerciseTypeNullableFilter<$PrismaModel>;
   };
 
   export type EnumExerciseCategoryNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -17380,11 +17650,11 @@ export namespace Prisma {
   };
 
   export type ExerciseCreateprimaryMusclesInput = {
-    set: string[];
+    set: $Enums.Muscle[];
   };
 
   export type ExerciseCreatesecondaryMusclesInput = {
-    set: string[];
+    set: $Enums.Muscle[];
   };
 
   export type ExerciseCreateinstructionsInput = {
@@ -17490,19 +17760,35 @@ export namespace Prisma {
     connect?: UserExerciseMappingWhereUniqueInput | UserExerciseMappingWhereUniqueInput[];
   };
 
+  export type NullableEnumMovementPatternFieldUpdateOperationsInput = {
+    set?: $Enums.MovementPattern | null;
+  };
+
+  export type NullableEnumEquipmentFieldUpdateOperationsInput = {
+    set?: $Enums.Equipment | null;
+  };
+
   export type ExerciseUpdateprimaryMusclesInput = {
-    set?: string[];
-    push?: string | string[];
+    set?: $Enums.Muscle[];
+    push?: $Enums.Muscle | $Enums.Muscle[];
   };
 
   export type ExerciseUpdatesecondaryMusclesInput = {
-    set?: string[];
-    push?: string | string[];
+    set?: $Enums.Muscle[];
+    push?: $Enums.Muscle | $Enums.Muscle[];
+  };
+
+  export type NullableEnumExperienceLevelFieldUpdateOperationsInput = {
+    set?: $Enums.ExperienceLevel | null;
   };
 
   export type ExerciseUpdateinstructionsInput = {
     set?: string[];
     push?: string | string[];
+  };
+
+  export type NullableEnumExerciseTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ExerciseType | null;
   };
 
   export type NullableEnumExerciseCategoryFieldUpdateOperationsInput = {
@@ -18300,6 +18586,34 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null;
   };
 
+  export type NestedEnumMovementPatternNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.MovementPattern | EnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumMovementPatternNullableFilter<$PrismaModel> | $Enums.MovementPattern | null;
+  };
+
+  export type NestedEnumEquipmentNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.Equipment | EnumEquipmentFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumEquipmentNullableFilter<$PrismaModel> | $Enums.Equipment | null;
+  };
+
+  export type NestedEnumExperienceLevelNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExperienceLevel | EnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumExperienceLevelNullableFilter<$PrismaModel> | $Enums.ExperienceLevel | null;
+  };
+
+  export type NestedEnumExerciseTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExerciseType | EnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumExerciseTypeNullableFilter<$PrismaModel> | $Enums.ExerciseType | null;
+  };
+
   export type NestedEnumExerciseCategoryNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.ExerciseCategory | EnumExerciseCategoryFieldRefInput<$PrismaModel> | null;
     in?: $Enums.ExerciseCategory[] | ListEnumExerciseCategoryFieldRefInput<$PrismaModel> | null;
@@ -18321,6 +18635,55 @@ export namespace Prisma {
     gt?: string | StringFieldRefInput<$PrismaModel>;
     gte?: string | StringFieldRefInput<$PrismaModel>;
     not?: NestedUuidNullableFilter<$PrismaModel> | string | null;
+  };
+
+  export type NestedEnumMovementPatternNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MovementPattern | EnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.MovementPattern[] | ListEnumMovementPatternFieldRefInput<$PrismaModel> | null;
+    not?:
+      | NestedEnumMovementPatternNullableWithAggregatesFilter<$PrismaModel>
+      | $Enums.MovementPattern
+      | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumMovementPatternNullableFilter<$PrismaModel>;
+    _max?: NestedEnumMovementPatternNullableFilter<$PrismaModel>;
+  };
+
+  export type NestedEnumEquipmentNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.Equipment | EnumEquipmentFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.Equipment[] | ListEnumEquipmentFieldRefInput<$PrismaModel> | null;
+    not?: NestedEnumEquipmentNullableWithAggregatesFilter<$PrismaModel> | $Enums.Equipment | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumEquipmentNullableFilter<$PrismaModel>;
+    _max?: NestedEnumEquipmentNullableFilter<$PrismaModel>;
+  };
+
+  export type NestedEnumExperienceLevelNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExperienceLevel | EnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExperienceLevel[] | ListEnumExperienceLevelFieldRefInput<$PrismaModel> | null;
+    not?:
+      | NestedEnumExperienceLevelNullableWithAggregatesFilter<$PrismaModel>
+      | $Enums.ExperienceLevel
+      | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumExperienceLevelNullableFilter<$PrismaModel>;
+    _max?: NestedEnumExperienceLevelNullableFilter<$PrismaModel>;
+  };
+
+  export type NestedEnumExerciseTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExerciseType | EnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    in?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    notIn?: $Enums.ExerciseType[] | ListEnumExerciseTypeFieldRefInput<$PrismaModel> | null;
+    not?:
+      | NestedEnumExerciseTypeNullableWithAggregatesFilter<$PrismaModel>
+      | $Enums.ExerciseType
+      | null;
+    _count?: NestedIntNullableFilter<$PrismaModel>;
+    _min?: NestedEnumExerciseTypeNullableFilter<$PrismaModel>;
+    _max?: NestedEnumExerciseTypeNullableFilter<$PrismaModel>;
   };
 
   export type NestedEnumExerciseCategoryNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -18625,13 +18988,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -18645,13 +19008,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -18798,13 +19161,13 @@ export namespace Prisma {
     canonicalName?: StringFilter<'Exercise'> | string;
     displayNameRu?: StringNullableFilter<'Exercise'> | string | null;
     displayNameEn?: StringNullableFilter<'Exercise'> | string | null;
-    movementPattern?: StringNullableFilter<'Exercise'> | string | null;
-    equipment?: StringNullableFilter<'Exercise'> | string | null;
-    primaryMuscles?: StringNullableListFilter<'Exercise'>;
-    secondaryMuscles?: StringNullableListFilter<'Exercise'>;
-    level?: StringNullableFilter<'Exercise'> | string | null;
+    movementPattern?: EnumMovementPatternNullableFilter<'Exercise'> | $Enums.MovementPattern | null;
+    equipment?: EnumEquipmentNullableFilter<'Exercise'> | $Enums.Equipment | null;
+    primaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+    secondaryMuscles?: EnumMuscleNullableListFilter<'Exercise'>;
+    level?: EnumExperienceLevelNullableFilter<'Exercise'> | $Enums.ExperienceLevel | null;
     instructions?: StringNullableListFilter<'Exercise'>;
-    exerciseType?: StringNullableFilter<'Exercise'> | string | null;
+    exerciseType?: EnumExerciseTypeNullableFilter<'Exercise'> | $Enums.ExerciseType | null;
     category?: EnumExerciseCategoryNullableFilter<'Exercise'> | $Enums.ExerciseCategory | null;
     isGlobal?: BoolFilter<'Exercise'> | boolean;
     createdBy?: UuidNullableFilter<'Exercise'> | string | null;
@@ -19368,13 +19731,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -19388,13 +19751,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -19424,13 +19787,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19447,13 +19813,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19506,13 +19875,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -19526,13 +19895,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -19622,13 +19991,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19645,13 +20017,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19710,13 +20085,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -19730,13 +20105,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdBy?: string | null;
@@ -19898,13 +20273,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -19921,13 +20299,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -20254,13 +20635,13 @@ export namespace Prisma {
     canonicalName: string;
     displayNameRu?: string | null;
     displayNameEn?: string | null;
-    movementPattern?: string | null;
-    equipment?: string | null;
-    primaryMuscles?: ExerciseCreateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | string[];
-    level?: string | null;
+    movementPattern?: $Enums.MovementPattern | null;
+    equipment?: $Enums.Equipment | null;
+    primaryMuscles?: ExerciseCreateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseCreatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: $Enums.ExperienceLevel | null;
     instructions?: ExerciseCreateinstructionsInput | string[];
-    exerciseType?: string | null;
+    exerciseType?: $Enums.ExerciseType | null;
     category?: $Enums.ExerciseCategory | null;
     isGlobal?: boolean;
     createdAt?: Date | string;
@@ -20371,13 +20752,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -20394,13 +20778,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory
@@ -20417,13 +20804,16 @@ export namespace Prisma {
     canonicalName?: StringFieldUpdateOperationsInput | string;
     displayNameRu?: NullableStringFieldUpdateOperationsInput | string | null;
     displayNameEn?: NullableStringFieldUpdateOperationsInput | string | null;
-    movementPattern?: NullableStringFieldUpdateOperationsInput | string | null;
-    equipment?: NullableStringFieldUpdateOperationsInput | string | null;
-    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | string[];
-    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | string[];
-    level?: NullableStringFieldUpdateOperationsInput | string | null;
+    movementPattern?:
+      | NullableEnumMovementPatternFieldUpdateOperationsInput
+      | $Enums.MovementPattern
+      | null;
+    equipment?: NullableEnumEquipmentFieldUpdateOperationsInput | $Enums.Equipment | null;
+    primaryMuscles?: ExerciseUpdateprimaryMusclesInput | $Enums.Muscle[];
+    secondaryMuscles?: ExerciseUpdatesecondaryMusclesInput | $Enums.Muscle[];
+    level?: NullableEnumExperienceLevelFieldUpdateOperationsInput | $Enums.ExperienceLevel | null;
     instructions?: ExerciseUpdateinstructionsInput | string[];
-    exerciseType?: NullableStringFieldUpdateOperationsInput | string | null;
+    exerciseType?: NullableEnumExerciseTypeFieldUpdateOperationsInput | $Enums.ExerciseType | null;
     category?:
       | NullableEnumExerciseCategoryFieldUpdateOperationsInput
       | $Enums.ExerciseCategory

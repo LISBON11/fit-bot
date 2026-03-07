@@ -120,8 +120,11 @@ export class ExerciseService {
       isGlobal: false,
       movementPattern: null,
       equipment: null,
-      primaryMuscle: 'unknown',
+      primaryMuscles: [],
       secondaryMuscles: [],
+      level: null,
+      instructions: [],
+      exerciseType: null,
       category: null,
       createdBy: userId,
     });

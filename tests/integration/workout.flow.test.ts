@@ -1,4 +1,9 @@
-import { PrismaClient } from '../../src/generated/prisma/index.js';
+import {
+  PrismaClient,
+  Muscle,
+  MovementPattern,
+  Equipment,
+} from '../../src/generated/prisma/index.js';
 import { workoutService } from '../../src/services/index.js';
 import type { ParsedWorkout } from '../../src/nlu/nlu.types.js';
 
@@ -31,7 +36,7 @@ describe('Workout Flow Integration', () => {
         displayNameRu: 'Приседания со штангой',
         displayNameEn: 'Barbell Squat',
         isGlobal: true,
-        primaryMuscle: 'legs',
+        primaryMuscles: [Muscle.LEGS],
         secondaryMuscles: [],
       },
     });
@@ -39,22 +44,25 @@ describe('Workout Flow Integration', () => {
     await prisma.exerciseSynonym.create({
       data: {
         exerciseId: '11111111-1111-1111-1111-111111111111',
-        synonym: 'присед',
+        synonym: 'приседания',
         language: 'ru',
       },
     });
   });
 
+  // 2. Mock DeepSeek NLU
+  // We mock NLU to return a parsed workout with 'squat' matching our DB entry
   const sampleParsedWorkout: ParsedWorkout = {
-    date: new Date().toISOString().split('T')[0],
-    focus: ['legs'],
+    date: '2023-11-01',
+    location: 'Gym',
+    focus: [Muscle.LEGS],
     exercises: [
       {
         originalName: 'присед',
         mappedExerciseId: null,
         isAmbiguous: false,
-        movementPattern: 'squat',
-        equipment: 'barbell',
+        movementPattern: MovementPattern.SQUAT,
+        equipment: Equipment.BARBELL,
         sets: [
           { reps: 10, weight: 60, duration: null, distance: null, rpe: null },
           { reps: 8, weight: 65, duration: null, distance: null, rpe: null },

@@ -1,6 +1,12 @@
 import { formatPreview, formatPublish, formatWorkoutForNlu } from '../workoutFormatter.js';
 import type { WorkoutWithRelations } from '../workoutFormatter.js';
-import { Prisma, WeightUnit } from '../../../generated/prisma/index.js';
+import {
+  Prisma,
+  WeightUnit,
+  Muscle,
+  Equipment,
+  MovementPattern,
+} from '../../../generated/prisma/index.js';
 
 describe('workoutFormatter', () => {
   const getMockWorkout = () =>
@@ -13,7 +19,7 @@ describe('workoutFormatter', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       location: 'Gym',
-      focus: ['Legs', 'Back'],
+      focus: ['LEGS', 'LATS'],
       publisherId: null,
       workoutExercises: [
         {
@@ -23,6 +29,10 @@ describe('workoutFormatter', () => {
           order: 1,
           updatedAt: new Date(),
           exercise: {
+            movementPattern: MovementPattern.PUSH,
+            equipment: Equipment.BARBELL,
+            primaryMuscles: [Muscle.QUADRICEPS],
+            secondaryMuscles: [],
             id: 'e1',
             canonicalName: 'Squat',
             displayNameRu: 'Приседания',
@@ -206,7 +216,7 @@ describe('workoutFormatter', () => {
       const dto = formatWorkoutForNlu(workout);
 
       expect(dto.date).toBe('2023-10-25');
-      expect(dto.focus).toEqual(['Legs', 'Back']);
+      expect(dto.focus).toEqual(['LEGS', 'LATS']);
       expect(dto.location).toBe('Gym');
       expect(dto.comments).toEqual(['Great workout']);
 

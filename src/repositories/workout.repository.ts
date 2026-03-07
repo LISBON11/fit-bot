@@ -27,8 +27,8 @@ export class WorkoutRepository {
     const uniqueMuscles = new Set<string>();
 
     for (const we of workoutExercises) {
-      if (we.exercise.primaryMuscle) {
-        uniqueMuscles.add(we.exercise.primaryMuscle);
+      if (we.exercise.primaryMuscles) {
+        we.exercise.primaryMuscles.forEach((muscle) => uniqueMuscles.add(muscle));
       }
       we.exercise.secondaryMuscles.forEach((muscle) => uniqueMuscles.add(muscle));
     }

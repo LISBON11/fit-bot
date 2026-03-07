@@ -2,6 +2,7 @@ import type { DeepMockProxy } from 'jest-mock-extended';
 import { createMockExerciseRepository } from '../../__tests__/utils/mockRepositories.js';
 import { ExerciseService } from '../exercise.service.js';
 import type { ExerciseRepository } from '../../repositories/exercise.repository.js';
+import { MovementPattern, Equipment, Muscle } from '../../generated/prisma/index.js';
 import type { Exercise, UserExerciseMapping } from '../../generated/prisma/index.js';
 
 describe('ExerciseService', () => {
@@ -13,14 +14,17 @@ describe('ExerciseService', () => {
     canonicalName: 'squat',
     displayNameRu: 'Присед',
     displayNameEn: 'Squat',
-    movementPattern: 'squat',
-    equipment: 'barbell',
-    primaryMuscle: 'legs',
+    movementPattern: MovementPattern.SQUAT,
+    equipment: Equipment.BARBELL,
+    primaryMuscles: [Muscle.LEGS],
     secondaryMuscles: [],
     category: 'COMPOUND',
     isGlobal: true,
     createdBy: null,
     createdAt: new Date(),
+    level: null,
+    instructions: [],
+    exerciseType: null,
   };
 
   const mockExercise2: Exercise = {
@@ -28,14 +32,17 @@ describe('ExerciseService', () => {
     canonicalName: 'front_squat',
     displayNameRu: 'Фронтальный присед',
     displayNameEn: 'Front Squat',
-    movementPattern: 'squat',
-    equipment: 'barbell',
-    primaryMuscle: 'legs',
+    movementPattern: MovementPattern.SQUAT,
+    equipment: Equipment.BARBELL,
+    primaryMuscles: [Muscle.LEGS],
     secondaryMuscles: [],
     category: 'COMPOUND',
     isGlobal: true,
     createdBy: null,
     createdAt: new Date(),
+    level: null,
+    instructions: [],
+    exerciseType: null,
   };
 
   beforeEach(() => {
@@ -230,9 +237,12 @@ describe('ExerciseService', () => {
         displayNameEn: null,
         movementPattern: null,
         equipment: null,
-        primaryMuscle: 'unknown',
+        primaryMuscles: [],
         secondaryMuscles: [],
         category: null,
+        level: null,
+        instructions: [],
+        exerciseType: null,
         isGlobal: false,
         createdBy: 'user1',
         createdAt: new Date(),

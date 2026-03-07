@@ -1,6 +1,16 @@
 import { formatPreview } from '../../formatters/workoutFormatter.js';
 import type { WorkoutWithRelations } from '../../formatters/workoutFormatter.js';
-import { WorkoutStatus, CommentType, Prisma, WeightUnit } from '../../../generated/prisma/index.js';
+import {
+  WorkoutStatus,
+  CommentType,
+  Prisma,
+  WeightUnit,
+  MovementPattern,
+  Equipment,
+  Muscle,
+  ExerciseType,
+  ExperienceLevel,
+} from '../../../generated/prisma/index.js';
 
 describe('workoutFormatter', () => {
   it('должен корректно форматировать тренировку со всеми связями', () => {
@@ -9,7 +19,7 @@ describe('workoutFormatter', () => {
       userId: 'mock-user',
       workoutDate: new Date('2026-02-21T12:00:00Z'),
       status: WorkoutStatus.DRAFT,
-      focus: ['Legs', 'Glutes'],
+      focus: ['LEGS', 'GLUTES'],
       location: 'Alushta Home',
       comment: null,
       rawTranscript: null,
@@ -29,10 +39,13 @@ describe('workoutFormatter', () => {
             canonicalName: 'back_squat',
             displayNameRu: 'Приседания со штангой',
             displayNameEn: 'Back Squat',
-            movementPattern: 'squat',
-            equipment: 'barbell',
-            primaryMuscle: 'legs',
+            movementPattern: MovementPattern.PUSH,
+            equipment: Equipment.BARBELL,
+            primaryMuscles: [Muscle.QUADRICEPS, Muscle.GLUTES],
             secondaryMuscles: [],
+            level: ExperienceLevel.INTERMEDIATE,
+            exerciseType: ExerciseType.STRENGTH,
+            instructions: [],
             category: 'COMPOUND',
             isGlobal: true,
             createdBy: null,

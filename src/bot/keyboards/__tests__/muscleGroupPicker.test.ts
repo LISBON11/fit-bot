@@ -4,12 +4,13 @@ import {
   MUSCLE_GROUPS,
 } from '../muscleGroupPicker.js';
 import type { MuscleGroupEntry } from '../muscleGroupPicker.js';
+import { Muscle } from '../../../generated/prisma/index.js';
 
 describe('createMuscleGroupPickerKeyboard', () => {
   const groups: MuscleGroupEntry[] = [
-    { label: 'Грудь', dbValues: ['chest'] },
-    { label: 'Спина', dbValues: ['back'] },
-    { label: 'Ноги', dbValues: ['legs'] },
+    { label: 'Грудь', dbValues: [Muscle.CHEST] },
+    { label: 'Спина', dbValues: [Muscle.BACK] },
+    { label: 'Ноги', dbValues: [Muscle.LEGS] },
   ];
 
   it('should create a button for each muscle group with mg:{index} callback', () => {

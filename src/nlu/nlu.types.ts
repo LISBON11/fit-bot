@@ -1,4 +1,4 @@
-import type { PrimaryMuscle } from '../constants/muscleGroups.js';
+import type { Muscle } from '../constants/muscleGroups.js';
 import type { MovementPattern } from '../constants/movementPatterns.js';
 import type { Equipment } from '../constants/equipment.js';
 
@@ -29,6 +29,8 @@ export interface ParsedExercise {
   isAmbiguous: boolean; // Требует уточнения
   movementPattern?: MovementPattern | null;
   equipment?: Equipment | null;
+  primaryMuscle?: Muscle | null;
+  secondaryMuscles?: Muscle[] | null;
   sets: ParsedSet[];
   comments: ParsedComment[];
 }
@@ -39,7 +41,7 @@ export interface ParsedExercise {
 export interface ParsedWorkout {
   date: string; // YYYY-MM-DD
   location?: string | null;
-  focus: PrimaryMuscle[];
+  focus: Muscle[];
   exercises: ParsedExercise[];
   generalComments: ParsedComment[];
 }

@@ -1,11 +1,4 @@
-export const PRIMARY_MUSCLES = [
-  'chest',
-  'back',
-  'shoulders',
-  'arms',
-  'legs',
-  'core',
-  'glutes',
-] as const;
+import { Muscle } from '../generated/prisma/index.js';
 
-export type PrimaryMuscle = (typeof PRIMARY_MUSCLES)[number];
+export { Muscle };
+export const MUSCLE_GROUPS = Object.values(Muscle);

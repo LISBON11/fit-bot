@@ -1,7 +1,15 @@
 import type { DeepMockProxy } from 'jest-mock-extended';
 import { createMockPrismaClient } from '../../__tests__/utils/mockPrisma.js';
 import { ExerciseRepository } from '../exercise.repository.js';
-import type { PrismaClient } from '../../generated/prisma/index.js';
+import {
+  Muscle,
+  MovementPattern,
+  Equipment,
+  ExperienceLevel,
+  ExerciseType,
+  type PrismaClient,
+  type Exercise,
+} from '../../generated/prisma/index.js';
 
 describe('ExerciseRepository', () => {
   let repository: ExerciseRepository;
@@ -167,24 +175,27 @@ describe('ExerciseRepository', () => {
   describe('create', () => {
     it('should create an exercise', async () => {
       const data = {
-        name: 'Squat',
         canonicalName: 'squat',
         displayNameRu: 'Приседания',
         displayNameEn: 'Squat',
-        description: null,
-        videoUrl: null,
-        bodyParts: ['Legs'],
-        movementPattern: 'squat',
-        equipment: 'barbell',
-        primaryMuscle: 'legs',
-        secondaryMuscles: ['quads', 'glutes'],
+        movementPattern: MovementPattern.PUSH,
+        equipment: Equipment.BARBELL,
+        primaryMuscles: [Muscle.QUADRICEPS],
+        secondaryMuscles: [Muscle.GLUTES],
+        level: ExperienceLevel.INTERMEDIATE,
+        instructions: [],
+        exerciseType: ExerciseType.STRENGTH,
         category: null,
         isGlobal: true,
         createdBy: null,
       };
-      prismaMock.exercise.create.mockResolvedValue({ id: 'e1', ...data } as never);
+      prismaMock.exercise.create.mockResolvedValue({
+        id: 'e1',
+        createdAt: new Date(),
+        ...data,
+      } as never);
 
-      const result = await repository.create(data);
+      const result = await repository.create(data as unknown as Omit<Exercise, 'id' | 'createdAt'>);
 
       expect(prismaMock.exercise.create).toHaveBeenCalledWith({ data });
       expect(result.id).toBe('e1');
@@ -214,14 +225,11 @@ describe('ExerciseRepository', () => {
 
   describe('getMuscleGroups', () => {
     it('should return unique muscle groups via $queryRaw', async () => {
-      prismaMock.$queryRaw.mockResolvedValue([
-        { primary_muscle: 'грудь' },
-        { primary_muscle: 'спина' },
-      ] as never);
+      prismaMock.$queryRaw.mockResolvedValue([{ muscle: 'CHEST' }, { muscle: 'BACK' }] as never);
 
       const result = await repository.getMuscleGroups();
 
-      expect(result).toEqual(['грудь', 'спина']);
+      expect(result).toEqual(['CHEST', 'BACK']);
       expect(prismaMock.$queryRaw).toHaveBeenCalled();
     });
 
@@ -235,16 +243,16 @@ describe('ExerciseRepository', () => {
   });
 
   describe('getByMuscleGroup', () => {
-    it('should filter exercises by primaryMuscle', async () => {
-      const mockExercises = [{ id: 'e1', primaryMuscle: 'грудь' }];
+    it('should filter exercises by primaryMuscles', async () => {
+      const mockExercises = [{ id: 'e1', primaryMuscles: ['CHEST'] }];
       prismaMock.exercise.findMany.mockResolvedValue(mockExercises as never);
 
-      const result = await repository.getByMuscleGroup(['грудь']);
+      const result = await repository.getByMuscleGroup(['CHEST']);
 
       expect(prismaMock.exercise.findMany).toHaveBeenCalledWith({
         where: {
           isGlobal: true,
-          primaryMuscle: { in: ['грудь'] },
+          primaryMuscles: { hasSome: ['CHEST'] },
         },
         orderBy: { displayNameRu: 'asc' },
       });

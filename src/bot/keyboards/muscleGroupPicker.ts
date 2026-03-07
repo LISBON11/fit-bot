@@ -1,5 +1,5 @@
 import { InlineKeyboard } from 'grammy';
-import type { PrimaryMuscle } from '../../constants/muscleGroups.js';
+import type { Muscle } from '../../constants/muscleGroups.js';
 
 /**
  * Описание группы мышц для навигации.
@@ -10,21 +10,45 @@ export interface MuscleGroupEntry {
   /** Отображаемое русское название кнопки */
   label: string;
   /** Значения в поле primaryMuscle в БД (английские строки из seed) */
-  dbValues: ReadonlyArray<PrimaryMuscle>;
+  dbValues: ReadonlyArray<Muscle>;
 }
 
 /**
  * Фиксированный маппинг групп мышц: русское название → английские значения в БД.
+ */
+/**
  * Редактируй этот список при необходимости — запрос в БД не нужен.
  */
 export const MUSCLE_GROUPS: ReadonlyArray<MuscleGroupEntry> = [
-  { label: 'Грудь', dbValues: ['chest'] },
-  { label: 'Спина', dbValues: ['back'] },
-  { label: 'Плечи', dbValues: ['shoulders'] },
-  { label: 'Руки', dbValues: ['arms'] },
-  { label: 'Пресс', dbValues: ['core'] },
-  { label: 'Ноги', dbValues: ['legs'] },
-  { label: 'Ягодицы', dbValues: ['glutes'] },
+  { label: 'Грудь', dbValues: ['CHEST'] },
+  {
+    label: 'Спина',
+    dbValues: [
+      'LATS',
+      'MIDDLE_BACK',
+      'LOWER_BACK',
+      'TRAPS',
+      'BACK',
+    ] as unknown as ReadonlyArray<Muscle>,
+  },
+  { label: 'Плечи', dbValues: ['SHOULDERS'] },
+  {
+    label: 'Руки',
+    dbValues: ['BICEPS', 'TRICEPS', 'FOREARMS', 'ARMS'] as unknown as ReadonlyArray<Muscle>,
+  },
+  { label: 'Пресс', dbValues: ['ABDOMINALS'] },
+  {
+    label: 'Ноги',
+    dbValues: [
+      'QUADRICEPS',
+      'HAMSTRINGS',
+      'CALVES',
+      'ABDUCTORS',
+      'ADDUCTORS',
+      'LEGS',
+    ] as unknown as ReadonlyArray<Muscle>,
+  },
+  { label: 'Ягодицы', dbValues: ['GLUTES'] },
 ] as const;
 
 /**

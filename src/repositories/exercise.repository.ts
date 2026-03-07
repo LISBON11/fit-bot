@@ -4,6 +4,7 @@ import type {
   Prisma,
   UserExerciseMapping,
   ExerciseSynonym,
+  Muscle,
 } from '../generated/prisma/index.js';
 
 /**
@@ -206,22 +207,22 @@ export class ExerciseRepository {
 
   /**
    * Возвращает отсортированный список уникальных групп мышц из всех глобальных упражнений.
-   * Возвращает уникальные значения поля `primaryMuscle`.
+   * Возвращает уникальные значения поля `primaryMuscles`.
    * @returns Массив строк с уникальными группами мышц
    */
   async getMuscleGroups(): Promise<string[]> {
-    const rows = await this.prisma.$queryRaw<Array<{ primary_muscle: string }>>`
-      SELECT DISTINCT primary_muscle
+    const rows = await this.prisma.$queryRaw<Array<{ muscle: string }>>`
+      SELECT DISTINCT unnest(primary_muscles) as muscle
       FROM exercises
       WHERE is_global = true
-      ORDER BY primary_muscle ASC
+      ORDER BY muscle ASC
     `;
-    return rows.map((r) => r.primary_muscle);
+    return rows.map((r) => r.muscle);
   }
 
   /**
-   * Возвращает глобальные упражнения, у которых `primaryMuscle` соответствует
-   * одному из переданных значений.
+   * Возвращает глобальные упражнения, у которых `primaryMuscles` пересекается с
+   * переданными значениями.
    * @param muscleGroupValues Массив английских ключей из БД (из MuscleGroupEntry.dbValues)
    * @returns Список упражнений данной группы мышц
    */
@@ -229,7 +230,7 @@ export class ExerciseRepository {
     return this.prisma.exercise.findMany({
       where: {
         isGlobal: true,
-        primaryMuscle: { in: muscleGroupValues },
+        primaryMuscles: { hasSome: muscleGroupValues as Muscle[] },
       },
       orderBy: { displayNameRu: 'asc' },
     });

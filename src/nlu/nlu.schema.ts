@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { PRIMARY_MUSCLES } from '../constants/muscleGroups.js';
+import { MUSCLE_GROUPS } from '../constants/muscleGroups.js';
 import { MOVEMENT_PATTERNS } from '../constants/movementPatterns.js';
 import { EQUIPMENT_TYPES } from '../constants/equipment.js';
 
@@ -47,15 +47,20 @@ export const ParsedExerciseSchema = z
         'Устанавливается в true, если невозможно точно определить упражнение (например, "тяга" без уточнений)',
       ),
     movementPattern: z
-      .enum(MOVEMENT_PATTERNS)
+      .enum(MOVEMENT_PATTERNS as unknown as [string, ...string[]])
       .nullable()
       .optional()
       .describe('Паттерн движения упражнения, если его можно определить'),
     equipment: z
-      .enum(EQUIPMENT_TYPES)
+      .enum(EQUIPMENT_TYPES as unknown as [string, ...string[]])
       .nullable()
       .optional()
-      .describe('Оборудование, используемое в упражнении, если его можно определить'),
+      .describe('Оборудование (только если явно указано)'),
+    primaryMuscle: z
+      .enum(MUSCLE_GROUPS as unknown as [string, ...string[]])
+      .nullable()
+      .optional()
+      .describe('Основная работающая группа мышц'),
     sets: z.array(ParsedSetSchema).describe('Список выполненных подходов'),
     comments: z.array(ParsedCommentSchema).describe('Специфичные комментарии к этому упражнению'),
   })
@@ -78,7 +83,9 @@ export const ParsedWorkoutSchema = z
       .describe(
         'Место проведения тренировки (например, город, название тренажерного зала, "дома", "улица"). Может содержать любую комбинацию: "Алушта, дома", "Севастополь, зал Триумф", просто "дома" или просто название города. Если не указано или не удалось определить, возвращайте null.',
       ),
-    focus: z.array(z.enum(PRIMARY_MUSCLES)).describe('Глобальный фокус/тип тренировки'),
+    focus: z
+      .array(z.enum(MUSCLE_GROUPS as unknown as [string, ...string[]]))
+      .describe('Глобальный фокус/тип тренировки'),
     exercises: z
       .array(ParsedExerciseSchema)
       .describe('Список упражнений, выполненных за тренировку'),

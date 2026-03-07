@@ -5,7 +5,7 @@ import { createMockExerciseService } from '../../__tests__/utils/mockServices.js
 import { WorkoutService } from '../workout.service.js';
 import type { WorkoutRepository } from '../../repositories/workout.repository.js';
 import type { ExerciseService } from '../exercise.service.js';
-import { WorkoutStatus } from '../../generated/prisma/index.js';
+import { WorkoutStatus, Muscle } from '../../generated/prisma/index.js';
 import type { Exercise, Workout } from '../../generated/prisma/index.js';
 import type { WorkoutWithRelations } from '../../bot/formatters/workoutFormatter.js';
 
@@ -24,7 +24,7 @@ describe('WorkoutService', () => {
   describe('createDraft', () => {
     const mockParsedWorkout: ParsedWorkout = {
       date: '2026-02-22',
-      focus: ['legs'],
+      focus: [Muscle.LEGS],
       exercises: [
         {
           originalName: 'squat',
@@ -97,7 +97,7 @@ describe('WorkoutService', () => {
     it('should use mappedExerciseId if provided', async () => {
       const mockWithMapped: ParsedWorkout = {
         date: '2026-02-21',
-        focus: ['legs'],
+        focus: [Muscle.LEGS],
         exercises: [
           {
             originalName: 'unknown',
@@ -122,7 +122,7 @@ describe('WorkoutService', () => {
       expect(workoutRepoMock.createWithRelations).toHaveBeenCalledWith({
         userId: 'user1',
         workoutDate: expect.any(Date),
-        focusArray: ['legs'],
+        focusArray: [Muscle.LEGS],
         location: null,
         resolvedExercises: [{ parsed: mockWithMapped.exercises[0], exerciseId: 'mapped1' }],
         generalComments: [],
@@ -173,7 +173,7 @@ describe('WorkoutService', () => {
   describe('applyEdits', () => {
     const mockParsedWorkout: ParsedWorkout = {
       date: '2026-02-22',
-      focus: ['legs'],
+      focus: [Muscle.LEGS],
       exercises: [],
       generalComments: [],
     };
@@ -215,7 +215,7 @@ describe('WorkoutService', () => {
 
       const mockWithExercise: ParsedWorkout = {
         date: '2026-02-22',
-        focus: ['legs'],
+        focus: [Muscle.LEGS],
         exercises: [
           {
             originalName: 'тяга',

@@ -12,6 +12,8 @@ jobs:
   build-and-test:
     name: Lint, Test & Build
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/unused
 
     steps:
       - name: Checkout repository

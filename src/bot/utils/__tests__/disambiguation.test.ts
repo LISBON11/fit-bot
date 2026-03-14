@@ -35,6 +35,14 @@ jest.unstable_mockModule('../../../logger/logger.js', () => ({
   createLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
 
+const mockParseListSelection = jest.fn().mockResolvedValue(null as never);
+
+jest.unstable_mockModule('../../../nlu/workout-parser.js', () => ({
+  WorkoutParser: jest.fn().mockImplementation(() => ({
+    parseListSelection: mockParseListSelection,
+  })),
+}));
+
 describe('disambiguation loop', () => {
   let runDisambiguationLoop: (params: {
     conversation: Conversation<CustomContext, CustomContext>;
@@ -233,9 +241,9 @@ describe('disambiguation loop', () => {
       message: { text: 'Тестовое' },
     } as never);
 
-    mockExerciseService.resolveExercise
-      .mockResolvedValueOnce({ status: 'not_found' } as never) // Первый вызов из внешнего цикла (для Unknown exercise)
-      .mockResolvedValueOnce({ status: 'resolved', exercise: { id: 'ex1' } } as never); // Вызов из handleFlatList (для 'Тестовое')
+    mockParseListSelection.mockResolvedValueOnce(0 as never);
+
+    mockExerciseService.resolveExercise.mockResolvedValueOnce({ status: 'not_found' } as never); // Первый вызов из внешнего цикла (для Unknown exercise)
 
     const result = await runDisambiguationLoop({
       conversation,

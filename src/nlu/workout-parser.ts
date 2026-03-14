@@ -18,6 +18,10 @@ const DEEPSEEK_MODEL = 'deepseek-chat';
  * Ошибка парсинга NLU
  */
 export class NluParseError extends AppError {
+  /**
+   * @param message Текст ошибки
+   * @param isOperational Является ли ошибка ожидаемой (true) или системным сбоем (false)
+   */
   constructor(message: string, isOperational = true) {
     super(message, 400, isOperational);
     this.name = 'NluParseError';
@@ -27,8 +31,9 @@ export class NluParseError extends AppError {
 /**
  * Разбирает JSON-строку из ответа LLM и валидирует её через переданную Zod-схему.
  *
- * @param content Строка с JSON от LLM
- * @param schema Zod-схема для валидации
+ * @param params Параметры парсинга
+ * @param params.content Строка с JSON от LLM
+ * @param params.schema Zod-схема для валидации
  * @returns Валидированный объект
  * @throws NluParseError если JSON невалиден или не соответствует схеме
  */
@@ -264,6 +269,87 @@ export class WorkoutParser {
       throw new NluParseError(
         `DeepSeek API Error: ${error instanceof Error ? error.message : 'Unknown'}`,
       );
+    }
+  }
+
+  /**
+   * Анализирует текст пользователя и выбирает 0-индексированную опцию из списка.
+   * Применяется для уточнения (disambiguation), когда пользователь выбирает упражнение из предложенного списка.
+   *
+   * @param params Параметры выбора
+   * @param params.rawText Ответ пользователя по выбору (номер, название или контекст)
+   * @param params.options Список строк-вариантов
+   * @returns Индекс выбранного элемента (0-based) или null, если выбор не распознан или пользователь хочет создать новый
+   */
+  async parseListSelection({
+    rawText,
+    options,
+  }: {
+    rawText: string;
+    options: string[];
+  }): Promise<number | null> {
+    try {
+      logger.debug('Запуск NLU парсера для выбора из списка...');
+
+      const systemPrompt = `You are a helpful assistant that parses a user's selection from a list of options.
+The user might answer with a number (e.g. "8", "eight", "the 8th one"), a name, or some context indicating their choice.
+
+Here are the available options (1-indexed):
+${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}
+
+Your response must be a JSON object containing a single field "selectedIndex" (number) representing the 0-based index of the option the user selected. If the user's input does not match any option, return null for "selectedIndex".
+
+Examples:
+- Options: ["Squat", "Bench"] User: "the second one" -> {"selectedIndex": 1}
+- Options: ["Squat", "Bench"] User: "жим" -> {"selectedIndex": 1}
+- Options: ["Squat", "Bench"] User: "create a new one" -> {"selectedIndex": null}
+- Options: ["Squat", "Bench"] User: "3" -> {"selectedIndex": null}`;
+
+      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: rawText },
+      ];
+
+      const completion = await withRetry({
+        operation: () =>
+          this.openai.chat.completions.create({
+            model: DEEPSEEK_MODEL,
+            messages,
+            response_format: { type: 'json_object' },
+            temperature: 0,
+          }),
+        context: 'DeepSeek NLU List Selection',
+        options: { maxRetries: 2, baseDelayMs: 2000 },
+      });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new NluParseError('LLM вернул пустой ответ при выборе из списка');
+      }
+
+      let parsed: { selectedIndex: number | null };
+      try {
+        parsed = JSON.parse(content);
+      } catch {
+        throw new NluParseError('Невалидный JSON при выборе из списка');
+      }
+
+      if (
+        parsed.selectedIndex !== null &&
+        (typeof parsed.selectedIndex !== 'number' ||
+          parsed.selectedIndex < 0 ||
+          parsed.selectedIndex >= options.length)
+      ) {
+        return null; // LLM вернул мусор или out of bounds
+      }
+
+      return parsed.selectedIndex;
+    } catch (error) {
+      logger.error(
+        { err: error, text: rawText },
+        'Ошибка при работе NLU парсера выбора (DeepSeek)',
+      );
+      return null; // Fallback: если NLU сломалось, возвращаем null (приведет к созданию нового)
     }
   }
 }

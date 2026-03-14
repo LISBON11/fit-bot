@@ -40,4 +40,13 @@ export class UserService {
     logger.info({ userId: newUser.id, telegramId }, 'Created new user');
     return newUser;
   }
+
+  /**
+   * Получает пользователя по внутреннему ID
+   * @param id Внутренний идентификатор
+   * @returns Пользователь или null, если не найден
+   */
+  async getById(id: string): Promise<User | null> {
+    return this.userRepository.findById(id);
+  }
 }

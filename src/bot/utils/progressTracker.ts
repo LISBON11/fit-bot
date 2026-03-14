@@ -67,8 +67,11 @@ const STEP_LABELS: Record<WorkoutStep, string> = {
  * Все методы кроме `send()` — graceful: если сообщение ещё не отправлено, работают как noop.
  */
 export class ProgressTracker {
+  /** ID чата, в котором находится статус-сообщение */
   private chatId: number | null = null;
+  /** ID отправленного статус-сообщения */
   private messageId: number | null = null;
+  /** Карта текущих состояний для каждого шага тренировки */
   private readonly steps: Map<WorkoutStep, StepState>;
   /**
    * Очередь обновлений сообщения — каждый вызов edit() цепляется к предыдущему,
@@ -129,6 +132,14 @@ export class ProgressTracker {
   }
 
   /**
+   * Помечает шаг как возвращенный в ожидание и обновляет сообщение.
+   * @param step Шаг для обновления
+   */
+  setPending({ step }: { step: WorkoutStep }): void {
+    this.updateStep({ step, status: 'pending' });
+  }
+
+  /**
    * Добавляет подсписок к шагу — все пункты в статусе ожидания.
    * Вызывать до первого `setSubItemRunning`.
    * @param step Шаг, к которому добавляется подсписок
@@ -173,9 +184,55 @@ export class ProgressTracker {
     }
   }
 
+  /**
+   * Возвращает статусы к этапу NLU (например, для режима редактирования)
+   * Сбрасывает все последующие шаги в ожидание и очищает подпункты.
+   */
+  resetToNLU(): void {
+    const stepsToReset = [
+      WorkoutStep.NLU,
+      WorkoutStep.EXERCISES,
+      WorkoutStep.SAVE,
+      WorkoutStep.CLARIFY,
+      WorkoutStep.PUBLISH,
+    ];
+    for (const step of stepsToReset) {
+      const state = this.steps.get(step);
+      if (state) {
+        state.status = step === WorkoutStep.NLU ? 'running' : 'pending';
+        state.subItems = [];
+      }
+    }
+    this.enqueueEdit();
+  }
+
+  /**
+   * Заменяет текст статус-сообщения на произвольный (вместо списка шагов) и дожидается окончания всех предыдущих правок.
+   */
+  /**
+   * Заменяет текст статус-сообщения на произвольный (вместо списка шагов) и дожидается окончания всех предыдущих правок.
+   * Полезно для вывода финального результата или уведомления об ошибке.
+   *
+   * @param text Новый HTML-текст сообщения
+   */
+  async replaceWithTextAndStop(text: string): Promise<void> {
+    if (!this.chatId || !this.messageId) return;
+    await this.editQueue;
+    try {
+      await this.ctx.api.editMessageText(this.chatId, this.messageId, text, { parse_mode: 'HTML' });
+    } catch (err: unknown) {
+      logger.debug({ err }, 'ProgressTracker: пропущено обновление текста сообщения');
+    }
+  }
+
   // ─── Приватные методы ────────────────────────────────────────────────────────
 
-  /** Обновляет статус шага и ставит в очередь редактирование сообщения */
+  /**
+   * Внутренний метод для изменения статуса конкретного шага и постановки задачи на обновление сообщения.
+   *
+   * @param params.step Шаг, который нужно обновить
+   * @param params.status Новый статус для установки
+   */
   private updateStep({ step, status }: { step: WorkoutStep; status: StepStatus }): void {
     const state = this.steps.get(step);
     if (!state) return;
@@ -183,7 +240,13 @@ export class ProgressTracker {
     this.enqueueEdit();
   }
 
-  /** Обновляет статус подпункта и ставит в очередь редактирование сообщения */
+  /**
+   * Внутренний метод для изменения статуса подпункта конкретного шага.
+   *
+   * @param params.step Родительский шаг
+   * @param params.index Индекс подпункта в массиве
+   * @param params.status Новый статус для установки
+   */
   private updateSubItem({
     step,
     index,

@@ -4,7 +4,8 @@ import { ExerciseRepository } from '../repositories/exercise.repository.js';
 import { ExerciseService } from './exercise.service.js';
 import { WorkoutRepository } from '../repositories/workout.repository.js';
 import { WorkoutService } from './workout.service.js';
-import { DeepgramStt } from '../stt/deepgram.stt.js';
+import { SonioxStt } from '../stt/soniox.stt.js';
+import type { SttService } from '../stt/stt.interface.js';
 import { WorkoutParser } from '../nlu/workout-parser.js';
 import { getPrismaClient } from '../config/database.js';
 
@@ -21,10 +22,10 @@ export const workoutRepository = new WorkoutRepository(getPrismaClient());
 export const workoutService = new WorkoutService(workoutRepository, exerciseService);
 
 // STT module
-let sttServiceInstance: DeepgramStt | null = null;
-export function getSttService(): DeepgramStt {
+let sttServiceInstance: SttService | null = null;
+export function getSttService(): SttService {
   if (!sttServiceInstance) {
-    sttServiceInstance = new DeepgramStt();
+    sttServiceInstance = new SonioxStt();
   }
   return sttServiceInstance;
 }

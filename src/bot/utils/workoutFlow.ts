@@ -1,7 +1,7 @@
 import type { Conversation } from '@grammyjs/conversations';
 import type { CustomContext } from '../types.js';
 
-import { getNluParser, exerciseService } from '../../services/index.js';
+import { getNluParser, exerciseService, userService } from '../../services/index.js';
 
 import { runDisambiguationLoop } from './disambiguation.js';
 import { AppError } from '../../errors/app-errors.js';
@@ -15,6 +15,22 @@ const logger = createLogger('WorkoutFlowHelper');
 
 type WorkoutFlowMode = 'new' | 'edit';
 
+/**
+ * Основная функция флоу обработки тренировки: парсинг текста через NLU и запуск цикла уточнения упражнений.
+ * Обрабатывает как создание новой тренировки, так и редактирование существующей.
+ *
+ * @param params Объект с параметрами
+ * @param params.conversation Объект сессии/конво из @grammyjs/conversations
+ * @param params.ctx Контекст сообщения
+ * @param params.rawText Исходный текст (или транскрипция), который нужно обработать
+ * @param params.mode Режим работы: 'new' (создание) или 'edit' (редактирование существующей)
+ * @param params.userId Внутренний ID пользователя
+ * @param params.existingWorkoutContext JSON-строка текущей тренировки (обязательно для режима 'edit')
+ * @param params.workoutIdForDelta ID тренировки в базе (обязательно для режима 'edit' для сохранения изменений)
+ * @param params.tracker Опциональный инстанс ProgressTracker для отображения прогресса в UI
+ *
+ * @returns Объект со статусом выполнения или null в случае ошибки парсинга, которую нельзя обработать автоматически
+ */
 export async function parseAndDisambiguateUserInput({
   conversation,
   ctx,
@@ -69,6 +85,15 @@ export async function parseAndDisambiguateUserInput({
           })),
         }),
       );
+
+      // Если в NLU не определена локация, подтягиваем дефолтную локацию пользователя
+      if (!parsedWorkoutOrDelta.location) {
+        const user = await conversation.external(() => userService.getById(userId));
+        if (user?.defaultLocation) {
+          logger.info({ userId }, 'Using default user location for new workout');
+          parsedWorkoutOrDelta.location = user.defaultLocation;
+        }
+      }
     } else {
       if (!existingWorkoutContext) throw new AppError('Требуется контекст для редактирования', 500);
       parsedWorkoutOrDelta = await conversation.external(() =>
@@ -78,6 +103,7 @@ export async function parseAndDisambiguateUserInput({
           currentWorkoutJson: existingWorkoutContext,
         }),
       );
+      console.log('parsedWorkoutOrDelta =>', parsedWorkoutOrDelta);
     }
     tracker?.setDone({ step: WorkoutStep.NLU });
   } catch (err: unknown) {

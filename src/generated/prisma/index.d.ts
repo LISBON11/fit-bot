@@ -2029,6 +2029,7 @@ export namespace Prisma {
     email: string | null;
     passwordHash: string | null;
     displayName: string | null;
+    defaultLocation: string | null;
     createdAt: Date | null;
     updatedAt: Date | null;
   };
@@ -2040,6 +2041,7 @@ export namespace Prisma {
     email: string | null;
     passwordHash: string | null;
     displayName: string | null;
+    defaultLocation: string | null;
     createdAt: Date | null;
     updatedAt: Date | null;
   };
@@ -2051,6 +2053,7 @@ export namespace Prisma {
     email: number;
     passwordHash: number;
     displayName: number;
+    defaultLocation: number;
     createdAt: number;
     updatedAt: number;
     _all: number;
@@ -2063,6 +2066,7 @@ export namespace Prisma {
     email?: true;
     passwordHash?: true;
     displayName?: true;
+    defaultLocation?: true;
     createdAt?: true;
     updatedAt?: true;
   };
@@ -2074,6 +2078,7 @@ export namespace Prisma {
     email?: true;
     passwordHash?: true;
     displayName?: true;
+    defaultLocation?: true;
     createdAt?: true;
     updatedAt?: true;
   };
@@ -2085,6 +2090,7 @@ export namespace Prisma {
     email?: true;
     passwordHash?: true;
     displayName?: true;
+    defaultLocation?: true;
     createdAt?: true;
     updatedAt?: true;
     _all?: true;
@@ -2169,6 +2175,7 @@ export namespace Prisma {
     email: string | null;
     passwordHash: string | null;
     displayName: string | null;
+    defaultLocation: string | null;
     createdAt: Date;
     updatedAt: Date;
     _count: UserCountAggregateOutputType | null;
@@ -2197,6 +2204,7 @@ export namespace Prisma {
         email?: boolean;
         passwordHash?: boolean;
         displayName?: boolean;
+        defaultLocation?: boolean;
         createdAt?: boolean;
         updatedAt?: boolean;
         authProviders?: boolean | User$authProvidersArgs<ExtArgs>;
@@ -2218,6 +2226,7 @@ export namespace Prisma {
       email?: boolean;
       passwordHash?: boolean;
       displayName?: boolean;
+      defaultLocation?: boolean;
       createdAt?: boolean;
       updatedAt?: boolean;
     },
@@ -2234,6 +2243,7 @@ export namespace Prisma {
       email?: boolean;
       passwordHash?: boolean;
       displayName?: boolean;
+      defaultLocation?: boolean;
       createdAt?: boolean;
       updatedAt?: boolean;
     },
@@ -2247,6 +2257,7 @@ export namespace Prisma {
     email?: boolean;
     passwordHash?: boolean;
     displayName?: boolean;
+    defaultLocation?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
   };
@@ -2259,6 +2270,7 @@ export namespace Prisma {
       | 'email'
       | 'passwordHash'
       | 'displayName'
+      | 'defaultLocation'
       | 'createdAt'
       | 'updatedAt',
       ExtArgs['result']['user']
@@ -2293,6 +2305,7 @@ export namespace Prisma {
         email: string | null;
         passwordHash: string | null;
         displayName: string | null;
+        defaultLocation: string | null;
         createdAt: Date;
         updatedAt: Date;
       },
@@ -2837,6 +2850,7 @@ export namespace Prisma {
     readonly email: FieldRef<'User', 'String'>;
     readonly passwordHash: FieldRef<'User', 'String'>;
     readonly displayName: FieldRef<'User', 'String'>;
+    readonly defaultLocation: FieldRef<'User', 'String'>;
     readonly createdAt: FieldRef<'User', 'DateTime'>;
     readonly updatedAt: FieldRef<'User', 'DateTime'>;
   }
@@ -14168,6 +14182,7 @@ export namespace Prisma {
     email: 'email';
     passwordHash: 'passwordHash';
     displayName: 'displayName';
+    defaultLocation: 'defaultLocation';
     createdAt: 'createdAt';
     updatedAt: 'updatedAt';
   };
@@ -14582,6 +14597,7 @@ export namespace Prisma {
     email?: StringNullableFilter<'User'> | string | null;
     passwordHash?: StringNullableFilter<'User'> | string | null;
     displayName?: StringNullableFilter<'User'> | string | null;
+    defaultLocation?: StringNullableFilter<'User'> | string | null;
     createdAt?: DateTimeFilter<'User'> | Date | string;
     updatedAt?: DateTimeFilter<'User'> | Date | string;
     authProviders?: AuthProviderListRelationFilter;
@@ -14597,6 +14613,7 @@ export namespace Prisma {
     email?: SortOrderInput | SortOrder;
     passwordHash?: SortOrderInput | SortOrder;
     displayName?: SortOrderInput | SortOrder;
+    defaultLocation?: SortOrderInput | SortOrder;
     createdAt?: SortOrder;
     updatedAt?: SortOrder;
     authProviders?: AuthProviderOrderByRelationAggregateInput;
@@ -14616,6 +14633,7 @@ export namespace Prisma {
       telegramUsername?: StringNullableFilter<'User'> | string | null;
       passwordHash?: StringNullableFilter<'User'> | string | null;
       displayName?: StringNullableFilter<'User'> | string | null;
+      defaultLocation?: StringNullableFilter<'User'> | string | null;
       createdAt?: DateTimeFilter<'User'> | Date | string;
       updatedAt?: DateTimeFilter<'User'> | Date | string;
       authProviders?: AuthProviderListRelationFilter;
@@ -14633,6 +14651,7 @@ export namespace Prisma {
     email?: SortOrderInput | SortOrder;
     passwordHash?: SortOrderInput | SortOrder;
     displayName?: SortOrderInput | SortOrder;
+    defaultLocation?: SortOrderInput | SortOrder;
     createdAt?: SortOrder;
     updatedAt?: SortOrder;
     _count?: UserCountOrderByAggregateInput;
@@ -14650,6 +14669,7 @@ export namespace Prisma {
     email?: StringNullableWithAggregatesFilter<'User'> | string | null;
     passwordHash?: StringNullableWithAggregatesFilter<'User'> | string | null;
     displayName?: StringNullableWithAggregatesFilter<'User'> | string | null;
+    defaultLocation?: StringNullableWithAggregatesFilter<'User'> | string | null;
     createdAt?: DateTimeWithAggregatesFilter<'User'> | Date | string;
     updatedAt?: DateTimeWithAggregatesFilter<'User'> | Date | string;
   };
@@ -15345,6 +15365,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderCreateNestedManyWithoutUserInput;
@@ -15360,6 +15381,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderUncheckedCreateNestedManyWithoutUserInput;
@@ -15375,6 +15397,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUpdateManyWithoutUserNestedInput;
@@ -15390,6 +15413,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUncheckedUpdateManyWithoutUserNestedInput;
@@ -15405,6 +15429,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
   };
@@ -15416,6 +15441,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
@@ -15427,6 +15453,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
   };
@@ -16214,6 +16241,7 @@ export namespace Prisma {
     email?: SortOrder;
     passwordHash?: SortOrder;
     displayName?: SortOrder;
+    defaultLocation?: SortOrder;
     createdAt?: SortOrder;
     updatedAt?: SortOrder;
   };
@@ -16225,6 +16253,7 @@ export namespace Prisma {
     email?: SortOrder;
     passwordHash?: SortOrder;
     displayName?: SortOrder;
+    defaultLocation?: SortOrder;
     createdAt?: SortOrder;
     updatedAt?: SortOrder;
   };
@@ -16236,6 +16265,7 @@ export namespace Prisma {
     email?: SortOrder;
     passwordHash?: SortOrder;
     displayName?: SortOrder;
+    defaultLocation?: SortOrder;
     createdAt?: SortOrder;
     updatedAt?: SortOrder;
   };
@@ -19181,6 +19211,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     workouts?: WorkoutCreateNestedManyWithoutUserInput;
@@ -19195,6 +19226,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     workouts?: WorkoutUncheckedCreateNestedManyWithoutUserInput;
@@ -19225,6 +19257,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     workouts?: WorkoutUpdateManyWithoutUserNestedInput;
@@ -19239,6 +19272,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     workouts?: WorkoutUncheckedUpdateManyWithoutUserNestedInput;
@@ -19253,6 +19287,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderCreateNestedManyWithoutUserInput;
@@ -19267,6 +19302,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderUncheckedCreateNestedManyWithoutUserInput;
@@ -19361,6 +19397,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUpdateManyWithoutUserNestedInput;
@@ -19375,6 +19412,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUncheckedUpdateManyWithoutUserNestedInput;
@@ -19470,6 +19508,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderCreateNestedManyWithoutUserInput;
@@ -19484,6 +19523,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderUncheckedCreateNestedManyWithoutUserInput;
@@ -19611,6 +19651,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUpdateManyWithoutUserNestedInput;
@@ -19625,6 +19666,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUncheckedUpdateManyWithoutUserNestedInput;
@@ -19841,6 +19883,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderCreateNestedManyWithoutUserInput;
@@ -19855,6 +19898,7 @@ export namespace Prisma {
     email?: string | null;
     passwordHash?: string | null;
     displayName?: string | null;
+    defaultLocation?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     authProviders?: AuthProviderUncheckedCreateNestedManyWithoutUserInput;
@@ -19945,6 +19989,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUpdateManyWithoutUserNestedInput;
@@ -19959,6 +20004,7 @@ export namespace Prisma {
     email?: NullableStringFieldUpdateOperationsInput | string | null;
     passwordHash?: NullableStringFieldUpdateOperationsInput | string | null;
     displayName?: NullableStringFieldUpdateOperationsInput | string | null;
+    defaultLocation?: NullableStringFieldUpdateOperationsInput | string | null;
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string;
     authProviders?: AuthProviderUncheckedUpdateManyWithoutUserNestedInput;

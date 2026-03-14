@@ -93,6 +93,14 @@ describe('workoutFormatter', () => {
       ],
       comments: [
         {
+          id: 'c1',
+          workoutId: 'w1',
+          workoutExerciseId: 'we1',
+          rawText: 'Hard set',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
           id: 'c2',
           workoutId: 'w1',
           workoutExerciseId: null,

@@ -156,12 +156,15 @@ export function formatPreview(workout: WorkoutWithRelations): string {
         text += `<blockquote>${escapeHtml(c.rawText)}</blockquote>\n`;
       });
     }
+
+    text += '\n';
   });
 
   // Общие комментарии к тренировке — blockquote
-  if (workout.comments && workout.comments.length > 0) {
+  const generalComments = workout.comments?.filter((c) => c.workoutExerciseId === null) || [];
+  if (generalComments.length > 0) {
     text += '\n';
-    workout.comments.forEach((c) => {
+    generalComments.forEach((c) => {
       text += `<blockquote>${escapeHtml(c.rawText)}</blockquote>\n`;
     });
   }
@@ -195,8 +198,9 @@ export function formatWorkoutForNlu(workout: WorkoutWithRelations): Record<strin
     date: workoutDateObj.toISOString().split('T')[0],
     focus: workout.focus,
     location: workout.location,
-    comments: workout.comments.map((c) => c.rawText),
+    comments: workout.comments.filter((c) => c.workoutExerciseId === null).map((c) => c.rawText),
     exercises: workout.workoutExercises.map((we) => ({
+      mappedExerciseId: we.exerciseId,
       name: we.exercise?.displayNameRu || we.exercise?.canonicalName || 'Упражнение',
       sets: we.sets.map((s) => ({
         reps: s.reps,

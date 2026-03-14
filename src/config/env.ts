@@ -8,15 +8,21 @@ dotenv.config();
  * Проверяет все обязательные и опциональные переменные при старте приложения.
  */
 const envSchema = z.object({
+  /** Токен Telegram бота от @BotFather */
   BOT_TOKEN: z.string().min(1, 'BOT_TOKEN обязателен'),
   /** Используется для NLU (парсинг тренировок через DeepSeek V3) */
   DEEPSEEK_API_KEY: z.string().min(1, 'DEEPSEEK_API_KEY обязателен'),
-  /** Используется для STT (Deepgram Nova-3) */
-  DEEPGRAM_API_KEY: z.string().min(1, 'DEEPGRAM_API_KEY обязателен'),
+  /** Используется для STT (Soniox stt-async-v4) */
+  SONIOX_API_KEY: z.string().min(1, 'SONIOX_API_KEY обязателен'),
+  /** URL подключения к базе данных (PostgreSQL/Supabase) */
   DATABASE_URL: z.string().url('DATABASE_URL должен быть валидным URL'),
+  /** URL подключения к Redis для очередей и кэша */
   REDIS_URL: z.string().default('redis://localhost:6379'),
+  /** Уровень логирования (pino) */
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  /** Текущее окружение выполнения */
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  /** ID канала или группы для публикации готовых тренировок */
   PUBLISH_CHAT_ID: z.string().min(1, 'PUBLISH_CHAT_ID обязателен'),
 });
 

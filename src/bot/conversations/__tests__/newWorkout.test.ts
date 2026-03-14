@@ -123,7 +123,7 @@ describe('newWorkout conversation', () => {
     conversation.external.mockImplementation((async <R>(fn: unknown) => {
       return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
     }) as never);
-    conversation.waitForCallbackQuery.mockResolvedValue(actionCtxCancelOrApprove);
+    conversation.waitFor.mockResolvedValue(actionCtxCancelOrApprove);
 
     parseAndDisambiguateUserInput.mockResolvedValue({
       status: 'success',
@@ -184,7 +184,7 @@ describe('newWorkout conversation', () => {
     conversation.external.mockImplementation((async <R>(fn: unknown) => {
       return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
     }) as never);
-    conversation.waitForCallbackQuery.mockResolvedValue(actionCtxCancel);
+    conversation.waitFor.mockResolvedValue(actionCtxCancel);
 
     downloadAndTranscribeVoice.mockResolvedValue('test voice');
     parseAndDisambiguateUserInput.mockResolvedValue({
@@ -208,11 +208,6 @@ describe('newWorkout conversation', () => {
       tracker: expect.anything(),
     });
     expect(mockWorkoutService.cancelDraft).toHaveBeenCalledWith('w1');
-    expect(ctx.api.editMessageText).toHaveBeenCalledWith(
-      100,
-      222,
-      expect.stringContaining('❌'),
-      expect.objectContaining({ reply_markup: { inline_keyboard: [] } }),
-    );
+    expect(ctx.api.deleteMessage).toHaveBeenCalledWith(100, 222);
   });
 });

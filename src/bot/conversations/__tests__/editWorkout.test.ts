@@ -92,10 +92,8 @@ describe('editWorkout conversation', () => {
       external: jest.fn(async (fn: () => unknown) => fn()),
       waitFor: jest
         .fn<(...args: unknown[]) => Promise<unknown>>()
-        .mockResolvedValue({ message: { text: 'вчера' } }),
-      waitForCallbackQuery: jest
-        .fn<(...args: unknown[]) => Promise<unknown>>()
-        .mockResolvedValue(actionCtxCancel),
+        .mockResolvedValueOnce({ message: { text: 'вчера' } })
+        .mockResolvedValueOnce(actionCtxCancel),
     };
 
     mockNluParser.parseDate.mockResolvedValue('2023-01-01');
@@ -132,7 +130,7 @@ describe('editWorkout conversation', () => {
 
     const conversation = {
       external: jest.fn(async (fn: () => unknown) => fn()),
-      waitForCallbackQuery: jest
+      waitFor: jest
         .fn<(...args: unknown[]) => Promise<unknown>>()
         .mockResolvedValue(actionCtxApprove),
     };

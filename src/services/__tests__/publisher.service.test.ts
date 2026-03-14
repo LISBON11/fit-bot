@@ -20,7 +20,7 @@ describe('PublisherService', () => {
     _resetConfigForTesting();
     process.env.BOT_TOKEN = 'test_token';
     process.env.DEEPSEEK_API_KEY = 'test_deepseek_key';
-    process.env.DEEPGRAM_API_KEY = 'test_deepgram_key';
+    process.env.SONIOX_API_KEY = 'test_soniox_key';
     process.env.DATABASE_URL = 'http://test';
     process.env.PUBLISH_CHAT_ID = '-1001234567890';
     validateConfig();

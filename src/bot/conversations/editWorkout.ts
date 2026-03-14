@@ -109,12 +109,35 @@ export async function editWorkout(
       );
     }
 
-    const actionCtx = await conversation.waitForCallbackQuery([/^appr:/, /^edit:/, /^canc:/], {
-      otherwise: (otherCtx) =>
-        otherCtx.reply('Выберите действие по кнопкам', {
-          reply_to_message_id: otherCtx.message?.message_id,
-        }),
-    });
+    let actionCtx;
+    const warningMsgIds: number[] = [];
+
+    while (true) {
+      actionCtx = await conversation.waitFor(['callback_query:data', 'message']);
+
+      if (
+        actionCtx.callbackQuery?.data &&
+        /^(appr|edit|canc):/.test(actionCtx.callbackQuery.data)
+      ) {
+        break;
+      }
+
+      if (actionCtx.message) {
+        const msg = await actionCtx.reply('Выберите действие по кнопкам', {
+          reply_to_message_id: actionCtx.message.message_id,
+        });
+        warningMsgIds.push(msg.message_id);
+      }
+    }
+
+    if (warningMsgIds.length > 0 && ctx.chat?.id) {
+      const chatId = ctx.chat.id;
+      await conversation.external(async () => {
+        for (const msgId of warningMsgIds) {
+          await ctx.api.deleteMessage(chatId, msgId).catch(() => {});
+        }
+      });
+    }
 
     const actionData = actionCtx.callbackQuery.data;
     const action = actionData.split(':')[0];

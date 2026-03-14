@@ -67,6 +67,8 @@ export async function newWorkout(
     return;
   }
 
+  console.log('rawText =>', rawText);
+
   // 2. NLU Parsing & Disambiguation Loop
   convLogger.info('Step 2: Starting parseAndDisambiguateUserInput');
   const draftResult = await parseAndDisambiguateUserInput({
@@ -83,6 +85,8 @@ export async function newWorkout(
     { draftResultStatus: draftResult?.status },
     'Step 2: parseAndDisambiguateUserInput output',
   );
+
+  console.log('draftResult =>', draftResult);
 
   if (!draftResult) return; // Ошибка парсинга обработана внутри
 
@@ -149,15 +153,37 @@ export async function newWorkout(
     }
 
     // 5. Ожидание действия (Approve, Edit, Cancel)
-    convLogger.info('Loop: Waiting for callback query (appr, edit, canc)');
-    const actionCtx = await conversation.waitForCallbackQuery([/^appr:/, /^edit:/, /^canc:/], {
-      otherwise: (otherCtx) =>
-        otherCtx.reply(
+    let actionCtx;
+    const warningMsgIds: number[] = [];
+
+    while (true) {
+      actionCtx = await conversation.waitFor(['callback_query:data', 'message']);
+
+      if (
+        actionCtx.callbackQuery?.data &&
+        /^(appr|edit|canc):/.test(actionCtx.callbackQuery.data)
+      ) {
+        break;
+      }
+
+      if (actionCtx.message) {
+        const msg = await actionCtx.reply(
           'Пожалуйста, подтвердите, отредактируйте или отмените тренировку по кнопкам 👆',
-          { reply_to_message_id: otherCtx.message?.message_id },
-        ),
-    });
+          { reply_to_message_id: actionCtx.message.message_id },
+        );
+        warningMsgIds.push(msg.message_id);
+      }
+    }
     convLogger.info({ actionData: actionCtx.callbackQuery.data }, 'Loop: Received callback query');
+
+    if (warningMsgIds.length > 0 && ctx.chat?.id) {
+      const chatId = ctx.chat.id;
+      await conversation.external(async () => {
+        for (const msgId of warningMsgIds) {
+          await ctx.api.deleteMessage(chatId, msgId).catch(() => {});
+        }
+      });
+    }
 
     const actionData = actionCtx.callbackQuery.data;
     const action = actionData.split(':')[0];
@@ -208,19 +234,16 @@ export async function newWorkout(
     } else if (action === 'canc') {
       // Отменяем
       await conversation.external(() => workoutService.cancelDraft(workoutId));
-      // Удаляем трекер — тренировка отменена
-      await tracker?.delete();
-      if (previewMsgId && ctx.chat?.id) {
-        await ctx.api
-          .editMessageText(
-            ctx.chat.id,
-            previewMsgId,
-            previewHtml + '\n\n❌ <i>Тренировка отменена</i>',
-            { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } },
-          )
-          .catch(() => {});
+
+      // Обновляем трекер (сообщение статуса)
+      if (tracker) {
+        await tracker.replaceWithTextAndStop('❌ Тренировка отменена');
       } else {
         await ctx.reply('❌ Тренировка отменена.');
+      }
+
+      if (previewMsgId && ctx.chat?.id) {
+        await ctx.api.deleteMessage(ctx.chat.id, previewMsgId).catch(() => {});
       }
       return;
     } else if (action === 'edit') {
@@ -253,6 +276,22 @@ export async function newWorkout(
         continue;
       }
 
+      // Чистим историю сообщений редактирования сразу после получения ответа
+      if (ctx.chat?.id) {
+        // Удаляем запрос "Что вы хотите изменить?"
+        if (promptMsg.message_id) {
+          ctx.api.deleteMessage(ctx.chat.id, promptMsg.message_id).catch(() => {});
+        }
+        // Удаляем "Драфт тренировки" (превью), чтобы оно не мешалось пользователю
+        if (previewMsgId) {
+          ctx.api.deleteMessage(ctx.chat.id, previewMsgId).catch(() => {});
+          previewMsgId = undefined; // Сбрасываем id, чтобы создалось новое сообщение превью
+        }
+      }
+
+      // Сбрасываем статус прогресса на "Понимаем тренировку"
+      tracker?.resetToNLU();
+
       const editResult = await parseAndDisambiguateUserInput({
         conversation: conversation,
         ctx: ctx,
@@ -261,17 +300,8 @@ export async function newWorkout(
         userId: userId,
         existingWorkoutContext: JSON.stringify(loopWorkout, null, 2),
         workoutIdForDelta: workoutId,
+        tracker: tracker,
       });
-
-      // Чистим историю сообщений редактирования, чтобы превью обновилось на месте
-      if (ctx.chat?.id) {
-        if (promptMsg.message_id) {
-          ctx.api.deleteMessage(ctx.chat.id, promptMsg.message_id).catch(() => {});
-        }
-        if (editInputCtx.message?.message_id) {
-          ctx.api.deleteMessage(ctx.chat.id, editInputCtx.message.message_id).catch(() => {});
-        }
-      }
 
       if (!editResult) continue;
     }

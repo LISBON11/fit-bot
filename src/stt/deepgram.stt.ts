@@ -1,7 +1,6 @@
 import { createClient } from '@deepgram/sdk';
 import type { SttService } from './stt.interface.js';
 import { AppError } from '../errors/app-errors.js';
-import { getConfig } from '../config/env.js';
 import { createLogger } from '../logger/logger.js';
 import { withRetry } from '../utils/retry.js';
 
@@ -27,7 +26,11 @@ export class DeepgramStt implements SttService {
   private readonly deepgram: ReturnType<typeof createClient>;
 
   constructor() {
-    this.deepgram = createClient(getConfig().DEEPGRAM_API_KEY);
+    /**
+     * Конструктор инициализирует клиент Deepgram с использованием ключа из окружения.
+     * Заметка: Актуальная реализация STT сейчас на SonioxStt, этот класс оставлен для обратной совместимости.
+     */
+    this.deepgram = createClient(process.env['DEEPGRAM_API_KEY'] ?? '');
   }
 
   /**

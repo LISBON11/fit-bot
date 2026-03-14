@@ -127,12 +127,25 @@ describe('ProgressTracker', () => {
       });
     });
 
+    it('setPending вызывает editMessageText с символом 〇', async () => {
+      const tracker = new ProgressTracker(ctx);
+      await tracker.send();
+
+      tracker.setPending({ step: WorkoutStep.SAVE });
+      await flushQueue();
+
+      expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('〇'), {
+        parse_mode: 'HTML',
+      });
+    });
+
     it('методы — graceful noop если send() не был вызван', () => {
       const tracker = new ProgressTracker(ctx);
 
       tracker.setRunning({ step: WorkoutStep.STT });
       tracker.setDone({ step: WorkoutStep.STT });
       tracker.setSkipped({ step: WorkoutStep.EXERCISES });
+      tracker.setPending({ step: WorkoutStep.SAVE });
 
       expect(ctx.api.editMessageText).not.toHaveBeenCalled();
     });

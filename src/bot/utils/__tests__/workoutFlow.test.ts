@@ -12,9 +12,14 @@ const mockExerciseService = {
   getExerciseListForNlu: jest.fn<() => Promise<unknown>>().mockResolvedValue([]),
 };
 
+const mockUserService = {
+  getById: jest.fn<() => Promise<unknown>>().mockResolvedValue(null),
+};
+
 jest.unstable_mockModule('../../../services/index.js', () => ({
   getNluParser: jest.fn(() => mockNluParser),
   exerciseService: mockExerciseService,
+  userService: mockUserService,
   services: {
     nluParser: mockNluParser,
   },
@@ -93,6 +98,38 @@ describe('workoutFlow', () => {
         tracker: undefined,
       });
       expect(result?.status).toBe('created');
+    });
+
+    it('should use defaultLocation if location is missing in NLU', async () => {
+      mockNluParser.parse.mockResolvedValue({ originalName: 'Test' } as unknown as ParsedWorkout);
+      mockUserService.getById.mockResolvedValue({
+        id: 'u1',
+        defaultLocation: 'Home Gym',
+      });
+      (runDisambiguationLoop as jest.Mock).mockResolvedValue({ status: 'created' } as never);
+
+      const ctx = createMockCtx();
+      const conversation = {
+        external: jest.fn(async (fn: () => unknown) => fn()),
+      } as unknown as Conversation<CustomContext, CustomContext>;
+
+      await parseAndDisambiguateUserInput({
+        conversation,
+        ctx,
+        rawText: '10 pull ups',
+        mode: 'new',
+        userId: 'u1',
+      });
+
+      expect(runDisambiguationLoop).toHaveBeenCalledWith({
+        conversation,
+        ctx,
+        parsedDelta: expect.objectContaining({ location: 'Home Gym' }),
+        workoutId: 'draft',
+        userId: 'u1',
+        isEditMode: false,
+        tracker: undefined,
+      });
     });
 
     it('should parse edit workout and run disambiguation', async () => {

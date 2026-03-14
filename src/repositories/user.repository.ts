@@ -5,6 +5,7 @@ import { getPrismaClient } from '../config/database.js';
  * Репозиторий для управления данными пользователей
  */
 export class UserRepository {
+  /** Геттер для получения инстанса PrismaClient */
   private get prisma(): PrismaClient {
     return getPrismaClient();
   }
@@ -28,6 +29,17 @@ export class UserRepository {
     });
 
     return authProvider?.user || null;
+  }
+
+  /**
+   * Находит пользователя по его внутреннему ID
+   * @param id Внутренний идентификатор пользователя
+   * @returns Данные пользователя или null, если не найден
+   */
+  async findById(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
   }
 
   /**

@@ -1979,5 +1979,48 @@
     ],
     "exerciseType": "STRENGTH",
     "category": "ISOLATION"
+  },
+  {
+    "validated": false,
+    "canonicalName": "one_arm_kettlebell_floor_press",
+    "displayNameRu": "Жим гири лежа одной рукой",
+    "displayNameEn": "One-Arm Kettlebell Floor Press",
+    "movementPattern": "PUSH",
+    "equipment": "KETTLEBELL",
+    "primaryMuscles": ["CHEST"],
+    "secondaryMuscles": ["SHOULDERS", "TRICEPS"],
+    "level": "INTERMEDIATE",
+    "instructions": [
+      "Lie on your back on the floor with your knees bent and feet flat on the ground. Place a kettlebell next to your shoulder.",
+      "Roll onto your side to grip the kettlebell with both hands, bring it to your chest/stomach area, and roll back flat onto your back.",
+      "Press the kettlebell straight up toward the ceiling with one arm. This is your starting position.",
+      "Slowly lower the weight. Technique note: when the kettlebell is lowered from the top towards the center of the chest, you can bring your elbow slightly closer to the ribs, maintaining a 90-degree angle.",
+      "Pause briefly when your triceps touch the floor, then push the kettlebell back up to the starting position.",
+      "Repeat for the recommended amount of repetitions, then switch sides."
+    ],
+    "exerciseType": "STRENGTH",
+    "category": "COMPOUND"
+  },
+  {
+    "validated": false,
+    "canonicalName": "one_arm_straight_cable_pulldown",
+    "displayNameRu": "Опускание прямой руки с тросом",
+    "displayNameEn": "One-Arm Straight Cable Pulldown",
+    "movementPattern": "PULL",
+    "equipment": "CABLE",
+    "primaryMuscles": ["LATS"],
+    "secondaryMuscles": ["SHOULDERS", "TRICEPS"],
+    "level": "INTERMEDIATE",
+    "instructions": [
+      "Attach a single handle to the high pulley of a cable machine.",
+      "Stand facing the machine, grab the handle with one hand with a pronated grip (palm facing down), and step back slightly to create tension.",
+      "Bend slightly at the waist. Keep your arm straight and parallel to the floor, this is your starting position.",
+      "Keeping your arm straight, pull the cable down in an arc towards your thigh using your lats.",
+      "Pause at the bottom contraction for a second.",
+      "Slowly return your arm back up until it is parallel to the floor again, maintaining control.",
+      "Repeat for the recommended amount of repetitions, then switch sides."
+    ],
+    "exerciseType": "STRENGTH",
+    "category": "ISOLATION"
   }
 ]

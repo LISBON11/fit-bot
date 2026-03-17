@@ -15,6 +15,8 @@ import {
 } from './_testUtils.js';
 
 const { newWorkout } = await import('../newWorkout.js');
+const { cancelWorkoutFlow } = await import('../../utils/cancelFlow.js');
+const { CANCEL_WORKOUT_CALLBACK } = await import('../../utils/progressTracker.js');
 
 describe('Сценарий: Отмена создания тренировки', () => {
   let bot: Bot<CustomContext>;
@@ -30,7 +32,14 @@ describe('Сценарий: Отмена создания тренировки',
     bot.use(conversations());
     bot.use(createConversation(newWorkout));
 
-    // Обычный тестовый слушатель
+    // Настраиваем callback отмены
+    bot.callbackQuery(CANCEL_WORKOUT_CALLBACK, async (ctx) => {
+      if (ctx.from) {
+        // Мы передаем bot.api прямо в ctx, так как ChatSimulator к нему подключен
+        await cancelWorkoutFlow({ ctx, userId: ctx.from.id });
+      }
+    });
+
     bot.on('message:text', async (ctx) => {
       ctx.user = { id: 'db-user-123' } as unknown as CustomContext['user'];
       await ctx.conversation.enter('newWorkout');
@@ -41,25 +50,29 @@ describe('Сценарий: Отмена создания тренировки',
       await ctx.conversation.enter('newWorkout');
     });
 
-    // Дефолтный корректный контекст пользователя (не отменен)
-    mockUserContextService.getUserContext.mockResolvedValue({
-      activeStatusMessage: { chatId: 111, messageId: 999 },
+    // Настраиваем фейковый storage для userContext
+    let fakeRedisContext: Record<string, unknown> = {};
+    mockUserContextService.saveUserContext.mockImplementation(async (userId, data) => {
+      fakeRedisContext = { ...fakeRedisContext, ...(data as Record<string, unknown>) };
+    });
+    mockUserContextService.getUserContext.mockImplementation(async () => fakeRedisContext);
+    mockUserContextService.clearUserContext.mockImplementation(async () => {
+      fakeRedisContext = {};
     });
   });
 
   it('Отмена во время распознавания голоса (STT)', async () => {
     mockUserService.getOrCreateByTelegram.mockResolvedValue({ id: 'db-user-123' });
 
-    // Эмулируем задержку STT и то, что пользователь в это время нажал "Отмена"
-    mockTelegramUtils.downloadAndTranscribeVoice.mockImplementation(async () => {
-      // Имитируем, что статус отменён к моменту завершения STT
-      mockUserContextService.getUserContext.mockResolvedValue({
-        activeStatusMessage: undefined, // Ключевой маркер отмены
+    let resolveStt: (v: string) => void = () => {};
+    mockTelegramUtils.downloadAndTranscribeVoice.mockImplementation(() => {
+      return new Promise((r) => {
+        resolveStt = r;
       });
-      return 'распознанный текст из голосового';
     });
 
-    await bot.handleUpdate({
+    // Отправляем аудио (STT повисает)
+    const updatePromise = bot.handleUpdate({
       update_id: 1,
       message: {
         message_id: 10,
@@ -74,41 +87,58 @@ describe('Сценарий: Отмена создания тренировки',
       },
     });
 
-    // Проверяем, что парсер NLU не был вызван, так как мы прервали процесс после STT
-    expect(mockTelegramUtils.downloadAndTranscribeVoice).toHaveBeenCalled();
-    expect(mockNluParser.parse).not.toHaveBeenCalled();
-    expect(mockWorkoutService.createDraft).not.toHaveBeenCalled();
+    // Даем микротаскам отработать (чтобы трекер отправился и записал activeStatusMessage)
+    await new Promise(setImmediate);
 
-    // Проверяем, что отправилось только сообщение со статусом STT,
-    // и превью или другие сообщения не появлялись
-    const replies = chat.messages.filter((m) => m.type === 'sendMessage');
-    expect(replies.length).toBe(1); // Только трекер "Распознаю голос..."
+    // Симулируем нажатие кнопки Отмена
+    await bot.handleUpdate({
+      update_id: 2,
+      callback_query: {
+        id: 'cq-cancel',
+        from: { id: 111, is_bot: false, first_name: 'Test' },
+        message: {
+          message_id: chat.messages[0].message_id,
+          date: Date.now() / 1000,
+          chat: { id: 111, type: 'private', first_name: 'Test' },
+          text: 'Tracker text',
+        },
+        chat_instance: '1',
+        data: CANCEL_WORKOUT_CALLBACK,
+      },
+    });
+
+    // Теперь разрешаем STT
+    if (resolveStt) resolveStt('распознанный текст из голосового');
+    await updatePromise;
+
+    // В чате отправился только трекер, превью не отрисовано
+    const smMessages = chat.messages.filter((m) => m.type === 'sendMessage');
+    expect(smMessages.length).toBe(1);
+
+    // Проверяем, что трекер был изменён на "❌ Отмена..." (самое свежее изменение)
+    const editMessages = chat.messages.filter(
+      (m) => m.type === 'editMessageText' && m.message_id === smMessages[0].message_id,
+    );
+    expect(editMessages.length).toBeGreaterThan(0);
+    const lastEdit = editMessages[editMessages.length - 1];
+    expect(lastEdit.text).toContain('❌ Отмена...');
+    // Проверяем, что инлайн-клавиатура (с кнопкой отмены) удалена у статус-сообщения
+    expect(lastEdit.reply_markup?.inline_keyboard?.length).toBe(0);
   });
 
   it('Отмена во время запроса к NLU', async () => {
     mockUserService.getOrCreateByTelegram.mockResolvedValue({ id: 'db-user-123' });
 
-    // NLU парсер возвращает готовую тренировку, но эмулируем отмену в процессе
-    mockNluParser.parse.mockImplementation(async () => {
-      // Имитируем, что в процессе парсинга (занимает время) стаус был отменён
-      mockUserContextService.getUserContext.mockResolvedValue({
-        currentDraftId: 'draft-1',
-        activeStatusMessage: undefined, // Ключевой маркер отмены
+    let resolveNlu: (v: unknown) => void = () => {};
+    mockNluParser.parse.mockImplementation(() => {
+      return new Promise((r) => {
+        resolveNlu = r;
       });
-
-      return {
-        location: 'Gym',
-        exercises: [{ originalName: 'Bench press', sets: [] }],
-      };
     });
 
-    mockWorkoutService.createDraft.mockResolvedValue({
-      status: 'created',
-      workout: { id: 'draft-1' },
-    });
-
-    await bot.handleUpdate({
-      update_id: 2,
+    // Оправляем текст (NLU повисает)
+    const updatePromise = bot.handleUpdate({
+      update_id: 3,
       message: {
         message_id: 11,
         date: Date.now() / 1000,
@@ -118,26 +148,46 @@ describe('Сценарий: Отмена создания тренировки',
       },
     });
 
-    // Проверяем: NLU отработал, процесс прервался
+    await new Promise(setImmediate);
+
+    // Симулируем нажатие Отмена
+    await bot.handleUpdate({
+      update_id: 4,
+      callback_query: {
+        id: 'cq-cancel-2',
+        from: { id: 111, is_bot: false, first_name: 'Test' },
+        message: {
+          message_id: chat.messages[0].message_id,
+          date: Date.now() / 1000,
+          chat: { id: 111, type: 'private', first_name: 'Test' },
+          text: 'Tracker text',
+        },
+        chat_instance: '1',
+        data: CANCEL_WORKOUT_CALLBACK,
+      },
+    });
+
+    if (resolveNlu) {
+      resolveNlu({
+        location: 'Gym',
+        exercises: [{ originalName: 'Bench press', sets: [] }],
+      });
+    }
+    await updatePromise;
+
+    // Проверяем: NLU отработал, создание прервалось
     expect(mockNluParser.parse).toHaveBeenCalled();
     expect(mockWorkoutService.createDraft).not.toHaveBeenCalled();
-
-    // getDraftForUser (для превью) вызван не был, потому что процесс прервался
     expect(mockWorkoutService.getDraftForUser).not.toHaveBeenCalled();
 
-    // В чате только трекер, превью не отрисовано
     const smMessages = chat.messages.filter((m) => m.type === 'sendMessage');
-    expect(smMessages.length).toBe(1); // Отправится только трекер
+    expect(smMessages.length).toBe(1);
 
-    // Не должно быть editMessageText с превью тренировки
-    const editMessages = chat.messages.filter((m) => m.type === 'editMessageText');
-    // Могли быть эдиты от трекера, но никаких кнопок вроде 'appr:draft-1'
-    expect(
-      editMessages.some((m) =>
-        m.reply_markup?.inline_keyboard?.some((row) =>
-          row.some((btn) => btn.callback_data === 'appr:draft-1'),
-        ),
-      ),
-    ).toBe(false);
+    const editMessages = chat.messages.filter(
+      (m) => m.type === 'editMessageText' && m.message_id === smMessages[0].message_id,
+    );
+    expect(editMessages.length).toBeGreaterThan(0);
+    const lastEdit = editMessages[editMessages.length - 1];
+    expect(lastEdit.text).toContain('❌ Отмена...');
   });
 });

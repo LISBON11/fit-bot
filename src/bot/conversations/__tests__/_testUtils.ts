@@ -51,9 +51,11 @@ export const mockTelegramUtils = {
 };
 
 export const mockUserContextService = {
-  saveUserContext: jest.fn<() => Promise<unknown>>(),
-  clearUserContext: jest.fn<() => Promise<unknown>>(),
-  getUserContext: jest.fn<() => Promise<unknown>>().mockResolvedValue(mockUserContext),
+  saveUserContext: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+  clearUserContext: jest.fn<(...args: unknown[]) => Promise<unknown>>(),
+  getUserContext: jest
+    .fn<(...args: unknown[]) => Promise<unknown>>()
+    .mockResolvedValue(mockUserContext),
 };
 
 jest.unstable_mockModule('../../utils/telegram.js', () => mockTelegramUtils);

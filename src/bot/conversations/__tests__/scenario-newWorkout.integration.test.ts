@@ -90,24 +90,31 @@ describe('Сценарий: Добавление классической тре
     });
 
     // 3. Проверяем сообщения после парсинга текста:
-    // Так как это текст, ProgressTracker не инициализируется.
+    // Теперь ProgressTracker инициализируется и для текстового ввода
     const sendMessages = chat.messages.filter((m) => m.type === 'sendMessage');
-    const editMessages = chat.messages.filter((m) => m.type === 'editMessageText');
     const deleteMessages = chat.messages.filter((m) => m.type === 'deleteMessage');
 
-    // Ожидаем ровно 1 сообщение (Превью)
-    expect(sendMessages).toHaveLength(1);
-    expect(editMessages).toHaveLength(0);
-    expect(deleteMessages).toHaveLength(0);
+    // Ожидаем 2 сообщения (Трекер + Превью)
+    expect(sendMessages).toHaveLength(2);
+    expect(deleteMessages).toHaveLength(0); // Трекер удаляется только после аппрува
 
-    const previewMessage = sendMessages[0];
+    const trackerMessage = sendMessages[0];
+    const previewMessage = sendMessages[1];
+
+    // Убеждаемся, что так как это текст, этап STT пропущен (крестик)
+    const trackerEdits = chat.messages.filter(
+      (m) => m.type === 'editMessageText' && m.message_id === trackerMessage.message_id,
+    );
+    const lastTrackerState =
+      trackerEdits.length > 0 ? trackerEdits[trackerEdits.length - 1].text : trackerMessage.text;
+    expect(lastTrackerState).toContain('✖\u2009 Речь в текст');
+
     const inlineKeyboard = previewMessage.reply_markup?.inline_keyboard;
     expect(inlineKeyboard).toBeDefined();
-    expect(
-      inlineKeyboard?.[0]?.some(
-        (btn: { callback_data?: string }) => btn.callback_data === 'appr:draft-1',
-      ),
-    ).toBe(true);
+    // Проверяем наличие кнопки Approve в первом ряду
+    expect(inlineKeyboard?.[0]).toContainEqual(
+      expect.objectContaining({ callback_data: 'appr:draft-1' }),
+    );
 
     // 4. Имитируем нажатие "Approve" (Утвердить) на сообщении превью
     await bot.handleUpdate({
@@ -130,10 +137,15 @@ describe('Сценарий: Добавление классической тре
     expect(mockWorkoutService.approveDraft).toHaveBeenCalledWith('draft-1');
     expect(mockPublisher.publish).toHaveBeenCalled();
 
+    // 6. Убеждаемся, что трекер был удален
+    const finalDeleteMessages = chat.messages.filter((m) => m.type === 'deleteMessage');
+    expect(finalDeleteMessages).toHaveLength(1);
+    expect(finalDeleteMessages[0].message_id).toBe(trackerMessage.message_id);
+
     const postApproveEdits = chat.messages.filter(
       (m) => m.type === 'editMessageText' && m.message_id === previewMessage.message_id,
     );
-    expect(postApproveEdits).toHaveLength(1); // Сообщение превью было отредактировано 1 раз
+    expect(postApproveEdits.length).toBeGreaterThanOrEqual(1);
 
     const finalEdit = postApproveEdits[postApproveEdits.length - 1];
     expect(finalEdit.text).toContain('✅ <i>Тренировка успешно опубликована!</i>');
@@ -240,10 +252,21 @@ describe('Сценарий: Добавление классической тре
 
     expect(mockWorkoutService.approveDraft).toHaveBeenCalledWith('draft-2');
 
-    // Теперь проверяем, что трекер был удален
+    // 5. Проверяем сообщения после "Approve"
+    // Трекер должен быть удален
     const deleteMessagesAfterApprove = chat.messages.filter((m) => m.type === 'deleteMessage');
     expect(deleteMessagesAfterApprove).toHaveLength(1);
     expect(deleteMessagesAfterApprove[0].message_id).toBe(trackerMessage.message_id);
+
+    // Сообщение превью должно быть отредактировано на финальный текст без кнопок
+    const postApproveEdits = chat.messages.filter(
+      (m) => m.type === 'editMessageText' && m.message_id === previewMessage.message_id,
+    );
+    expect(postApproveEdits.length).toBeGreaterThanOrEqual(1);
+
+    const finalEdit = postApproveEdits[postApproveEdits.length - 1];
+    expect(finalEdit.text).toContain('✅ <i>Тренировка успешно опубликована!</i>');
+    expect(finalEdit.reply_markup?.inline_keyboard).toEqual([]);
   });
 
   it('Отслеживание смены иконок и статусов в Progress Tracker', async () => {

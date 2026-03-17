@@ -127,7 +127,7 @@ describe('Сценарий: Отмена создания тренировки',
 
     // В чате только трекер, превью не отрисовано
     const smMessages = chat.messages.filter((m) => m.type === 'sendMessage');
-    expect(smMessages.length).toBe(0); // Трекер для текста не инициализируется
+    expect(smMessages.length).toBe(1); // Отправится только трекер
 
     // Не должно быть editMessageText с превью тренировки
     const editMessages = chat.messages.filter((m) => m.type === 'editMessageText');

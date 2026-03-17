@@ -157,7 +157,7 @@ describe('newWorkout conversation', () => {
       userId: 'u1',
       existingWorkoutContext: undefined,
       workoutIdForDelta: undefined,
-      tracker: undefined,
+      tracker: expect.any(Object),
     });
     expect(mockWorkoutService.updateMessageIds).toHaveBeenCalledWith({
       id: 'w1',

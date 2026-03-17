@@ -47,21 +47,19 @@ export async function newWorkout(
   }
 
   let rawText: string;
-  let tracker: ProgressTracker | undefined;
+  // Инициализируем трекер и сразу показываем статусы.
+  const tracker = new ProgressTracker(ctx);
+  const statusMsgCoords = await tracker.send();
+
+  // Сохраняем координаты статус-сообщения в сессию.
+  if (statusMsgCoords) {
+    await saveUserContext(telegramUserId, { activeStatusMessage: statusMsgCoords });
+    convLogger.debug(statusMsgCoords, 'activeStatusMessage сохранён в Redis (userContext)');
+  }
 
   // 1. Получение текста (голос -> STT или напрямую текст)
   if (ctx.message?.voice) {
     convLogger.info('Step 1: Downloading and transcribing voice');
-
-    // Инициализируем трекер и сразу показываем статусы.
-    tracker = new ProgressTracker(ctx);
-    const statusMsgCoords = await tracker.send();
-
-    // Сохраняем координаты статус-сообщения в сессию.
-    if (statusMsgCoords) {
-      await saveUserContext(telegramUserId, { activeStatusMessage: statusMsgCoords });
-      convLogger.debug(statusMsgCoords, 'activeStatusMessage сохранён в Redis (userContext)');
-    }
 
     tracker.setRunning({ step: WorkoutStep.STT });
     rawText = await downloadAndTranscribeVoice({ ctx, conversation });
@@ -79,8 +77,12 @@ export async function newWorkout(
     tracker.setDone({ step: WorkoutStep.STT });
     convLogger.info({ telegramUserId }, 'Step 1: Voice transcription complete');
   } else if (ctx.message?.text) {
+    tracker.setSkipped({ step: WorkoutStep.STT });
     rawText = ctx.message.text;
   } else {
+    // Если это не текст и не голос - трекер нам не нужен
+    await tracker.delete();
+    await clearUserContext(telegramUserId);
     await ctx.reply('⚠️ Пожалуйста, отправьте текст или голосовое сообщение.');
     return;
   }

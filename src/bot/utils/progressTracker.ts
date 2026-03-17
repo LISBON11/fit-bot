@@ -1,7 +1,14 @@
+import { InlineKeyboard } from 'grammy';
 import type { CustomContext } from '../types.js';
 import { createLogger } from '../../logger/logger.js';
 
 const logger = createLogger('ProgressTracker');
+
+/**
+ * Callback-данные кнопки отмены создания тренировки.
+ * Обрабатывается глобальным обработчиком в bot.ts (до conversations()).
+ */
+export const CANCEL_WORKOUT_CALLBACK = 'cancel_workout_creation';
 
 /**
  * Шаги обработки голосового сообщения.
@@ -56,11 +63,16 @@ const STEP_LABELS: Record<WorkoutStep, string> = {
   [WorkoutStep.PUBLISH]: 'Публикуем в канал',
 };
 
+/** Inline-клавиатура с кнопкой отмены, добавляемая к статус-сообщению */
+function buildCancelKeyboard(): InlineKeyboard {
+  return new InlineKeyboard().text('❌ Отменить создание', CANCEL_WORKOUT_CALLBACK);
+}
+
 /**
  * Управляет живым статус-сообщением при обработке голосового сообщения.
  *
  * Паттерн использования:
- * 1. `await tracker.send()` — отправляет начальное сообщение
+ * 1. `await tracker.send(conversation)` — отправляет начальное сообщение и сохраняет координаты в сессию
  * 2. `tracker.setRunning(step)` / `tracker.setDone(step)` — обновляет статусы
  * 3. `await tracker.delete()` — удаляет при завершении
  *
@@ -94,16 +106,32 @@ export class ProgressTracker {
   /**
    * Отправляет начальное статус-сообщение со всеми шагами в статусе ⬜.
    * Должен быть вызван перед любыми другими методами.
+   *
+   * Возвращает координаты отправленного сообщения (chatId, messageId), которые
+   * вызывающий код должен сохранить в сессию через conversation.external, чтобы
+   * глобальный обработчик cancel_workout_creation мог мгновенно отредактировать сообщение.
+   *
+   * @returns Координаты сообщения или null при ошибке отправки
    */
-  async send(): Promise<void> {
+  async send(): Promise<{ chatId: number; messageId: number } | null> {
     try {
       const text = this.buildText();
-      const msg = await this.ctx.reply(text, { parse_mode: 'HTML' });
+      const keyboard = buildCancelKeyboard();
+      const msg = await this.ctx.reply(text, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      });
       this.chatId = this.ctx.chat?.id ?? null;
       this.messageId = msg.message_id;
       logger.debug({ messageId: this.messageId }, 'ProgressTracker: сообщение отправлено');
+
+      if (this.chatId && this.messageId) {
+        return { chatId: this.chatId, messageId: this.messageId };
+      }
+      return null;
     } catch (err) {
       logger.warn({ err }, 'ProgressTracker: не удалось отправить статус-сообщение');
+      return null;
     }
   }
 
@@ -208,10 +236,8 @@ export class ProgressTracker {
 
   /**
    * Заменяет текст статус-сообщения на произвольный (вместо списка шагов) и дожидается окончания всех предыдущих правок.
-   */
-  /**
-   * Заменяет текст статус-сообщения на произвольный (вместо списка шагов) и дожидается окончания всех предыдущих правок.
    * Полезно для вывода финального результата или уведомления об ошибке.
+   * Кнопка отмены убирается, так как действие уже завершено.
    *
    * @param text Новый HTML-текст сообщения
    */
@@ -219,7 +245,10 @@ export class ProgressTracker {
     if (!this.chatId || !this.messageId) return;
     await this.editQueue;
     try {
-      await this.ctx.api.editMessageText(this.chatId, this.messageId, text, { parse_mode: 'HTML' });
+      await this.ctx.api.editMessageText(this.chatId, this.messageId, text, {
+        parse_mode: 'HTML',
+        reply_markup: { inline_keyboard: [] },
+      });
     } catch (err: unknown) {
       logger.debug({ err }, 'ProgressTracker: пропущено обновление текста сообщения');
     }
@@ -287,18 +316,23 @@ export class ProgressTracker {
    * Ставит отправку актуального состояния в очередь.
    * Snapshot текущего текста делается в момент попадания в очередь (не в момент старта).
    * Благодаря chaining-у промисов вызовы не пересекаются → нет ошибки 429.
+   * Кнопка отмены сохраняется при каждом обновлении.
    */
   private enqueueEdit(): void {
     if (!this.chatId || !this.messageId) return;
     // Снимаем текст прямо сейчас — к моменту выполнения состояние может измениться,
     // но нам важен актуальный снимок на данный момент вызова.
     const text = this.buildText();
+    const keyboard = buildCancelKeyboard();
     const chatId = this.chatId;
     const messageId = this.messageId;
 
     this.editQueue = this.editQueue.then(async () => {
       try {
-        await this.ctx.api.editMessageText(chatId, messageId, text, { parse_mode: 'HTML' });
+        await this.ctx.api.editMessageText(chatId, messageId, text, {
+          parse_mode: 'HTML',
+          reply_markup: keyboard,
+        });
       } catch (err: unknown) {
         // Игнорируем «message is not modified» и прочие безвредные ошибки
         logger.debug({ err }, 'ProgressTracker: пропущено обновление сообщения');

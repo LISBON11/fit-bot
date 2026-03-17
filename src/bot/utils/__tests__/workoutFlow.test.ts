@@ -29,6 +29,12 @@ jest.unstable_mockModule('../disambiguation.js', () => ({
   runDisambiguationLoop: jest.fn(),
 }));
 
+jest.unstable_mockModule('../userContext.js', () => ({
+  getUserContext: jest
+    .fn()
+    .mockResolvedValue({ activeStatusMessage: { chatId: 1, messageId: 2 } } as never),
+}));
+
 jest.unstable_mockModule('../../../utils/date.js', () => ({
   getCurrentDateString: jest.fn(() => '2023-01-01'),
 }));

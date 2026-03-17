@@ -18,11 +18,13 @@ jest.unstable_mockModule('../../../logger/logger.js', () => ({
 
 let ProgressTracker: new (ctx: CustomContext) => ProgressTrackerType;
 let WorkoutStep: typeof WorkoutStepType;
+let CANCEL_WORKOUT_CALLBACK: string;
 
 beforeAll(async () => {
   const m = await import('../progressTracker.js');
   ProgressTracker = m.ProgressTracker;
   WorkoutStep = m.WorkoutStep;
+  CANCEL_WORKOUT_CALLBACK = m.CANCEL_WORKOUT_CALLBACK;
 });
 
 /**
@@ -33,6 +35,7 @@ function createTrackerCtx(): DeepMockProxy<CustomContext> {
 
   Object.assign(ctx, {
     chat: { id: 999, type: 'private', first_name: 'Test' },
+    session: {},
   });
 
   ctx.reply.mockResolvedValue({ message_id: 42 } as never);
@@ -65,9 +68,10 @@ describe('ProgressTracker', () => {
       const tracker = new ProgressTracker(ctx);
       await tracker.send();
 
-      expect(ctx.reply).toHaveBeenCalledWith(expect.stringContaining('Обрабатываю тренировку'), {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.reply).toHaveBeenCalledWith(
+        expect.stringContaining('Обрабатываю тренировку'),
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
     });
 
     it('начальное сообщение содержит все 6 шагов', async () => {
@@ -81,6 +85,34 @@ describe('ProgressTracker', () => {
       expect(text).toContain('Сохраняем в базу');
       expect(text).toContain('Уточняем детали');
       expect(text).toContain('Публикуем в канал');
+    });
+
+    it('начальное сообщение содержит кнопку отмены', async () => {
+      const tracker = new ProgressTracker(ctx);
+      await tracker.send();
+
+      const [, options] = ctx.reply.mock.calls[0] as [string, { reply_markup?: unknown }];
+      expect(options).toHaveProperty('reply_markup');
+      const markup = options.reply_markup as {
+        inline_keyboard: Array<Array<{ callback_data: string }>>;
+      };
+      const allButtons = markup.inline_keyboard.flat();
+      expect(allButtons.some((btn) => btn.callback_data === CANCEL_WORKOUT_CALLBACK)).toBe(true);
+    });
+
+    it('возвращает координаты сообщения (chatId, messageId) при успехе', async () => {
+      const tracker = new ProgressTracker(ctx);
+      const result = await tracker.send();
+
+      expect(result).toEqual({ chatId: 999, messageId: 42 });
+    });
+
+    it('возвращает null при ошибке отправки', async () => {
+      ctx.reply.mockRejectedValue(new Error('Network error') as never);
+      const tracker = new ProgressTracker(ctx);
+      const result = await tracker.send();
+
+      expect(result).toBeNull();
     });
 
     it('при ошибке отправки не выбрасывает исключение', async () => {
@@ -98,9 +130,12 @@ describe('ProgressTracker', () => {
       tracker.setRunning({ step: WorkoutStep.STT });
       await flushQueue();
 
-      expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('➤'), {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.api.editMessageText).toHaveBeenCalledWith(
+        999,
+        42,
+        expect.stringContaining('➤'),
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
     });
 
     it('setDone вызывает editMessageText с символом ✔', async () => {
@@ -110,9 +145,12 @@ describe('ProgressTracker', () => {
       tracker.setDone({ step: WorkoutStep.NLU });
       await flushQueue();
 
-      expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('✔'), {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.api.editMessageText).toHaveBeenCalledWith(
+        999,
+        42,
+        expect.stringContaining('✔'),
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
     });
 
     it('setSkipped вызывает editMessageText с символом ✖', async () => {
@@ -122,9 +160,12 @@ describe('ProgressTracker', () => {
       tracker.setSkipped({ step: WorkoutStep.EXERCISES });
       await flushQueue();
 
-      expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('✖'), {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.api.editMessageText).toHaveBeenCalledWith(
+        999,
+        42,
+        expect.stringContaining('✖'),
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
     });
 
     it('setPending вызывает editMessageText с символом 〇', async () => {
@@ -134,9 +175,30 @@ describe('ProgressTracker', () => {
       tracker.setPending({ step: WorkoutStep.SAVE });
       await flushQueue();
 
-      expect(ctx.api.editMessageText).toHaveBeenCalledWith(999, 42, expect.stringContaining('〇'), {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.api.editMessageText).toHaveBeenCalledWith(
+        999,
+        42,
+        expect.stringContaining('〇'),
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
+    });
+
+    it('обновления сохраняют кнопку отмены в reply_markup', async () => {
+      const tracker = new ProgressTracker(ctx);
+      await tracker.send();
+
+      tracker.setRunning({ step: WorkoutStep.STT });
+      await flushQueue();
+
+      const lastCall = ctx.api.editMessageText.mock.calls.at(-1) as
+        | [number, number, string, { reply_markup?: unknown }]
+        | undefined;
+      expect(lastCall).toBeDefined();
+      const markup = lastCall?.[3]?.reply_markup as {
+        inline_keyboard: Array<Array<{ callback_data: string }>>;
+      };
+      const allButtons = markup?.inline_keyboard?.flat() ?? [];
+      expect(allButtons.some((btn) => btn.callback_data === CANCEL_WORKOUT_CALLBACK)).toBe(true);
     });
 
     it('методы — graceful noop если send() не был вызван', () => {
@@ -245,6 +307,30 @@ describe('ProgressTracker', () => {
       await tracker.send();
 
       await expect(tracker.delete()).resolves.not.toThrow();
+    });
+  });
+
+  describe('replaceWithTextAndStop()', () => {
+    it('заменяет текст и убирает кнопки (inline_keyboard: [])', async () => {
+      const tracker = new ProgressTracker(ctx);
+      await tracker.send();
+
+      await tracker.replaceWithTextAndStop('❌ Тренировка отменена');
+
+      expect(ctx.api.editMessageText).toHaveBeenCalledWith(
+        999,
+        42,
+        '❌ Тренировка отменена',
+        expect.objectContaining({
+          parse_mode: 'HTML',
+          reply_markup: { inline_keyboard: [] },
+        }),
+      );
+    });
+
+    it('не падает если send() не вызван (graceful noop)', async () => {
+      const tracker = new ProgressTracker(ctx);
+      await expect(tracker.replaceWithTextAndStop('test')).resolves.not.toThrow();
     });
   });
 });

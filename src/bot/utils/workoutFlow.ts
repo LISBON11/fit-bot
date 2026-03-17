@@ -3,6 +3,7 @@ import type { CustomContext } from '../types.js';
 
 import { getNluParser, exerciseService, userService } from '../../services/index.js';
 
+import { getUserContext } from './userContext.js';
 import { runDisambiguationLoop } from './disambiguation.js';
 import { AppError } from '../../errors/app-errors.js';
 import { createLogger } from '../../logger/logger.js';
@@ -105,6 +106,17 @@ export async function parseAndDisambiguateUserInput({
       );
       console.log('parsedWorkoutOrDelta =>', parsedWorkoutOrDelta);
     }
+
+    // Проверяем, не отменил ли пользователь создание тренировки во время NLU
+    if (ctx.from?.id) {
+      const userId = ctx.from.id;
+      const userContext = await conversation.external(() => getUserContext(userId));
+      if (!userContext.activeStatusMessage) {
+        logger.info('Workout creation cancelled by user during NLU, aborting');
+        return null;
+      }
+    }
+
     tracker?.setDone({ step: WorkoutStep.NLU });
   } catch (err: unknown) {
     console.log(err);

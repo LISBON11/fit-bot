@@ -38,6 +38,21 @@ jest.unstable_mockModule('../../utils/telegram.js', () => ({
   downloadAndTranscribeVoice: jest.fn(),
 }));
 
+jest.unstable_mockModule('../../utils/userContext.js', () => ({
+  saveUserContext: jest.fn(),
+  clearUserContext: jest.fn(),
+  getUserContext: jest
+    .fn()
+    .mockResolvedValue({ activeStatusMessage: { chatId: 1, messageId: 2 } } as never),
+}));
+
+const mockUnlockUser = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+
+jest.unstable_mockModule('../../utils/processingLock.js', () => ({
+  unlockUser: mockUnlockUser,
+  lockUser: jest.fn<() => Promise<boolean>>().mockResolvedValue(true),
+}));
+
 jest.unstable_mockModule('../../utils/workoutFlow.js', () => ({
   parseAndDisambiguateUserInput: jest.fn(),
 }));
@@ -158,56 +173,26 @@ describe('newWorkout conversation', () => {
     );
   });
 
-  it('should handle voice input and cancel', async () => {
+  it('should stop if cancelled during STT', async () => {
     const ctx = createMockCtx();
     Object.defineProperty(ctx, 'from', { value: { id: 12345 } });
     Object.defineProperty(ctx, 'message', { value: { voice: {}, message_id: 111 } });
-    Object.defineProperty(ctx, 'chat', { value: { id: 100 } });
-
-    ctx.reply.mockResolvedValue({ message_id: 222 } as never);
-    ctx.api.deleteMessage = jest.fn().mockResolvedValue(true as never) as never;
-    ctx.api.editMessageText = jest.fn().mockResolvedValue(true as never) as never;
-
-    const actionCtxCancel = createMockCtx() as unknown as CallbackQueryContext<CustomContext>;
-    actionCtxCancel.deleteMessage = jest.fn().mockResolvedValue(true as never) as never;
-    Object.defineProperty(actionCtxCancel, 'api', {
-      value: {
-        deleteMessage: jest.fn().mockResolvedValue(true as never),
-        editMessageText: jest.fn().mockResolvedValue(true as never),
-      },
-      writable: true,
-    });
-    Object.defineProperty(actionCtxCancel, 'callbackQuery', { value: { data: 'canc:w1' } });
-    Object.defineProperty(actionCtxCancel, 'match', { value: 'canc:w1' });
 
     const conversation = mockDeep<Conversation<CustomContext, CustomContext>>();
     conversation.external.mockImplementation((async <R>(fn: unknown) => {
       return typeof fn === 'function' ? (fn() as R) : (undefined as unknown as R);
     }) as never);
-    conversation.waitFor.mockResolvedValue(actionCtxCancel);
 
     downloadAndTranscribeVoice.mockResolvedValue('test voice');
-    parseAndDisambiguateUserInput.mockResolvedValue({
-      status: 'success',
-      workout: { id: 'w1' } as never,
-    });
-    mockWorkoutService.getDraftForUser.mockResolvedValue({ id: 'w1' } as never);
-    mockWorkoutService.cancelDraft.mockResolvedValue(true);
+
+    // Mock getUserContext to return empty object (no activeStatusMessage)
+    const userContextModule = await import('../../utils/userContext.js');
+    (userContextModule.getUserContext as jest.Mock).mockResolvedValueOnce({} as never);
 
     await newWorkout(conversation, ctx);
 
     expect(downloadAndTranscribeVoice).toHaveBeenCalled();
-    expect(parseAndDisambiguateUserInput).toHaveBeenCalledWith({
-      conversation,
-      ctx,
-      rawText: 'test voice',
-      mode: 'new',
-      userId: 'u1',
-      existingWorkoutContext: undefined,
-      workoutIdForDelta: undefined,
-      tracker: expect.anything(),
-    });
-    expect(mockWorkoutService.cancelDraft).toHaveBeenCalledWith('w1');
-    expect(ctx.api.deleteMessage).toHaveBeenCalledWith(100, 222);
+    // Should NOT proceed to parseAndDisambiguateUserInput
+    expect(parseAndDisambiguateUserInput).not.toHaveBeenCalled();
   });
 });

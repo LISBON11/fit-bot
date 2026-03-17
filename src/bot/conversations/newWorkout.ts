@@ -11,6 +11,7 @@ import { downloadAndTranscribeVoice } from '../utils/telegram.js';
 import { cloneWithoutClasses } from '../utils/serialization.js';
 import { parseAndDisambiguateUserInput } from '../utils/workoutFlow.js';
 import { ProgressTracker, WorkoutStep } from '../utils/progressTracker.js';
+import { saveUserContext, clearUserContext, getUserContext } from '../utils/userContext.js';
 
 const convLogger = createLogger('newWorkoutConversation');
 
@@ -46,12 +47,32 @@ export async function newWorkout(
   if (ctx.message?.voice) {
     convLogger.info('Step 1: Downloading and transcribing voice');
 
-    // Инициализируем трекер и сразу показываем статусы
+    // Инициализируем трекер и сразу показываем статусы.
     tracker = new ProgressTracker(ctx);
-    await tracker.send();
+    const statusMsgCoords = await tracker.send();
+
+    // Сохраняем координаты статус-сообщения в сессию.
+    // Это позволяет глобальному обработчику cancel_workout_creation мгновенно
+    // отредактировать сообщение без ожидания завершения текущего шага (Bypass Middleware).
+    // Запись в ctx.session выполняется напрямую (не через conversation.external),
+    // так как conversation.external получает специальный контекст без session middleware.
+    if (statusMsgCoords && ctx.from?.id) {
+      await saveUserContext(ctx.from.id, { activeStatusMessage: statusMsgCoords });
+      convLogger.debug(statusMsgCoords, 'activeStatusMessage сохранён в Redis (userContext)');
+    }
 
     tracker.setRunning({ step: WorkoutStep.STT });
     rawText = await downloadAndTranscribeVoice({ ctx: ctx, conversation: conversation });
+
+    // Проверяем, не отменил ли пользователь создание тренировки во время STT
+    if (ctx.from?.id) {
+      const userContext = await getUserContext(ctx.from.id);
+      if (!userContext.activeStatusMessage) {
+        convLogger.info('Workout creation cancelled by user during STT, aborting');
+        return;
+      }
+    }
+
     tracker.setDone({ step: WorkoutStep.STT });
 
     convLogger.info('Step 1: Voice transcription complete');
@@ -90,11 +111,30 @@ export async function newWorkout(
 
   if (!draftResult) return; // Ошибка парсинга обработана внутри
 
+  // Проверяем, не отменил ли пользователь создание тренировки во время парсинга
+  if (ctx.from?.id) {
+    const userContext = await getUserContext(ctx.from.id);
+    // Если activeStatusMessage нет, значит пользователь нажал "Отмена" и глобальный обработчик очистил контекст
+    if (!userContext.activeStatusMessage) {
+      convLogger.info('Workout creation cancelled by user during NLU, aborting preview');
+      return;
+    }
+  }
+
   // 4. Показ превью
   const workoutId = draftResult.workout?.id;
   if (!workoutId) {
     throw new AppError('Не удалось создать черновик тренировки', 500);
   }
+
+  // Сохраняем workoutId в сессию, чтобы глобальный обработчик cancel_workout_creation
+  // мог удалить черновик при мгновенной отмене (Bypass Middleware паттерн).
+  // Запись напрямую в ctx.session (не через conversation.external) — см. комментарий выше.
+  if (ctx.from?.id) {
+    await saveUserContext(ctx.from.id, { currentDraftId: workoutId });
+    convLogger.debug({ workoutId }, 'workoutId сохранён в Redis (userContext)');
+  }
+
   const fullWorkout = await conversation.external(async () => {
     const draft = await workoutService.getDraftForUser(userId);
     return cloneWithoutClasses(draft);
@@ -152,17 +192,17 @@ export async function newWorkout(
       );
     }
 
-    // 5. Ожидание действия (Approve, Edit, Cancel)
+    // 5. Ожидание действия (Approve, Edit)
+    // Кнопка «Cancel» теперь использует CANCEL_WORKOUT_CALLBACK и обрабатывается
+    // глобальным bypass-обработчиком в bot.ts ДО conversations() middleware.
+    // Поэтому здесь ждём только appr: и edit:.
     let actionCtx;
     const warningMsgIds: number[] = [];
 
     while (true) {
       actionCtx = await conversation.waitFor(['callback_query:data', 'message']);
 
-      if (
-        actionCtx.callbackQuery?.data &&
-        /^(appr|edit|canc):/.test(actionCtx.callbackQuery.data)
-      ) {
+      if (actionCtx.callbackQuery?.data && /^(appr|edit):/.test(actionCtx.callbackQuery.data)) {
         break;
       }
 
@@ -216,6 +256,11 @@ export async function newWorkout(
       // Удаляем трекер — тренировка подтверждена
       await tracker?.delete();
 
+      // Очищаем данные сессии — conversation завершена нормально
+      if (ctx.from?.id) {
+        await clearUserContext(ctx.from.id);
+      }
+
       if (previewMsgId && ctx.chat?.id) {
         await ctx.api
           .editMessageText(
@@ -230,21 +275,6 @@ export async function newWorkout(
       }
 
       convLogger.info('Action: approve (finish)');
-      return;
-    } else if (action === 'canc') {
-      // Отменяем
-      await conversation.external(() => workoutService.cancelDraft(workoutId));
-
-      // Обновляем трекер (сообщение статуса)
-      if (tracker) {
-        await tracker.replaceWithTextAndStop('❌ Тренировка отменена');
-      } else {
-        await ctx.reply('❌ Тренировка отменена.');
-      }
-
-      if (previewMsgId && ctx.chat?.id) {
-        await ctx.api.deleteMessage(ctx.chat.id, previewMsgId).catch(() => {});
-      }
       return;
     } else if (action === 'edit') {
       // Редактируем: запрашиваем дельту изменений

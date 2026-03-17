@@ -3,13 +3,26 @@ import type { ConversationFlavor } from '@grammyjs/conversations';
 import type { User } from '../generated/prisma/index.js';
 
 /**
- * Описание данных сессии бота
+ * Координаты активного статус-сообщения (ProgressTracker).
+ * Используются внешним обработчиком cancel_workout_creation для мгновенного
+ * редактирования сообщения без ожидания завершения conversation.
+ */
+export interface ActiveStatusMessage {
+  chatId: number;
+  messageId: number;
+}
+
+/**
+ * Описание данных сессии бота.
+ * Поле `conversation` управляется плагином `@grammyjs/conversations` и очищается
+ * глобальным обработчиком отмены в bot.ts.
  */
 export interface SessionData {
   conversationState?: string;
-  currentDraftId?: string;
   disambiguation?: unknown;
   isProcessing?: boolean;
+  /** Внутреннее состояние плагина conversations. Очищается при отмене тренировки. */
+  conversation?: Record<string, unknown>;
 }
 
 /**

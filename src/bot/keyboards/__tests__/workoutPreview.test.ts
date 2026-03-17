@@ -1,4 +1,5 @@
 import { createWorkoutPreviewKeyboard } from '../workoutPreview.js';
+import { CANCEL_WORKOUT_CALLBACK } from '../../utils/progressTracker.js';
 
 describe('createWorkoutPreviewKeyboard', () => {
   it('should create keyboard with approve, edit, and cancel buttons', () => {
@@ -14,6 +15,8 @@ describe('createWorkoutPreviewKeyboard', () => {
     expect((inline_keyboard[1][0] as { callback_data: string }).callback_data).toBe('edit:w1');
 
     expect(inline_keyboard[2][0].text).toBe('❌ Cancel');
-    expect((inline_keyboard[2][0] as { callback_data: string }).callback_data).toBe('canc:w1');
+    expect((inline_keyboard[2][0] as { callback_data: string }).callback_data).toBe(
+      CANCEL_WORKOUT_CALLBACK,
+    );
   });
 });

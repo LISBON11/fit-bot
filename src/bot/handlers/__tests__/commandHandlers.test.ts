@@ -1,9 +1,17 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import type { User } from '../../../generated/prisma/index.js';
-import { handleStart, handleHelp, handleCancel } from '../commandHandlers.js';
 import { createMockCtx } from '../../__tests__/utils/mockCtx.js';
 import type { DeepMockProxy } from 'jest-mock-extended';
 import type { CustomContext } from '../../types.js';
+import type { User } from '../../../generated/prisma/index.js';
+
+// 1. Сначала мокируем
+jest.unstable_mockModule('../../utils/cancelFlow.js', () => ({
+  cancelWorkoutFlow: jest.fn(),
+}));
+
+// 2. Импортируем тестируемые хэндлеры ПОСЛЕ моков
+const { handleStart, handleHelp, handleCancel } = await import('../commandHandlers.js');
+const { cancelWorkoutFlow } = await import('../../utils/cancelFlow.js');
 
 describe('Command Handlers', () => {
   let mockCtx: DeepMockProxy<CustomContext>;
@@ -54,13 +62,13 @@ describe('Command Handlers', () => {
   });
 
   describe('handleCancel', () => {
-    it('должен очищать сессию и отправлять подтверждение', async () => {
-      mockCtx.session = { currentDraftId: '123' };
-
+    it('должен вызывать cancelWorkoutFlow с правильными параметрами', async () => {
       await handleCancel(mockCtx);
 
-      expect(mockCtx.session).toEqual({});
-      expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Действие отменено'));
+      expect(cancelWorkoutFlow).toHaveBeenCalledWith({
+        ctx: mockCtx,
+        userId: mockCtx.from?.id,
+      });
     });
   });
 });

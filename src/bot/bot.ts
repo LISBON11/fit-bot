@@ -7,11 +7,13 @@ import { loggingMiddleware } from './middleware/loggingMiddleware.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 import { errorMiddleware } from './middleware/errorMiddleware.js';
 import { handleStart, handleHelp, handleCancel } from './handlers/commandHandlers.js';
+import { handleCancelWorkoutCallback } from './handlers/callbackHandlers.js';
 import { newWorkout } from './conversations/newWorkout.js';
 import { editWorkout } from './conversations/editWorkout.js';
 import { logger } from '../logger/logger.js';
 import { getRedisClient } from '../config/redis.js';
-import { lockUser, unlockUser } from './utils/processingLock.js';
+import { CANCEL_WORKOUT_CALLBACK } from './utils/progressTracker.js';
+import { enterWithLock } from './utils/conversationHelpers.js';
 
 const botLogger = logger.child({ module: 'BotInit' });
 
@@ -21,24 +23,25 @@ const botLogger = logger.child({ module: 'BotInit' });
  * @returns Настроенный экземпляр бота
  */
 export function createBot(token: string): Bot<CustomContext> {
-  botLogger.info('Configuring bot plugins and middleware...');
+  botLogger.info('Инициализация бота...');
 
   const bot = new Bot<CustomContext>(token);
 
   // Глобальный перехватчик ошибок
   bot.catch((err: BotError<CustomContext>) => {
-    botLogger.error({ err: err.error, update: err.ctx.update }, 'Unhandled Grammy error');
+    botLogger.error({ err: err.error, update: err.ctx.update }, 'Необработанная ошибка Grammy');
   });
 
+  // 1. Базовая цепочка middleware
   bot.use(loggingMiddleware);
   bot.use(errorMiddleware);
   bot.use(authMiddleware);
 
-  // Сессии хранятся в Redis: переживают перезапуск бота, автоочистка через 24 часа.
+  // 2. Сессии хранятся в Redis (переживают перезапуск, TTL 24 часа)
   const redisClient = getRedisClient();
   const storage = new RedisAdapter<SessionData>({
     instance: redisClient,
-    ttl: 86400, // 24 часа в секундах
+    ttl: 86400,
   });
 
   bot.use(
@@ -50,74 +53,62 @@ export function createBot(token: string): Bot<CustomContext> {
     }),
   );
 
+  // 3. Bypass Middleware: Глобальная отмена создания тренировки.
+  // Регистрируется ДО conversations(), чтобы работать мгновенно (ADR-013).
+  bot.callbackQuery(CANCEL_WORKOUT_CALLBACK, handleCancelWorkoutCallback);
+
+  // 4. Плагин диалогов
   bot.use(conversations());
   bot.use(createConversation<CustomContext, CustomContext>(newWorkout));
   bot.use(createConversation<CustomContext, CustomContext>(editWorkout));
 
+  // 5. Команды
   bot.command('start', handleStart);
   bot.command('help', handleHelp);
   bot.command('cancel', handleCancel);
+
   bot.command('edit', async (ctx) => {
-    if (!ctx.from) return;
-    if (!(await lockUser(ctx.from.id))) {
-      await ctx.reply('⏳ Пожалуйста, подождите, я ещё обрабатываю ваш предыдущий запрос.');
-      return;
-    }
-    try {
-      await ctx.conversation.enter('editWorkout');
-    } finally {
-      await unlockUser(ctx.from.id);
-    }
+    await enterWithLock({ ctx, conversationName: 'editWorkout' });
   });
 
-  // Обработка текстовых и голосовых сообщений, передающих управление в NLU/conversations
+  // 6. Обработка входящих сообщений (Голос/Текст)
   bot.on('message:voice', async (ctx) => {
-    if (!ctx.from) return;
-    if (!(await lockUser(ctx.from.id))) {
-      await ctx.reply('⏳ Пожалуйста, подождите, я ещё обрабатываю ваше предыдущее сообщение.');
-      return;
-    }
-    try {
-      await ctx.conversation.enter('newWorkout');
-    } finally {
-      await unlockUser(ctx.from.id);
-    }
+    await enterWithLock({
+      ctx,
+      conversationName: 'newWorkout',
+      errorMessage:
+        '⏳ Пожалуйста, подождите, я всё ещё обрабатываю ваше предыдущее голосовое сообщение.',
+    });
   });
 
   bot.on('message:text', async (ctx, next) => {
+    // Команды уже обработаны выше, пропускаем их
     if (ctx.message.text.startsWith('/')) {
       return next();
     }
-    if (!ctx.from) return;
-    if (!(await lockUser(ctx.from.id))) {
-      await ctx.reply('⏳ Пожалуйста, подождите, я ещё обрабатываю ваш предыдущий запрос.');
-      return;
-    }
-    try {
-      await ctx.conversation.enter('newWorkout');
-    } finally {
-      await unlockUser(ctx.from.id);
-    }
+    await enterWithLock({ ctx, conversationName: 'newWorkout' });
   });
 
-  // Глобальный перехватчик для неожидаемых/устаревших callback_query
-  // (например, если сессия (conversation) удалилась, а юзер нажал на кнопку "Approve")
+  // 7. Обработка устаревших или неизвестных callback_query
   bot.on('callback_query', async (ctx) => {
     botLogger.warn(
-      { data: ctx.callbackQuery.data },
+      { data: ctx.callbackQuery.data, userId: ctx.from?.id },
       'Получен неизвестный или устаревший callback_query',
     );
+
     await ctx
       .answerCallbackQuery({
         text: '⚠️ Действие устарело или сессия завершена.',
         show_alert: true,
       })
       .catch(() => {});
+
     if (ctx.callbackQuery.message) {
       // Удаляем кнопки у старого сообщения
       await ctx.editMessageReplyMarkup({ reply_markup: { inline_keyboard: [] } }).catch(() => {});
     }
   });
 
+  botLogger.info('Бот готов к работе 🚀');
   return bot;
 }

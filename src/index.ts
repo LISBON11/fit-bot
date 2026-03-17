@@ -14,6 +14,7 @@ import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { connectRedis, disconnectRedis } from './config/redis.js';
 import { createBot } from './bot/bot.js';
 import type { Bot } from 'grammy';
+import { run, type RunnerHandle } from '@grammyjs/runner';
 import type { CustomContext } from './bot/types.js';
 
 const config = validateConfig();
@@ -24,6 +25,7 @@ setupLogger(config);
 const mainLogger = createLogger('main');
 
 let bot: Bot<CustomContext> | undefined;
+let runner: RunnerHandle | undefined;
 
 /**
  * Выполняет graceful shutdown: останавливает бота и закрывает соединения.
@@ -33,13 +35,17 @@ let bot: Bot<CustomContext> | undefined;
 async function gracefulShutdown(signal: string): Promise<void> {
   mainLogger.info(`${signal} получен: завершение работы...`);
   try {
-    if (bot) {
+    if (runner) {
+      await runner.stop();
+    } else if (bot) {
       await bot.stop();
-      // Искусственная задержка, чтобы дать существующим асинхронным задачам
-      // (особенно conversations.external) время на завершение
-      mainLogger.info('Ожидание завершения активных тренировок (2 сек)...');
-      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
+
+    // Искусственная задержка, чтобы дать существующим асинхронным задачам
+    // (особенно conversations.external) время на завершение
+    mainLogger.info('Ожидание завершения активных тренировок (2 сек)...');
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     await disconnectRedis();
     await disconnectDatabase();
     mainLogger.info('✅ FitBot остановлен корректно');
@@ -80,11 +86,12 @@ async function main(): Promise<void> {
 
   // 4. Настройка и запуск бота
   bot = createBot(config.BOT_TOKEN);
-  await bot.start({
-    onStart: (botInfo): void => {
-      mainLogger.info({ username: botInfo.username }, '✅ FitBot запущен успешно');
-    },
-  });
+
+  // Используем runner для конкурентной обработки обновлений
+  runner = run(bot);
+
+  const botInfo = await bot.api.getMe();
+  mainLogger.info({ username: botInfo.username }, '✅ FitBot запущен успешно (runner mode)');
 }
 
 // Запуск приложения

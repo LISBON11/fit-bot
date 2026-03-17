@@ -115,10 +115,11 @@ describe('Сценарий: Отмена создания тренировки',
     const smMessages = chat.messages.filter((m) => m.type === 'sendMessage');
     expect(smMessages.length).toBe(1);
 
-    // Проверяем, что трекер был изменён на "❌ Отмена..." (самое свежее изменение)
-    const editMessages = chat.messages.filter(
-      (m) => m.type === 'editMessageText' && m.message_id === smMessages[0].message_id,
-    );
+    const editMessages = chat.messages.filter((m) => m.type === 'editMessageText');
+    // Все изменения должны относиться только к нашему трекеру
+    expect(editMessages.every((m) => m.message_id === smMessages[0].message_id)).toBe(true);
+
+    // Проверяем самое свежее изменение
     expect(editMessages.length).toBeGreaterThan(0);
     const lastEdit = editMessages[editMessages.length - 1];
     expect(lastEdit.text).toContain('❌ Отмена...');
@@ -180,14 +181,90 @@ describe('Сценарий: Отмена создания тренировки',
     expect(mockWorkoutService.createDraft).not.toHaveBeenCalled();
     expect(mockWorkoutService.getDraftForUser).not.toHaveBeenCalled();
 
+    // В чате отправился только трекер, превью не отрисовано
     const smMessages = chat.messages.filter((m) => m.type === 'sendMessage');
     expect(smMessages.length).toBe(1);
 
-    const editMessages = chat.messages.filter(
-      (m) => m.type === 'editMessageText' && m.message_id === smMessages[0].message_id,
-    );
+    const editMessages = chat.messages.filter((m) => m.type === 'editMessageText');
+    // Все изменения должны относиться только к нашему трекеру
+    expect(editMessages.every((m) => m.message_id === smMessages[0].message_id)).toBe(true);
+
+    // Проверяем самое свежее изменение
     expect(editMessages.length).toBeGreaterThan(0);
     const lastEdit = editMessages[editMessages.length - 1];
     expect(lastEdit.text).toContain('❌ Отмена...');
+    // Проверяем, что инлайн-клавиатура (с кнопкой отмены) удалена
+    expect(lastEdit.reply_markup?.inline_keyboard?.length).toBe(0);
+  });
+
+  it('Отмена во время запроса к NLU после голосового сообщения (STT -> NLU(pause) -> Cancel)', async () => {
+    mockUserService.getOrCreateByTelegram.mockResolvedValue({ id: 'db-user-123' });
+
+    // Сразу резолвим STT
+    mockTelegramUtils.downloadAndTranscribeVoice.mockResolvedValue('распознанный текст');
+
+    let resolveNlu: (v: unknown) => void = () => {};
+    mockNluParser.parse.mockImplementation(() => {
+      return new Promise((r) => {
+        resolveNlu = r;
+      });
+    });
+
+    // Отправляем голос
+    const updatePromise = bot.handleUpdate({
+      update_id: 5,
+      message: {
+        message_id: 12,
+        date: Date.now() / 1000,
+        chat: { id: 111, type: 'private', first_name: 'Test' },
+        from: { id: 111, is_bot: false, first_name: 'Test' },
+        voice: {
+          file_id: 'voice_123',
+          file_unique_id: 'voice_123_unique',
+          duration: 5,
+        },
+      },
+    });
+
+    await new Promise(setImmediate);
+
+    // Симулируем нажатие Отмена, пока висим на NLU
+    await bot.handleUpdate({
+      update_id: 6,
+      callback_query: {
+        id: 'cq-cancel-3',
+        from: { id: 111, is_bot: false, first_name: 'Test' },
+        message: {
+          message_id: chat.messages[0].message_id,
+          date: Date.now() / 1000,
+          chat: { id: 111, type: 'private', first_name: 'Test' },
+          text: 'Tracker text STT Done, NLU pending',
+        },
+        chat_instance: '1',
+        data: CANCEL_WORKOUT_CALLBACK,
+      },
+    });
+
+    if (resolveNlu) {
+      resolveNlu({
+        location: 'Gym',
+        exercises: [{ originalName: 'Bench press', sets: [] }],
+      });
+    }
+    await updatePromise;
+
+    expect(mockTelegramUtils.downloadAndTranscribeVoice).toHaveBeenCalled();
+    expect(mockNluParser.parse).toHaveBeenCalled();
+    expect(mockWorkoutService.createDraft).not.toHaveBeenCalled();
+
+    const smMessages = chat.messages.filter((m) => m.type === 'sendMessage');
+    expect(smMessages.length).toBe(1);
+
+    const editMessages = chat.messages.filter((m) => m.type === 'editMessageText');
+    expect(editMessages.every((m) => m.message_id === smMessages[0].message_id)).toBe(true);
+
+    const lastEdit = editMessages[editMessages.length - 1];
+    expect(lastEdit.text).toContain('❌ Отмена...');
+    expect(lastEdit.reply_markup?.inline_keyboard?.length).toBe(0);
   });
 });

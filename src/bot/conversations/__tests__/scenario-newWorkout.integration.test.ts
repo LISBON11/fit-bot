@@ -354,39 +354,30 @@ describe('Сценарий: Добавление классической тре
     // Собираем все текстовые состояния трекера в массив
     const trackerStates = [trackerMessage.text, ...trackerEdits.map((e) => e.text)];
 
-    // 0. Начальное состояние
-    expect(trackerStates).toContain(buildExpectedTrackerText({}));
-
-    // 1. STT в running
-    expect(trackerStates).toContain(buildExpectedTrackerText({ stt: 'running' }));
-
-    // 2. Переход STT в done, NLU в running
-    expect(trackerStates).toContain(buildExpectedTrackerText({ stt: 'done', nlu: 'running' }));
-
-    // 3. Упражнения пропущены, так как у нас нет новых упражнений, а Сохранение выполнено
-    expect(trackerStates).toContain(
-      buildExpectedTrackerText({
-        stt: 'done',
-        nlu: 'done',
-        exercises: 'skipped',
-        save: 'done',
-        clarify: 'pending',
-      }),
-    );
-
-    // 4. CLARIFY (Уточняем детали) - запущен (ожидает аппрува превью)
-    expect(trackerStates).toContain(
+    // Проверяем строгую очередность и отсутствие лишних состояний (ровно 12 переходов в боте)
+    expect(trackerStates).toEqual([
+      buildExpectedTrackerText({}), // 1
+      buildExpectedTrackerText({ stt: 'running' }), // 2
+      buildExpectedTrackerText({ stt: 'done' }), // 3
+      buildExpectedTrackerText({ stt: 'done', nlu: 'running' }), // 4
+      buildExpectedTrackerText({ stt: 'done', nlu: 'done' }), // 5
+      buildExpectedTrackerText({ stt: 'done', nlu: 'done', save: 'running' }), // 6
+      buildExpectedTrackerText({ stt: 'done', nlu: 'done', exercises: 'skipped', save: 'running' }), // 7
+      buildExpectedTrackerText({ stt: 'done', nlu: 'done', exercises: 'skipped', save: 'done' }), // 8
       buildExpectedTrackerText({
         stt: 'done',
         nlu: 'done',
         exercises: 'skipped',
         save: 'done',
         clarify: 'running',
-      }),
-    );
-
-    // 5. CLARIFY выполнен, PUBLISH запущен
-    expect(trackerStates).toContain(
+      }), // 9
+      buildExpectedTrackerText({
+        stt: 'done',
+        nlu: 'done',
+        exercises: 'skipped',
+        save: 'done',
+        clarify: 'done',
+      }), // 10
       buildExpectedTrackerText({
         stt: 'done',
         nlu: 'done',
@@ -394,11 +385,7 @@ describe('Сценарий: Добавление классической тре
         save: 'done',
         clarify: 'done',
         publish: 'running',
-      }),
-    );
-
-    // 6. PUBLISH выполнен (финальное состояние перед удалением сообщения)
-    expect(trackerStates).toContain(
+      }), // 11
       buildExpectedTrackerText({
         stt: 'done',
         nlu: 'done',
@@ -406,7 +393,7 @@ describe('Сценарий: Добавление классической тре
         save: 'done',
         clarify: 'done',
         publish: 'done',
-      }),
-    );
+      }), // 12
+    ]);
   });
 });

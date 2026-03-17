@@ -328,6 +328,15 @@ describe('Сценарий: Добавление классической тре
     const trackerMessage = sendMessages[0];
     const previewMessage = sendMessages[1];
 
+    // Проверяем состояние превью перед нажатием кнопки "Approve"
+    expect(previewMessage).toBeDefined();
+    expect(previewMessage.text).toContain('Gym');
+    const inlineKeyboard = previewMessage.reply_markup?.inline_keyboard;
+    expect(inlineKeyboard).toBeDefined();
+    expect(inlineKeyboard?.[0]).toContainEqual(
+      expect.objectContaining({ callback_data: 'appr:d3' }),
+    );
+
     // Симулируем нажатие Approve
     await bot.handleUpdate({
       update_id: 6,

@@ -25,20 +25,26 @@ export async function newWorkout(
 ): Promise<void> {
   convLogger.info({ userId: ctx.user?.id }, 'Started newWorkout conversation');
 
-  const telegramId = ctx.from?.id.toString();
-  if (!telegramId) {
-    throw new AppError('Пользователь не идентифицирован', 401);
+  const telegramUserId = ctx.from?.id;
+  if (!telegramUserId) {
+    throw new AppError('Пользователь не идентифицирован (нет Telegram ID)', 401);
   }
 
-  const user = await conversation.external(() =>
-    userService.getOrCreateByTelegram({
-      telegramId,
-      username: ctx.from?.username || null,
-      firstName: ctx.from?.first_name,
-    }),
-  );
+  // Попытка получить пользователя из контекста (подготовленного authMiddleware)
+  // или загрузить его заново через conversation.external (для случаев replay/диалога)
+  let dbUserId = ctx.user?.id;
 
-  const userId = user.id;
+  if (!dbUserId) {
+    convLogger.debug({ telegramUserId }, 'User not found in context, fetching from DB...');
+    const user = await conversation.external(() =>
+      userService.getOrCreateByTelegram({
+        telegramId: telegramUserId.toString(),
+        username: ctx.from?.username || null,
+        firstName: ctx.from?.first_name || 'Спортсмен',
+      }),
+    );
+    dbUserId = user.id;
+  }
 
   let rawText: string;
   let tracker: ProgressTracker | undefined;
@@ -52,30 +58,26 @@ export async function newWorkout(
     const statusMsgCoords = await tracker.send();
 
     // Сохраняем координаты статус-сообщения в сессию.
-    // Это позволяет глобальному обработчику cancel_workout_creation мгновенно
-    // отредактировать сообщение без ожидания завершения текущего шага (Bypass Middleware).
-    // Запись в ctx.session выполняется напрямую (не через conversation.external),
-    // так как conversation.external получает специальный контекст без session middleware.
-    if (statusMsgCoords && ctx.from?.id) {
-      await saveUserContext(ctx.from.id, { activeStatusMessage: statusMsgCoords });
+    if (statusMsgCoords) {
+      await saveUserContext(telegramUserId, { activeStatusMessage: statusMsgCoords });
       convLogger.debug(statusMsgCoords, 'activeStatusMessage сохранён в Redis (userContext)');
     }
 
     tracker.setRunning({ step: WorkoutStep.STT });
-    rawText = await downloadAndTranscribeVoice({ ctx: ctx, conversation: conversation });
+    rawText = await downloadAndTranscribeVoice({ ctx, conversation });
 
     // Проверяем, не отменил ли пользователь создание тренировки во время STT
-    if (ctx.from?.id) {
-      const userContext = await getUserContext(ctx.from.id);
-      if (!userContext.activeStatusMessage) {
-        convLogger.info('Workout creation cancelled by user during STT, aborting');
-        return;
-      }
+    const userContext = await getUserContext(telegramUserId);
+    if (!userContext.activeStatusMessage) {
+      convLogger.info(
+        { telegramUserId },
+        'Workout creation cancelled by user during STT, aborting',
+      );
+      return;
     }
 
     tracker.setDone({ step: WorkoutStep.STT });
-
-    convLogger.info('Step 1: Voice transcription complete');
+    convLogger.info({ telegramUserId }, 'Step 1: Voice transcription complete');
   } else if (ctx.message?.text) {
     rawText = ctx.message.text;
   } else {
@@ -88,7 +90,7 @@ export async function newWorkout(
     return;
   }
 
-  console.log('rawText =>', rawText);
+  convLogger.debug({ telegramUserId, dbUserId, textLength: rawText.length }, 'Raw text received');
 
   // 2. NLU Parsing & Disambiguation Loop
   convLogger.info('Step 2: Starting parseAndDisambiguateUserInput');
@@ -97,7 +99,7 @@ export async function newWorkout(
     ctx: ctx,
     rawText: rawText,
     mode: 'new',
-    userId: userId,
+    userId: dbUserId,
     existingWorkoutContext: undefined,
     workoutIdForDelta: undefined,
     tracker: tracker,
@@ -107,38 +109,33 @@ export async function newWorkout(
     'Step 2: parseAndDisambiguateUserInput output',
   );
 
-  console.log('draftResult =>', draftResult);
-
   if (!draftResult) return; // Ошибка парсинга обработана внутри
 
-  // Проверяем, не отменил ли пользователь создание тренировки во время парсинга
-  if (ctx.from?.id) {
-    const userContext = await getUserContext(ctx.from.id);
-    // Если activeStatusMessage нет, значит пользователь нажал "Отмена" и глобальный обработчик очистил контекст
-    if (!userContext.activeStatusMessage) {
-      convLogger.info('Workout creation cancelled by user during NLU, aborting preview');
-      return;
-    }
-  }
-
-  // 4. Показ превью
+  // 3. Сохраняем workoutId в Redis для мгновенной отмены (Bypass Middleware паттерн)
   const workoutId = draftResult.workout?.id;
   if (!workoutId) {
     throw new AppError('Не удалось создать черновик тренировки', 500);
   }
 
-  // Сохраняем workoutId в сессию, чтобы глобальный обработчик cancel_workout_creation
-  // мог удалить черновик при мгновенной отмене (Bypass Middleware паттерн).
-  // Запись напрямую в ctx.session (не через conversation.external) — см. комментарий выше.
-  if (ctx.from?.id) {
-    await saveUserContext(ctx.from.id, { currentDraftId: workoutId });
-    convLogger.debug({ workoutId }, 'workoutId сохранён в Redis (userContext)');
+  await saveUserContext(telegramUserId, { currentDraftId: workoutId });
+  convLogger.debug({ telegramUserId, workoutId }, 'workoutId сохранён в Redis (userContext)');
+
+  // Проверяем отмену после NLU
+  const statusAfterNlu = await getUserContext(telegramUserId);
+  if (!statusAfterNlu.activeStatusMessage) {
+    convLogger.info(
+      { telegramUserId },
+      'Workout creation cancelled by user during NLU, aborting preview',
+    );
+    return;
   }
 
-  const fullWorkout = await conversation.external(async () => {
-    const draft = await workoutService.getDraftForUser(userId);
+  // Загружаем полные данные черновика из БД (со всеми связями),
+  // так как draftResult содержит только ID.
+  let fullWorkout = (await conversation.external(async () => {
+    const draft = await workoutService.getDraftForUser(dbUserId);
     return cloneWithoutClasses(draft);
-  });
+  })) as WorkoutWithRelations;
 
   if (!fullWorkout) {
     throw new AppError('Не удалось загрузить созданный черновик', 500);
@@ -152,18 +149,18 @@ export async function newWorkout(
 
   // 4. Показ итеративного превью и выбор действия
   while (true) {
-    convLogger.info('Loop: entering visualization loop');
-    const loopWorkout = await conversation.external(async () => {
-      const draft = await workoutService.getDraftForUser(userId);
-      return cloneWithoutClasses(draft);
-    });
-    convLogger.info('Loop: Fetched loop workout');
+    if (!fullWorkout) {
+      fullWorkout = (await conversation.external(async () => {
+        const draft = await workoutService.getDraftForUser(dbUserId);
+        return cloneWithoutClasses(draft);
+      })) as WorkoutWithRelations;
+    }
 
-    if (!loopWorkout) {
+    if (!fullWorkout) {
       throw new AppError('Не удалось загрузить черновик тренировки', 404);
     }
 
-    const previewHtml = formatPreview(loopWorkout as WorkoutWithRelations);
+    const previewHtml = formatPreview(fullWorkout);
     const previewKb = createWorkoutPreviewKeyboard(workoutId);
 
     if (previewMsgId && ctx.chat?.id) {
@@ -257,9 +254,7 @@ export async function newWorkout(
       await tracker?.delete();
 
       // Очищаем данные сессии — conversation завершена нормально
-      if (ctx.from?.id) {
-        await clearUserContext(ctx.from.id);
-      }
+      await clearUserContext(telegramUserId);
 
       if (previewMsgId && ctx.chat?.id) {
         await ctx.api
@@ -327,13 +322,16 @@ export async function newWorkout(
         ctx: ctx,
         rawText: editRawText,
         mode: 'edit',
-        userId: userId,
-        existingWorkoutContext: JSON.stringify(loopWorkout, null, 2),
+        userId: dbUserId,
+        existingWorkoutContext: JSON.stringify(fullWorkout, null, 2),
         workoutIdForDelta: workoutId,
         tracker: tracker,
       });
 
       if (!editResult) continue;
+
+      // Обновляем локальный объект тренировки для следующей итерации цикла
+      fullWorkout = editResult.workout as WorkoutWithRelations;
     }
   }
 }

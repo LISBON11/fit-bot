@@ -6,7 +6,7 @@ import type { CustomContext, SessionData } from './types.js';
 import { loggingMiddleware } from './middleware/loggingMiddleware.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 import { errorMiddleware } from './middleware/errorMiddleware.js';
-import { handleStart, handleHelp, handleCancel } from './handlers/commandHandlers.js';
+import { handleStart, handleHelp, handleCancel, handleEdit } from './handlers/commandHandlers.js';
 import { handleCancelWorkoutCallback } from './handlers/callbackHandlers.js';
 import { newWorkout } from './conversations/newWorkout.js';
 import { editWorkout } from './conversations/editWorkout.js';
@@ -67,9 +67,7 @@ export function createBot(token: string): Bot<CustomContext> {
   bot.command('help', handleHelp);
   bot.command('cancel', handleCancel);
 
-  bot.command('edit', async (ctx) => {
-    await enterWithLock({ ctx, conversationName: 'editWorkout' });
-  });
+  bot.command('edit', handleEdit);
 
   // 6. Обработка входящих сообщений (Голос/Текст)
   bot.on('message:voice', async (ctx) => {

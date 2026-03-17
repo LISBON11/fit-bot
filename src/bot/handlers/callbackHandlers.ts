@@ -1,3 +1,4 @@
+import type { Filter } from 'grammy';
 import type { CustomContext } from '../types.js';
 import { logger } from '../../logger/logger.js';
 import { cancelWorkoutFlow } from '../utils/cancelFlow.js';
@@ -10,16 +11,10 @@ const callbackLogger = logger.child({ module: 'CallbackHandlers' });
  *
  * @param ctx Контекст grammY
  */
-export async function handleCancelWorkoutCallback(ctx: CustomContext): Promise<void> {
-  const userId = ctx.from?.id;
-
-  if (!userId) {
-    callbackLogger.warn(
-      { data: ctx.callbackQuery?.data },
-      'Получена отмена от неопознанного пользователя',
-    );
-    return;
-  }
+export async function handleCancelWorkoutCallback(
+  ctx: Filter<CustomContext, 'callback_query:data'>,
+): Promise<void> {
+  const userId = ctx.from.id;
 
   callbackLogger.info({ userId }, 'Нажата кнопка отмены создания тренировки');
 

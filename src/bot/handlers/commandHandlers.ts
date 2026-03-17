@@ -1,6 +1,7 @@
 import type { CustomContext } from '../types.js';
 import { logger } from '../../logger/logger.js';
 import { cancelWorkoutFlow } from '../utils/cancelFlow.js';
+import { enterWithLock } from '../utils/conversationHelpers.js';
 
 const commandLogger = logger.child({ module: 'CommandHandlers' });
 
@@ -9,8 +10,11 @@ const commandLogger = logger.child({ module: 'CommandHandlers' });
  * @param ctx Контекст бота
  */
 export async function handleStart(ctx: CustomContext): Promise<void> {
-  const name = ctx.user?.displayName || ctx.from?.first_name || 'Спортсмен';
-  commandLogger.info({ userId: ctx.from?.id }, 'Вызвана команда /start');
+  const from = ctx.from;
+  if (!from) return;
+
+  const name = ctx.user?.displayName || from.first_name || 'Спортсмен';
+  commandLogger.info({ userId: from.id }, 'Вызвана команда /start');
   await ctx.reply(
     `Привет, ${name}! 👋\n\nЯ FitBot — твой персональный фитнес-ассистент.\nОтправь мне голосовое сообщение или текст с описанием твоей тренировки, и я сохраню её.\n\nИспользуй /help чтобы узнать, как правильно описывать тренировки.`,
   );
@@ -21,7 +25,8 @@ export async function handleStart(ctx: CustomContext): Promise<void> {
  * @param ctx Контекст бота
  */
 export async function handleHelp(ctx: CustomContext): Promise<void> {
-  commandLogger.info({ userId: ctx.from?.id }, 'Вызвана команда /help');
+  if (!ctx.from) return;
+  commandLogger.info({ userId: ctx.from.id }, 'Вызвана команда /help');
   const helpText = `
 🏋️‍♂️ **Как использовать FitBot:**
 
@@ -54,4 +59,16 @@ export async function handleCancel(ctx: CustomContext): Promise<void> {
 
   // Используем унифицированный флоу для отмены
   await cancelWorkoutFlow({ ctx, userId });
+}
+
+/**
+ * Обработчик команды /edit. Запускает диалог редактирования тренировки.
+ * @param ctx Контекст бота
+ */
+export async function handleEdit(ctx: CustomContext): Promise<void> {
+  const userId = ctx.from?.id;
+  if (!userId) return;
+
+  commandLogger.info({ userId }, 'Вызвана команда /edit');
+  await enterWithLock({ ctx, conversationName: 'editWorkout' });
 }

@@ -51,6 +51,7 @@ jest.unstable_mockModule('../handlers/commandHandlers.js', () => ({
   handleStart: jest.fn(),
   handleHelp: jest.fn(),
   handleCancel: jest.fn(),
+  handleEdit: jest.fn(),
 }));
 
 jest.unstable_mockModule('../handlers/callbackHandlers.js', () => ({
@@ -71,6 +72,7 @@ jest.unstable_mockModule('../conversations/editWorkout.js', () => ({
 
 // 2. Импортируем тестируемый модуль ПОСЛЕ моков
 const { createBot } = await import('../bot.js');
+const { handleEdit } = await import('../handlers/commandHandlers.js');
 const { enterWithLock } = await import('../utils/conversationHelpers.js');
 
 describe('bot.ts construction', () => {
@@ -105,19 +107,9 @@ describe('bot.ts construction', () => {
   });
 
   describe('интеграция хэндлеров через bot.ts', () => {
-    it('обработчик /edit должен вызывать enterWithLock', async () => {
+    it('команда /edit должна использовать хэндлер handleEdit', async () => {
       createBot('TEST_TOKEN');
-      const editHandlerCall = mockBot.command.mock.calls.find((call) => call[0] === 'edit');
-      if (!editHandlerCall) throw new Error('Edit handler not found');
-      const editHandler = editHandlerCall[1] as (ctx: unknown) => Promise<void>;
-      const ctx = { from: { id: 1 } };
-
-      await editHandler(ctx);
-
-      expect(enterWithLock).toHaveBeenCalledWith({
-        ctx,
-        conversationName: 'editWorkout',
-      });
+      expect(mockBot.command).toHaveBeenCalledWith('edit', handleEdit);
     });
 
     it('обработчик message:voice должен вызывать enterWithLock', async () => {

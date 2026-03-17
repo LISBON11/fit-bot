@@ -9,9 +9,14 @@ jest.unstable_mockModule('../../utils/cancelFlow.js', () => ({
   cancelWorkoutFlow: jest.fn(),
 }));
 
+jest.unstable_mockModule('../../utils/conversationHelpers.js', () => ({
+  enterWithLock: jest.fn(),
+}));
+
 // 2. Импортируем тестируемые хэндлеры ПОСЛЕ моков
-const { handleStart, handleHelp, handleCancel } = await import('../commandHandlers.js');
+const { handleStart, handleHelp, handleCancel, handleEdit } = await import('../commandHandlers.js');
 const { cancelWorkoutFlow } = await import('../../utils/cancelFlow.js');
+const { enterWithLock } = await import('../../utils/conversationHelpers.js');
 
 describe('Command Handlers', () => {
   let mockCtx: DeepMockProxy<CustomContext>;
@@ -69,6 +74,23 @@ describe('Command Handlers', () => {
         ctx: mockCtx,
         userId: mockCtx.from?.id,
       });
+    });
+  });
+
+  describe('handleEdit', () => {
+    it('должен вызывать enterWithLock с правильными параметрами', async () => {
+      await handleEdit(mockCtx);
+
+      expect(enterWithLock).toHaveBeenCalledWith({
+        ctx: mockCtx,
+        conversationName: 'editWorkout',
+      });
+    });
+
+    it('не должен ничего делать, если нет userId', async () => {
+      const mockCtxNoUser = createMockCtx({ from: undefined });
+      await handleEdit(mockCtxNoUser);
+      expect(enterWithLock).not.toHaveBeenCalled();
     });
   });
 });
